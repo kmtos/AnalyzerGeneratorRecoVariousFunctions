@@ -1,0 +1,141 @@
+#include <string.h>
+#include "TChain.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TTree.h"
+#include "TKey.h"
+#include "Riostream.h"
+
+void root_macro_to_combine_histograms()
+{
+  gStyle->SetOptStat(kFALSE);
+
+  TFile fileP8("/afs/cern.ch/user/k/ktos/BBA/CMSSW_7_1_11_patch2/src/BBA/Analyzer/BSUB/ggH_a9_10K_dR_gt2_v2/ggH_a9_10K_dR_gt2_v2.root");
+  TFile fileP6("/afs/cern.ch/user/k/ktos/CMSSW_5_3_11/src/ggH/Analyzer/BSUB/ggH_P6_APR_29_v1.root");
+  TFile *outFile = new TFile("combined_Histograms_for_P6_P8.root", "RECREATE");
+
+cout << "Files Created" << endl;
+
+  TCanvas *CAPtP6_  = (TCanvas*)fileP6.Get("APtPart");
+  TCanvas *CAEtaP6_  = (TCanvas*)fileP6.Get("AEtaPart");
+  TCanvas *CAPhiP6_ = (TCanvas*)fileP6.Get("APhiPart");
+  TCanvas *CAdRP6_  = (TCanvas*)fileP6.Get("AdRPart");
+  TCanvas *CAdPhiP6_ = (TCanvas*)fileP6.Get("AdPhiPart");
+  TCanvas *CTauPTP6_ = (TCanvas*)fileP6.Get("TauPtPart");
+
+  TCanvas *CAPtP8_  = (TCanvas*)fileP8.Get("APtPart");
+  TCanvas *CAEtaP8_ = (TCanvas*)fileP8.Get("AEtaPart");
+  TCanvas *CAPhiP8_ = (TCanvas*)fileP8.Get("APhiPart");
+  TCanvas *CAdRP8_ = (TCanvas*)fileP8.Get("AdRPart");
+  TCanvas *CAdPhiP8_ = (TCanvas*)fileP8.Get("AdPhiPart");
+  TCanvas *CTauPTP8_ = (TCanvas*)fileP8.Get("TauPtPart");
+  
+// TCanvas *canv1 = (TCanvas*)file1.Get("recoMuPTVsTauSisterPTCanvas");
+//  TH1F *hist1 = (TH1F*)canv1->GetPrimitive("recoMuPTVsTauSisterPT");
+cout << "Got Canvases" << endl;
+ 
+  TH1F* APtP6_ = (TH1F*)CAEtaP6_->GetPrimitive("APtPart");
+  TH1F* AEtaP6_ = (TH1F*)CAEtaP6_->GetPrimitive("AEtaPart");
+  TH1F* APhiP6_ = (TH1F*)CAPhiP6_->GetPrimitive("APhiPart");
+  TH1F* AdRP6_  = (TH1F*)CAdRP6_->GetPrimitive("AdRPart");
+  TH1F* AdPhiP6_ = (TH1F*)CAdPhiP6_->GetPrimitive("AdPhiPart");
+  TH1F* TauPTP6_ = (TH1F*)CTauPTP6_->GetPrimitive("TauPtPart");
+
+  TH1F* APtP8_ = (TH1F*)CAEtaP8_->GetPrimitive("APtPart");
+  TH1F* AEtaP8_ = (TH1F*)CAEtaP8_->GetPrimitive("AEtaPart");
+  TH1F* APhiP8_ = (TH1F*)CAPhiP8_->GetPrimitive("APhiPart");
+  TH1F* AdRP8_  = (TH1F*)CAdRP8_->GetPrimitive("AdRPart");
+  TH1F* AdPhiP8_ = (TH1F*)CAdPhiP8_->GetPrimitive("AdPhiPart");
+  TH1F* TauPTP8_ = (TH1F*)CTauPTP8_->GetPrimitive("TauPtPart");
+
+cout << "Histograms assigned." << endl; 
+
+  TCanvas APtBOTHCanvas("APtBOTH","",600,600);
+  TCanvas AEtaBOTHCanvas("AEtaBOTH","",600,600);
+  TCanvas APhiBOTHCanvas("APhiBOTH","",600,600);
+  TCanvas AdRBOTHCanvas("AdRBoth","",600,600);
+  TCanvas AdPhiBOTHCanvas("AdPhiBOTH","",600,600);
+  TCanvas TauPtBOTHCanvas("TauPtBOTH","",600,600);
+
+cout << "Canvases created" << endl;
+
+  APtP8_->SetLineColor(kRed);
+  AEtaP8_->SetLineColor(kRed);
+  APhiP8_->SetLineColor(kRed);
+  AdRP8_->SetLineColor(kRed);
+  AdPhiP8_->SetLineColor(kRed);
+  TauPTP8_ ->SetLineColor(kRed);
+
+  APtP6_->SetLineColor(kRed);
+  AEtaP6_->SetLineColor(kBlue);
+  APhiP6_->SetLineColor(kBlue);
+  AdRP6_->SetLineColor(kBlue);
+  AdPhiP6_->SetLineColor(kBlue);
+  TauPTP6_->SetLineColor(kBlue);
+
+cout << "Attributes set." << endl;  
+
+  APtBOTHCanvas.cd();
+  APtP6_->DrawNormalized();
+  APtP8_->DrawNormalized("SAME");
+  legPt = new TLegend(0.1,0.7,0.48,0.9);
+  legPt->AddEntry(APtP8_,"Pythia 8","f");
+  legPt->AddEntry(APtP6_,"Pythia 6","f");
+  legPt->Draw();
+
+  AEtaBOTHCanvas.cd();
+  AEtaP6_->DrawNormalized();
+  AEtaP8_->DrawNormalized("SAME");
+  legEta = new TLegend(0.1,0.7,0.48,0.9);
+  legEta->AddEntry(AEtaP8_,"Pythia 8","f");
+  legEta->AddEntry(AEtaP6_,"Pythia 6","f");
+  legEta->Draw();
+
+  APhiBOTHCanvas.cd();
+  APhiP6_->DrawNormalized();
+  APhiP8_->DrawNormalized("SAME");
+  legPhi = new TLegend(0.1,0.7,0.48,0.9);
+  legPhi->AddEntry(APhiP8_,"Pythia 8","f");
+  legPhi->AddEntry(APhiP6_,"Pythia 6","f");
+  legPhi->Draw();
+
+  AdRBOTHCanvas.cd();
+  AdRP6_->DrawNormalized();
+  AdRP8_->DrawNormalized("SAME");
+  legdR = new TLegend(0.1,0.7,0.48,0.9);
+  legdR->AddEntry(AdRP8_,"Pythia 8","f");
+  legdR->AddEntry(AdRP6_,"Pythia 6","f");
+  legdR->Draw();
+
+  AdPhiBOTHCanvas.cd();
+  AdPhiP6_->DrawNormalized();
+  AdPhiP8_->DrawNormalized("SAME");
+  legdPhi = new TLegend(0.1,0.7,0.48,0.9);
+  legdPhi->AddEntry(AdPhiP8_,"Pythia 8","f");
+  legdPhi->AddEntry(AdPhiP6_,"Pythia 6","f");
+  legdPhi->Draw();
+
+  TauPtBOTHCanvas.cd();
+  TauPTP8_->DrawNormalized();
+  TauPTP6_->DrawNormalized("SAME");
+  legTauPt = new TLegend(0.1,0.7,0.48,0.9);
+  legTauPt->AddEntry(TauPTP8_,"Pythia 8","f");
+  legTauPt->AddEntry(TauPTP6_,"Pythia 6","f");
+  legTauPt->Draw();
+
+
+cout << "Histograms Drawn" << endl;
+
+  outFile->cd();
+  APtBOTHCanvas.Write();
+  AEtaBOTHCanvas.Write();
+  APhiBOTHCanvas.Write();
+  AdRBOTHCanvas.Write();
+  AdPhiBOTHCanvas.Write();
+  TauPtBOTHCanvas.Write();
+  outFile->Write();
+  outFile->Close();
+
+cout << "end" << endl;
+
+}//root_macro_to_combine_histograms

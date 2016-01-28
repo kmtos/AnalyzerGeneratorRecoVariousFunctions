@@ -1,0 +1,45 @@
+>> Local Products Rules ..... started
+>> Local Products Rules ..... done
+>> Building CMSSW version CMSSW_7_1_11_patch2 ----
+>> Entering Package Configuration/GenProduction
+>> Creating project symlinks
+  src/Configuration/GenProduction/python -> python/Configuration/GenProduction
+>> Leaving Package Configuration/GenProduction
+>> Package Configuration/GenProduction built
+>> Subsystem Configuration built
+>> Subsystem BigProducts built
+>> Local Products Rules ..... started
+>> Local Products Rules ..... done
+gmake[1]: Entering directory `/afs/cern.ch/user/k/ktos/Generation/CMSSW_7_1_11_patch2'
+>> Creating project symlinks
+>> Done python_symlink
+>> Compiling python modules cfipython/slc6_amd64_gcc481
+>> Compiling python modules python
+>> Compiling python modules src/Configuration/GenProduction/python
+>> All python modules compiled
+>> Pluging of all type refreshed.
+gmake[1]: Leaving directory `/afs/cern.ch/user/k/ktos/Generation/CMSSW_7_1_11_patch2'
+/afs/cern.ch/user/k/ktos/Generation/CMSSW_7_1_11_patch2/src
+/afs/cern.ch/user/k/ktos/Generation
+GEN,SIM,ENDJOB
+Step: GEN Spec: 
+Loading generator fragment from Configuration.GenProduction.HIG-RunIIFall14GS-00006-fragment
+Step: SIM Spec: 
+Step: ENDJOB Spec: 
+customising the process with addMonitoring from Configuration/DataProcessing/Utils
+customising the process with customisePostLS1 from SLHCUpgradeSimulations/Configuration/postLS1Customs
+Config file HIG-RunIIFall14GS-00006_1_cfg.py created
+nothing
+GEN,VALIDATION:genvalid_all,ENDJOB
+Step: GEN Spec: 
+Loading generator fragment from Configuration.GenProduction.HIG-RunIIFall14GS-00006-fragment
+Step: VALIDATION Spec: ['genvalid_all']
+genvalid_all in preparing validation
+Step: ENDJOB Spec: 
+customising the process with setCrossingFrameOn from SimGeneral/MixingModule/fullMixCustomize_cff
+Config file HIG-RunIIFall14GS-00006_genvalid.py created
+HARVESTING:genHarvesting
+entry file:HIG-RunIIFall14GS-00006_genvalid.root
+Step: HARVESTING Spec: ['genHarvesting']
+['HLT_Mu17_TkMu8', 'HLT_Mu17_Mu8', 'HLT_DoubleEle33_CaloIdL_GsfTrkIdVL']
+Config file HIG-RunIIFall14GS-00006_genvalid_harvesting.py created	

@@ -1,0 +1,106 @@
+//this Displays the bin cnumber and bin Count
+double binValue , binCount;
+for(int i = 0; i<100 ; i++)
+{ 
+  binCount = TauDecayPDG_->GetBinContent(i);
+  binValue = TauDecayPDG_->GetBinCenter(binCount);
+  std::cout << "Bin #= " << i << "\tBin Center= " << binValue << "\tBin Count= " << binCount <<std::endl;
+}//for i
+
+//
+// This Next block was to figure out the parentage of the A higgs boson
+//
+if(iGenParticle->pdgId() == 36)  //Looking for A
+{
+  std::cout << "A PDG= " << iGenParticle->pdgId() << "\tNumber of Mothers= " << iGenParticle->numberOfMothers() << std::endl;
+  unsigned int iMothers = 0;
+  while(iMothers < iGenParticle->numberOfMothers())
+  {
+    reco::GenParticleRef momRef = iGenParticle->motherRef(iMothers);
+    std::cout << "\tA Mother #" << iMothers << " PDG= " << momRef->pdgId() << "\tNumber of Mothers= " << momRef->numberOfMothers() << std::endl;
+    unsigned int iDaughters = 0;
+    while (iDaughters < momRef->numberOfDaughters())
+    {
+      reco::GenParticleRef childRef = momRef->daughterRef(iDaughters);
+      std::cout << "\t\tDaughter #" << iDaughters << " PDG ID= " << childRef->pdgId() << std::endl;
+      iDaughters++;
+    }//while IDaughters
+      
+    unsigned int iGrandMothers = 0;
+    while(iGrandMothers < momRef->numberOfMothers() )
+    {
+      reco::GenParticleRef grandMomRef = momRef->motherRef(iGrandMothers);
+      std::cout << "\t\tA GrandMother #" << iGrandMothers << " PDG ID= " << grandMomRef->pdgId() << "\tNumber of Daughters= " << grandMomRef->numberOfDaughters() << std::endl;
+      unsigned int iGrandsDaughters = 0;
+      while (iGrandsDaughters < grandMomRef->numberOfDaughters())
+      {
+        reco::GenParticleRef grandsChildRef = grandMomRef->daughterRef(iGrandsDaughters);
+        std::cout << "\t\t\tDaughter #" << iGrandsDaughters << " PDG ID= " << grandsChildRef->pdgId() << std::endl;
+        iGrandsDaughters++;
+      }//while IGrandsDaughters
+      iGrandMothers++;
+    }//while iGrandMothers
+    iMothers++;
+  }//while iMothers
+}//if pdgId == 36
+
+
+//
+//this was for looking into all the taus and their parentage
+//
+if(fabs(iGenParticle->pdgId()) == 15) //Looking for Tau
+{
+  std::cout << "\nTau PDG ID= " << iGenParticle->pdgId() << std::endl;
+  unsigned int iDaughters = 0;
+  std::cout << "\tTau Number of Mothers= " << iGenParticle->numberOfMothers() << std::endl;
+  unsigned int iMothers = 0;
+  while (iMothers < iGenParticle->numberOfMothers())
+  {
+    reco::GenParticleRef momRef = iGenParticle->motherRef(iMothers);
+    std::cout << "\t\tMom #" << iMothers << " PDGID= " << momRef->pdgId() << std::endl;
+    unsigned int iGrandMothers = 0;
+    std::cout << "\t\tNumber of Grandmothers= " << momRef->numberOfMothers() << std::endl;
+    while(iGrandMothers < momRef->numberOfMothers())
+    {
+      reco::GenParticleRef grandMomRef = momRef->motherRef(iGrandMothers);
+      std::cout << "\t\t\tGrandMother #" << iGrandMothers << "PDGID= " << grandMomRef->pdgId() << std::endl;
+      iGrandMothers++;
+    }//while iGrandMothers
+    iMothers++;
+  }//while numberofMothers
+
+  std::cout << "\tTau Number of Daughters= " << iGenParticle->numberOfDaughters() << std::endl;
+  while (iDaughters < iGenParticle->numberOfDaughters())
+  {
+    reco::GenParticleRef childRef = iGenParticle->daughterRef(iDaughters);
+    std::cout << "\t\tDaughter #" << iDaughters << " PDGID= " << childRef->pdgId() << std::endl;
+  }//while iDaughters
+}//if( pdgID == 15
+
+
+//
+//This looks at the b parentage and makes sure that if it is part of it's own decay chain, then it makes the daughter the new mother
+//
+if(fabs(iGenParticle->pdgId()) == 5 && iGenParticle->mother()->pdgId() == 21 )
+{
+  std::cout << "\tFound a B!! It's pdgId= " << iGenParticle->pdgId() << std::endl;
+  reco::GenParticleRef bmom = iGenParticle->motherRef();
+  bRef = VariousFunctions::findDaughterInDaughters(bmom, iGenParticle->pdgId(), false);
+  while(VariousFunctions::findIfInDaughters(bRef,bRef->pdgId(),false) && bRef->numberOfDaughters() == 1)
+    bRef = bRef->daughterRef(0);
+  VariousFunctions::listDaughters(bRef);
+}//if pdgid == 5
+
+
+//
+//This sets the bins
+//
+TauDecayLabeled_->GetXaxis()->SetBinLabel(1, "1-prong");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(2, "1-prong + 1 #pi^{0}");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(3, "1-prong + 2 #pi^{0}");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(4, "3-prong");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(5, "other");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(6, "Electron");
+TauDecayLabeled_->GetXaxis()->SetBinLabel(7, "Muon");
+  
+
