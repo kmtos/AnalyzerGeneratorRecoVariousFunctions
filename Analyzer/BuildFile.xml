@@ -1,4 +1,4 @@
-<use name="BBA/VariousFunctions"/>
+<use name="AnalyzerGeneratorRecoVariousFunctions/VariousFunctions"/>
 <use name="CommonTools/UtilAlgos"/>
 <use name="DataFormats/BTauReco"/>
 <use name="DataFormats/Candidate"/>

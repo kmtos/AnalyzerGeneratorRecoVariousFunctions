@@ -41,7 +41,7 @@ ANY_PT_RANK = -1
 #################
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
-mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/NMSSM_Analysis/CMSSW_7_4_12_patch4/src/BBA/Analyzer/FILE_TESTS/inFileList_ggH_a9_CleanJets.txt')
+#mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_4_12_patch4/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TEST.txt')
 
 process = cms.Process("CleanJetsAnalyzer")
 
@@ -49,11 +49,6 @@ process = cms.Process("CleanJetsAnalyzer")
 # initialize MessageLogger and output report
 ###################################################
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.threshold = 'INFO'
-process.MessageLogger.categories.append('BBA')
-process.MessageLogger.cerr.INFO = cms.untracked.PSet(
-    limit = cms.untracked.int32(-1)
-)
 
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100)
 process.options   = cms.untracked.PSet( 
@@ -61,22 +56,24 @@ process.options   = cms.untracked.PSet(
 		SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
 ####################
 # Input File List
 ####################
-readFiles = cms.untracked.vstring(*mylist)
+#readFiles = cms.untracked.vstring(*mylist)
 process.source = cms.Source("PoolSource",
-    fileNames = readFiles,
+#    fileNames = readFiles,
+    fileNames = cms.untracked.vstring('file:/tmp/ggH_a9_CleanJets_TauReco_102.root'),#'/store/user/ktos/ggH_a9_CleanJets/ggH_a9_CleanJets_TauReco_102.root'),
     skipEvents = cms.untracked.uint32(0)
     )
 
 process.ggh = cms.EDAnalyzer("GGHAnalyzer",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/NMSSM_Analysis/CMSSW_7_4_12_patch4/src/BBA/Analyzer/BSUB/TEST.root'),
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_4_12_patch4/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/TEST.root'),
    genParticleTag = cms.InputTag("genParticles", "", "SIM"),
    akJetTag = cms.InputTag("ak4PFJets"),
    muonsTag = cms.InputTag("muons"),
+   vtxTag = cms.InputTag('offlinePrimaryVertices'),
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
    jetValMapTag = cms.InputTag("CleanJets", "jetValMap", "CLEANJETS"),
    tauRECOTag = cms.InputTag("hpsPFTauProducer", "", "RECO"),
@@ -89,7 +86,15 @@ process.ggh = cms.EDAnalyzer("GGHAnalyzer",
    looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
    medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
    tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
-   decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "RECO")
+   decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "RECO"),
+   genMatchedTauVisiblePtMapTagCJ = cms.InputTag("genATauMuMatchedRecoTauSelectorCJ", "TauVisiblePtMap", "CleanJetsAnalyzer"),
+   genMatchedTauDecayModeMapTagCJ = cms.InputTag("genATauMuMatchedRecoTauSelectorCJ", "TauDecayModeMap", "CleanJetsAnalyzer"),
+   genMatchedTauMatchedMapTagCJ = cms.InputTag("genATauMuMatchedRecoTauSelectorCJ", "TauMatchedMap", "CleanJetsAnalyzer"),
+   genMatchedRecoTausCJ = cms.InputTag("genATauMuMatchedRecoTauSelectorCJ", "valMapAccessers", "CleanJetsAnalyzer"),
+   genMatchedTauVisiblePtMapTagRECO = cms.InputTag("genATauMuMatchedRecoTauSelectorRECO", "TauVisiblePtMap", "CleanJetsAnalyzer"),
+   genMatchedTauDecayModeMapTagRECO = cms.InputTag("genATauMuMatchedRecoTauSelectorRECO", "TauDecayModeMap", "CleanJetsAnalyzer"),
+   genMatchedTauMatchedMapTagRECO = cms.InputTag("genATauMuMatchedRecoTauSelectorRECO", "TauMatchedMap", "CleanJetsAnalyzer"),
+   genMatchedRecoTausRECO = cms.InputTag("genATauMuMatchedRecoTauSelectorRECO", "valMapAccessers", "CleanJetsAnalyzer")   
 )
 
 ###########################
@@ -101,27 +106,7 @@ ATauTauPSet = cms.PSet(momPDGID = cms.vint32(A_PDGID),
                        chargedLeptonPTMin = cms.double(0.0), #should always be 0.0
                        totalPTMin = cms.double(0.0)) #should always be 0.0
 
-process.genATauMuSelector = cms.EDFilter(
-    'GenObjectProducer',
-    genParticleTag = cms.InputTag('genParticles'),
-    absMatchPDGIDs = cms.vuint32(TAU_PDGID),     #choose a gen tau...
-    sisterAbsMatchPDGID = cms.uint32(TAU_PDGID), #...whose sister is another gen tau...
-    genTauDecayIDPSet = ATauTauPSet,             #...and whose mother is a pseudoscalar a
-    primaryTauDecayType = cms.uint32(TAU_MU),    #primary tau decay mode is mu...
-    sisterTauDecayType = cms.uint32(TAU_HAD),    #...sister tau decay mode is hadronic
-    primaryTauPTRank = cms.int32(ANY_PT_RANK),  #should always be ANY_PT_RANK
-    primaryTauHadronicDecayType = cms.int32(TAU_ALL_HAD), #choose TAU_ALL_HAD when the tau decay type is non-hadronic
-    sisterHadronicDecayType = cms.int32(TAU_ALL_HAD),     #choose TAU_ALL_HAD when the tau decay type is hadronic and you want any hadronic mode
-    primaryTauAbsEtaMax = cms.double(2.1),  #|eta| < 2.1 on muon from tau-->mu
-    primaryTauPTMin = cms.double(5.0),      #pT > 5 GeV on muon from tau-->mu
-    countSister = cms.bool(False),          #only put the muon from tau-->mu in the output collection (i.e. object has  |PDG ID| = 13 and status = 1 that is decayed from the tau)
-    applyPTCuts = cms.bool(False),          #should always be False
-    countKShort = cms.bool(False),          #should always be False
-    minNumGenObjectsToPassFilter = cms.uint32(1), #EDFilter only returns true if >=1 tau-->mu is found satisfying pT, |eta|, and decay mode cuts
-    makeAllCollections = cms.bool(False) #should always be False
-    )
-
-process.genATauHadSelector = cms.EDFilter(
+process.genATauHadSelectorCJ = cms.EDFilter(
     'GenObjectProducer',
     genParticleTag = cms.InputTag('genParticles'),
     absMatchPDGIDs = cms.vuint32(TAU_PDGID),     #choose a gen tau...
@@ -141,23 +126,43 @@ process.genATauHadSelector = cms.EDFilter(
     makeAllCollections = cms.bool(False) #should always be False
     )
 
-process.recoTauSelector = cms.EDFilter('PFTauRefSelector',
-                                        src = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
-                                        cut = cms.string('pt > 5.0'),
-                                        filter = cms.bool(True)
-                                        )
-
-process.recoMuonSelector = cms.EDFilter('MuonRefSelector',
-                                        src = cms.InputTag('muons'),
-                                        cut = cms.string('pt > 5.0'),
-                                        filter = cms.bool(True)
-                                        )
-
-process.genATauMuMatchedRecoTauSelector = cms.EDFilter(
-    'GenMatchedTauProducer',
+process.genATauHadSelectorRECO = cms.EDFilter(
+    'GenObjectProducer',
     genParticleTag = cms.InputTag('genParticles'),
-    selectedGenParticleTag = cms.InputTag('genATauHadSelector'), #must be a reco::GenParticleRefVector
-    recoObjTag = cms.InputTag("recoTauSelector"),
+    absMatchPDGIDs = cms.vuint32(TAU_PDGID),     #choose a gen tau...
+    sisterAbsMatchPDGID = cms.uint32(TAU_PDGID), #...whose sister is another gen tau...
+    genTauDecayIDPSet = ATauTauPSet,             #...and whose mother is a pseudoscalar a
+    primaryTauDecayType = cms.uint32(TAU_HAD),    #primary tau decay mode is mu...
+    sisterTauDecayType = cms.uint32(TAU_MU),    #...sister tau decay mode is hadronic
+    primaryTauPTRank = cms.int32(ANY_PT_RANK),  #should always be ANY_PT_RANK
+    primaryTauHadronicDecayType = cms.int32(TAU_ALL_HAD), #choose TAU_ALL_HAD when the tau decay type is non-hadronic
+    sisterHadronicDecayType = cms.int32(TAU_ALL_HAD),     #choose TAU_ALL_HAD when the tau decay type is hadronic and you want any hadronic mode
+    primaryTauAbsEtaMax = cms.double(2.5),  #|eta| < 2.1 on muon from tau-->mu
+    primaryTauPTMin = cms.double(5.0),      #pT > 5 GeV on muon from tau-->mu
+    countSister = cms.bool(False),          #only put the muon from tau-->mu in the output collection (i.e. object has  |PDG ID| = 13 and status = 1 that is decayed from the tau)
+    applyPTCuts = cms.bool(False),          #should always be False
+    countKShort = cms.bool(False),          #should always be False
+    minNumGenObjectsToPassFilter = cms.uint32(1), #EDFilter only returns true if >=1 tau_Had is found satisfying pT, |eta|, and decay mode cuts
+    makeAllCollections = cms.bool(False) #should always be False
+    )
+
+process.recoTauSelectorCJ = cms.EDFilter('PFTauRefSelector',
+                                        src = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
+                                        cut = cms.string('pt > 0.0'),
+                                        filter = cms.bool(True)
+                                        )
+
+process.recoTauSelectorRECO = cms.EDFilter('PFTauRefSelector',
+                                        src = cms.InputTag("hpsPFTauProducer", "", "RECO"),
+                                        cut = cms.string('pt > 0.0'),
+                                        filter = cms.bool(True)
+                                        )
+
+process.genATauMuMatchedRecoTauSelectorCJ = cms.EDFilter(
+    'TauMatchedRecoObjectProducer',
+    genParticleTag = cms.InputTag('genParticles'),
+    selectedGenParticleTag = cms.InputTag('genATauHadSelectorCJ'), #must be a reco::GenParticleRefVector
+    recoObjTag = cms.InputTag('recoTauSelectorCJ'),      
     baseRecoObjTag = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
     genTauDecayIDPSet = ATauTauPSet,      #need to know the pseudoscalar a mother
     applyPTCuts = cms.bool(False),        #should always be false
@@ -171,12 +176,12 @@ process.genATauMuMatchedRecoTauSelector = cms.EDFilter(
     minNumGenObjectsToPassFilter = cms.uint32(1) #EDFilter returns true if >=1 gen-matched reco muon is found
     )
 
-process.genATauMuMatchedRecoMuonSelector = cms.EDFilter(
-    'GenMatchedMuonProducer',
+process.genATauMuMatchedRecoTauSelectorRECO = cms.EDFilter(
+    'TauMatchedRecoObjectProducer',
     genParticleTag = cms.InputTag('genParticles'),
-    selectedGenParticleTag = cms.InputTag('genATauMuSelector'), #must be a reco::GenParticleRefVector
-    recoObjTag = cms.InputTag('recoMuonSelector'),              #must be a reco::MuonRefVector
-    baseRecoObjTag = cms.InputTag('muons'),
+    selectedGenParticleTag = cms.InputTag('genATauHadSelectorRECO'), #must be a reco::GenParticleRefVector
+    recoObjTag = cms.InputTag('recoTauSelectorRECO'),
+    baseRecoObjTag = cms.InputTag("hpsPFTauProducer", "", "RECO"),
     genTauDecayIDPSet = ATauTauPSet,      #need to know the pseudoscalar a mother
     applyPTCuts = cms.bool(False),        #should always be false
     countKShort = cms.bool(False),        #should always be false
@@ -185,26 +190,23 @@ process.genATauMuMatchedRecoMuonSelector = cms.EDFilter(
     useGenObjPTRank = cms.bool(True),     #should always be True
     nOutputColls = cms.uint32(1),         #should always be 1
     dR = cms.double(0.1),                 #dR criteria for matching
-    ifTauColl = cms.bool(False),           #This Creates a map of GenTaus and their Decay Mode and Visible Pt
+    ifTauColl = cms.bool(True),           #This Creates a map of GenTaus and their Decay Mode and Visible Pt
     minNumGenObjectsToPassFilter = cms.uint32(1) #EDFilter returns true if >=1 gen-matched reco muon is found
     )
 
-#######################################
-# Configuring edm Output
-#######################################
 process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string('file:BSUB/TEST_edmOutput.root')
+    fileName = cms.untracked.string('file:BSUB/TEST_edmEventContent.root')
 )
 
+
 process.p2 = cms.Path(
-	process.genATauMuSelector*
-	process.genATauHadSelector*
-	process.recoTauSelector*
-	process.recoMuonSelector*
-	process.genATauMuMatchedRecoTauSelector*
-	process.genATauMuMatchedRecoMuonSelector*
+	process.genATauHadSelectorCJ*
+	process.recoTauSelectorCJ*
+	process.genATauMuMatchedRecoTauSelectorCJ*	
+        process.genATauHadSelectorRECO*
+        process.recoTauSelectorRECO*
+        process.genATauMuMatchedRecoTauSelectorRECO*
 	process.ggh
 )
 
 process.e = cms.EndPath(process.out)
-

@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
 mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/NMSSM_Analysis/CMSSW_7_4_12_patch4/src/BBA/Analyzer/FILE_TESTS/inFileList_ttbar_TauReco.txt')
 
-process = cms.Process("CleanJetsAnalyzer")
+process = cms.Process("CleanJetsAnalyze")
 
 #
 # This begins the part of the demo along with the top two lines of text

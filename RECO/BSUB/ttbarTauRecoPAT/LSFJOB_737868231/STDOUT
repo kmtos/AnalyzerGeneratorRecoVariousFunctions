@@ -1,0 +1,90 @@
+@(#)CERN job starter $Date: 2010/06/23 14:22:16 $
+Working directory is </pool/lsf/ktos/737868231> on <b60ba57969.cern.ch>
+
+/pool/lsf/ktos/737868231
+Added 'egmGsfElectronIDs' to process definition (MiniAOD format)!
+Added ID 'cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-loose' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-loose added to patElectrons
+Added ID 'cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-medium' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-medium added to patElectrons
+Added ID 'cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-tight' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-tight added to patElectrons
+Added ID 'cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-veto' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-PHYS14-PU20bx25-V2-standalone-veto added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-25ns-V1-standalone-loose' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-loose added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-25ns-V1-standalone-medium' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-medium added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-25ns-V1-standalone-tight' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-tight added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-25ns-V1-standalone-veto' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-50ns-V1-standalone-loose' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-50ns-V1-standalone-loose added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-50ns-V1-standalone-medium' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-50ns-V1-standalone-medium added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-50ns-V1-standalone-tight' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-50ns-V1-standalone-tight added to patElectrons
+Added ID 'cutBasedElectronID-Spring15-50ns-V1-standalone-veto' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:cutBasedElectronID-Spring15-50ns-V1-standalone-veto added to patElectrons
+Added ID 'heepElectronID-HEEPV60' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:heepElectronID-HEEPV60 added to patElectrons
+Added ID 'mvaEleID-Spring15-25ns-nonTrig-V1-wp80' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80 added to patElectrons
+Added ID 'mvaEleID-Spring15-25ns-nonTrig-V1-wp90' to egmGsfElectronIDs
+	--- egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90 added to patElectrons
+Added 'egmPhotonIDs' to process definition (MiniAOD format)!
+Added ID 'cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-loose' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-loose added to patPhotons
+Added ID 'cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-medium' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-medium added to patPhotons
+Added ID 'cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-tight' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-tight added to patPhotons
+Added ID 'cutBasedPhotonID-Spring15-50ns-V1-standalone-loose' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-Spring15-50ns-V1-standalone-loose added to patPhotons
+Added ID 'cutBasedPhotonID-Spring15-50ns-V1-standalone-medium' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-Spring15-50ns-V1-standalone-medium added to patPhotons
+Added ID 'cutBasedPhotonID-Spring15-50ns-V1-standalone-tight' to egmPhotonIDs
+	--- egmPhotonIDs:cutBasedPhotonID-Spring15-50ns-V1-standalone-tight added to patPhotons
+Added ID 'mvaPhoID-Spring15-25ns-nonTrig-V2-wp90' to egmPhotonIDs
+	--- egmPhotonIDs:mvaPhoID-Spring15-25ns-nonTrig-V2-wp90 added to patPhotons
+Added ID 'mvaPhoID-Spring15-50ns-nonTrig-V2-wp90' to egmPhotonIDs
+	--- egmPhotonIDs:mvaPhoID-Spring15-50ns-nonTrig-V2-wp90 added to patPhotons
+# Conditions read from  CMS_CONDITIONS  via FrontierProd 
+11-Dec-2015 22:49:43 CET  Initiating request to open file root://eoscms//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root
+[2015-12-11 22:49:45.621307 +0100][Error  ][XRootD            ] [eoscms:1094] Handling error while processing kXR_open (file: /eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root, mode: 0660, flags: kXR_open_read kXR_async kXR_retstat ): [ERROR] Error response.
+%MSG-w XrdAdaptorInternal:  file_open 11-Dec-2015 22:49:45 CET pre-events
+Failed to open file at URL root://eoscms:1094//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root.
+%MSG
+[2015-12-11 22:49:45.650574 +0100][Error  ][XRootD            ] [eoscms:1094] Handling error while processing kXR_open (file: /eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root?tried=, mode: 0660, flags: kXR_open_read kXR_async kXR_retstat ): [ERROR] Error response.
+%MSG-w XrdAdaptorInternal:  file_open 11-Dec-2015 22:49:45 CET pre-events
+Failed to open file at URL root://eoscms:1094//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root?tried=.
+%MSG
+----- Begin Fatal Exception 11-Dec-2015 22:49:45 CET-----------------------
+An exception of category 'FileOpenError' occurred while
+   [0] Constructing the EventProcessor
+   [1] Constructing input source of type PoolSource
+   [2] Calling RootInputFileSequence::initFile()
+   [3] Calling StorageFactory::open()
+   [4] Calling XrdFile::open()
+Exception Message:
+Failed to open the file 'root://eoscms//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root'
+   Additional Info:
+      [a] Input file root://eoscms//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root could not be opened.
+      [b] XrdCl::File::Open(name='root://eoscms//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root', flags=0x10, permissions=0660) => error '[ERROR] Server responded with an error: [3011] Unable to open file /eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root; No such file or directory
+' (errno=3011, code=400). No additional data servers were found.
+      [c] Last URL tried: root://eoscms:1094//eos/cms/store/user/ktos/ttbarTauRecoIndividual/ttbarTauRecoIndividual_6.root?tried=
+      [d] Problematic data server: eoscms:1094
+      [e] Disabled source: eoscms:1094
+----- End Fatal Exception -------------------------------------------------
+Will overwrite /store/user/ktos/ttbarTauRecoPAT/ttbarTauRecoPAT_6.root due to force flag.
+xrdcp: No such file or directory processing ttbarTauRecoPAT_6.root
+xrdcp exited with error code 2, exiting with the same code.
+rm: cannot remove `ttbarTauRecoPAT_6.root': No such file or directory
+rm: cannot remove `ttbarTauRecoPAT_DQM_6.root': No such file or directory
+
+Job finished at Fri Dec 11 22:49:53 CET 2015 on node 
+ under linux version Scientific Linux CERN SLC release 6.7 (Carbon)
+
+CERN statistics: This process used approximately : 0:01:04 KSI2K hours (64 KSI2K seconds)
+                 This process corresponds to     : 0:04:13 HS06  hours (253 HS06  seconds)
