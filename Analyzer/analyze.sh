@@ -19,7 +19,7 @@ echo "path= $path"
 
 echo "DIRNAME    = ${dir_name}"
 echo "python file= ${cfg_name}_${dir_name}.py"
-cp ../../src/GGHAnalyzer.cc GGHAnalyzer_${dir_name}.cc
+cp ../../src/GGHAnalyzer_IndivCJ.cc GGHAnalyzer_IndivCJ_${dir_name}.cc
 echo "ANALYZER   = $BBAAnalyzer_${dir_name}.cc"
 echo "Script name= ${script_name}_${dir_name}.sh"
 sed -e "s%DIRNAME%${dir_name}%g" ../../${cfg_name}.py > ${cfg_name}_${dir_name}.py
