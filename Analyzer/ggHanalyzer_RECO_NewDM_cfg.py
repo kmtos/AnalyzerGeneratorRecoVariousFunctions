@@ -110,12 +110,12 @@ process.genATauHadSelectorRECO = cms.EDFilter(
     primaryTauPTRank = cms.int32(ANY_PT_RANK),  #should always be ANY_PT_RANK
     primaryTauHadronicDecayType = cms.int32(TAU_ALL_HAD), #choose TAU_ALL_HAD when the tau decay type is non-hadronic
     sisterHadronicDecayType = cms.int32(TAU_ALL_HAD),     #choose TAU_ALL_HAD when the tau decay type is hadronic and you want any hadronic mode
-    primaryTauAbsEtaMax = cms.double(2.5),  #|eta| < 2.1 on muon from tau-->mu
-    primaryTauPTMin = cms.double(5.0),      #pT > 5 GeV on muon from tau-->mu
+    primaryTauAbsEtaMax = cms.double(-1),  #|eta| < 2.1 on muon from tau-->mu
+    primaryTauPTMin = cms.double(-1),      #pT > 5 GeV on muon from tau-->mu
     countSister = cms.bool(False),          #only put the muon from tau-->mu in the output collection (i.e. object has  |PDG ID| = 13 and status = 1 that is decayed from the tau)
     applyPTCuts = cms.bool(False),          #should always be False
     countKShort = cms.bool(False),          #should always be False
-    minNumGenObjectsToPassFilter = cms.uint32(0), #EDFilter only returns true if >=1 tau_Had is found satisfying pT, |eta|, and decay mode cuts
+    minNumGenObjectsToPassFilter = cms.uint32(1), #EDFilter only returns true if >=1 tau_Had is found satisfying pT, |eta|, and decay mode cuts
     makeAllCollections = cms.bool(False) #should always be False
     )
 
@@ -140,7 +140,7 @@ process.genATauMuMatchedRecoTauSelectorRECO = cms.EDFilter(
     nOutputColls = cms.uint32(1),         #should always be 1
     dR = cms.double(0.1),                 #dR criteria for matching
     ifTauColl = cms.bool(True),           #This Creates a map of GenTaus and their Decay Mode and Visible Pt
-    minNumGenObjectsToPassFilter = cms.uint32(0) #EDFilter returns true if >=1 gen-matched reco muon is found
+    minNumGenObjectsToPassFilter = cms.uint32(1) #EDFilter returns true if >=1 gen-matched reco muon is found
     )
 
 process.p2 = cms.Path(
