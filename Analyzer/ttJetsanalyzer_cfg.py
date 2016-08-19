@@ -41,7 +41,11 @@ ANY_PT_RANK = -1
 #################
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
+<<<<<<< HEAD
 mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_TT_CleanJets.txt')
+=======
+mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_TT_CleanJets.txt')
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 
 process = cms.Process("FAKERATEANALYZER")
 
@@ -65,7 +69,11 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")  #Configuration.StandardSequences.Geometry_cff")
 process.load("Configuration.StandardSequences.Reconstruction_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff") #Configuration.StandardSequences.FrontierConditions_CMS.GlobalTag_cff")
+<<<<<<< HEAD
 process.GlobalTag.globaltag = cms.string('80X_mcRun2_asymptotic_v14') #'IDEAL_V9::All'
+=======
+process.GlobalTag.globaltag = cms.string('76X_dataRun2_v15') #'IDEAL_V9::All'
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 process.impactParameterTagInfos.jetTracks = cms.InputTag("ak4JetTracksAssociatorAtVertex")
 process.ak4JetTracksAssociatorAtVertex.jets = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS')
 process.ak4JetTracksAssociatorAtVertex.tracks = cms.InputTag("generalTracks")
@@ -97,7 +105,11 @@ process.source = cms.Source("PoolSource",
     )
 
 process.ggh = cms.EDAnalyzer("FakeRateAnalyzer",
+<<<<<<< HEAD
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots.root'),
+=======
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots.root'),
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
    genParticleTag = cms.InputTag("genParticles", "", ""),
    genJetTag = cms.InputTag("ak4GenJets", "", ""),
    akJetTag = cms.InputTag("ak4PFJets"),
@@ -107,6 +119,7 @@ process.ggh = cms.EDAnalyzer("FakeRateAnalyzer",
    jetValMapTag = cms.InputTag("CleanJets", "jetValMap", "CLEANJETS"),
    tauCJTag = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
    pizerosTag = cms.InputTag("hpsPFTauProducer", "pizeros" ),
+<<<<<<< HEAD
    #looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3oldDMwLT", "", "CLEANJETS"),
    looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
    #medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3oldDMwLT", "", "CLEANJETS"),
@@ -117,6 +130,18 @@ process.ggh = cms.EDAnalyzer("FakeRateAnalyzer",
    genMatchPDGIDTag = cms.int32(6),
    oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
    csvBTag = cms.InputTag("combinedSecondaryVertexBJetTags", "", "FAKERATEANALYZER")
+=======
+   looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3oldDMwLT", "", "CLEANJETS"),
+   #looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3oldDMwLT", "", "CLEANJETS"),
+   #medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3oldDMwLT", "", "CLEANJETS"),
+   #tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   decayModeFindingTagCJ = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "CLEANJETS"),
+   genMatchPDGIDTag = cms.int32(6),
+   oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
+   csvBTag = cms.InputTag("pfCombinedMVAV2BJetTags", "", "FAKERATEANALYZER") #combinedSecondaryVertexBJetTags 
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 )
 
 

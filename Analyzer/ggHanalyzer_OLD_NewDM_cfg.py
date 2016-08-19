@@ -58,6 +58,35 @@ process.options   = cms.untracked.PSet(
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
+#########################################
+# Rerunning bTaggin on CleanJets Sample
+#########################################
+process.load("Configuration.StandardSequences.MagneticField_cff")
+process.load("Configuration.Geometry.GeometryRecoDB_cff")  #Configuration.StandardSequences.Geometry_cff")
+process.load("Configuration.StandardSequences.Reconstruction_cff")
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff") #Configuration.StandardSequences.FrontierConditions_CMS.GlobalTag_cff")
+process.GlobalTag.globaltag = cms.string('76X_dataRun2_v15') #'IDEAL_V9::All'
+process.impactParameterTagInfos.jetTracks = cms.InputTag("ak4JetTracksAssociatorAtVertex")
+process.ak4JetTracksAssociatorAtVertex.jets = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS')
+process.ak4JetTracksAssociatorAtVertex.tracks = cms.InputTag("generalTracks")
+
+process.btagging = cms.Sequence(
+    process.ak4JetTracksAssociatorAtVertex*
+    # impact parameters and IP-only algorithms
+    process.impactParameterTagInfos*
+    (process.trackCountingHighEffBJetTags +
+     process.trackCountingHighPurBJetTags +
+     process.jetProbabilityBJetTags +
+     process.jetBProbabilityBJetTags +
+     # SV tag infos depending on IP tag infos, and SV (+IP) based algos
+     process.secondaryVertexTagInfos*
+     (process.simpleSecondaryVertexHighEffBJetTags +
+      process.simpleSecondaryVertexHighPurBJetTags +
+      process.combinedSecondaryVertexBJetTags) +
+     process.ghostTrackVertexTagInfos*
+     process.ghostTrackBJetTags)
+)
+
 ####################
 # Input File List
 ####################
@@ -79,23 +108,25 @@ process.ggh = cms.EDAnalyzer("GGHAnalyzer_OLD",
    tauCJTag = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
    pizerosTag = cms.InputTag("hpsPFTauProducer", "pizeros" ),
    looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   #looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3newDMwLT", "", "CLEANJETS"),
    medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   #medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3newDMwLT", "", "CLEANJETS"),
    tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
+   #tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "CLEANJETS"),
    decayModeFindingTagCJ = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingNewDMs", "", "CLEANJETS"),
    looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   #looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3newDMwLT", "", "RECO"),   
    medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   #medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3newDMwLT", "", "RECO"),   
    tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   #tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "RECO"),
    decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingNewDMs", "", "RECO"),
-   looseIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3newDMwLT", "", "CLEANJETS"),
-   medIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3newDMwLT", "", "CLEANJETS"),
-   tightIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "CLEANJETS"),
-   looseIsoTagRECOMVA = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3newDMwLT", "", "RECO"),
-   medIsoTagRECOMVA = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3newDMwLT", "", "RECO"),
-   tightIsoTagRECOMVA = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "RECO")
-
+   oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
+   csvBTag = cms.InputTag("combinedSecondaryVertexBJetTags", "", "CleanJetsAnalyzer")
 )
 
 
 process.p2 = cms.Path(
+	process.btagging*
 	process.ggh
 )

@@ -58,6 +58,35 @@ process.options   = cms.untracked.PSet(
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
+#########################################
+# Rerunning bTaggin on CleanJets Sample
+#########################################
+process.load("Configuration.StandardSequences.MagneticField_cff")
+process.load("Configuration.Geometry.GeometryRecoDB_cff")  #Configuration.StandardSequences.Geometry_cff")
+process.load("Configuration.StandardSequences.Reconstruction_cff")
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff") #Configuration.StandardSequences.FrontierConditions_CMS.GlobalTag_cff")
+process.GlobalTag.globaltag = cms.string('76X_dataRun2_v15') #'IDEAL_V9::All'
+process.impactParameterTagInfos.jetTracks = cms.InputTag("ak4JetTracksAssociatorAtVertex")
+process.ak4JetTracksAssociatorAtVertex.jets = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS')
+process.ak4JetTracksAssociatorAtVertex.tracks = cms.InputTag("generalTracks")
+
+process.btagging = cms.Sequence(
+    process.ak4JetTracksAssociatorAtVertex*
+    # impact parameters and IP-only algorithms
+    process.impactParameterTagInfos*
+    (process.trackCountingHighEffBJetTags +
+     process.trackCountingHighPurBJetTags +
+     process.jetProbabilityBJetTags +
+     process.jetBProbabilityBJetTags +
+     # SV tag infos depending on IP tag infos, and SV (+IP) based algos
+     process.secondaryVertexTagInfos*
+     (process.simpleSecondaryVertexHighEffBJetTags +
+      process.simpleSecondaryVertexHighPurBJetTags +
+      process.combinedSecondaryVertexBJetTags) +
+     process.ghostTrackVertexTagInfos*
+     process.ghostTrackBJetTags)
+)
+
 ####################
 # Input File List
 ####################
@@ -87,7 +116,10 @@ process.ggh = cms.EDAnalyzer("GGHAnalyzer_IndivCJ",
    genMatchedRecoTausCJ = cms.InputTag("genATauMuMatchedRecoTauSelectorCJ", "valMapAccessers", "CleanJetsAnalyzer"),
    looseIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3newDMwLT", "", "CLEANJETS"),
    medIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3newDMwLT", "", "CLEANJETS"),
-   tightIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "CLEANJETS")
+   tightIsoTagCJMVA = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3newDMwLT", "", "CLEANJETS"),
+   oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
+   csvBTag = cms.InputTag("combinedSecondaryVertexBJetTags", "", "FAKERATEANALYZER")
+
 )
 
 ###########################
@@ -110,12 +142,12 @@ process.genATauHadSelectorCJ = cms.EDFilter(
     primaryTauPTRank = cms.int32(ANY_PT_RANK),  #should always be ANY_PT_RANK
     primaryTauHadronicDecayType = cms.int32(TAU_ALL_HAD), #choose TAU_ALL_HAD when the tau decay type is non-hadronic
     sisterHadronicDecayType = cms.int32(TAU_ALL_HAD),     #choose TAU_ALL_HAD when the tau decay type is hadronic and you want any hadronic mode
-    primaryTauAbsEtaMax = cms.double(2.5),  #|eta| < 2.1 on muon from tau-->mu
-    primaryTauPTMin = cms.double(5.0),      #pT > 5 GeV on muon from tau-->mu
+    primaryTauAbsEtaMax = cms.double(-1),  #|eta| < 2.1 on muon from tau-->mu
+    primaryTauPTMin = cms.double(-1),      #pT > 5 GeV on muon from tau-->mu
     countSister = cms.bool(False),          #only put the muon from tau-->mu in the output collection (i.e. object has  |PDG ID| = 13 and status = 1 that is decayed from the tau)
     applyPTCuts = cms.bool(False),          #should always be False
     countKShort = cms.bool(False),          #should always be False
-    minNumGenObjectsToPassFilter = cms.uint32(0), #EDFilter only returns true if >=1 tau_Had is found satisfying pT, |eta|, and decay mode cuts
+    minNumGenObjectsToPassFilter = cms.uint32(1), #EDFilter only returns true if >=1 tau_Had is found satisfying pT, |eta|, and decay mode cuts
     makeAllCollections = cms.bool(False) #should always be False
     )
 
@@ -140,12 +172,13 @@ process.genATauMuMatchedRecoTauSelectorCJ = cms.EDFilter(
     nOutputColls = cms.uint32(1),         #should always be 1
     dR = cms.double(0.1),                 #dR criteria for matching
     ifTauColl = cms.bool(True),		  #This Creates a map of GenTaus and their Decay Mode and Visible Pt
-    minNumGenObjectsToPassFilter = cms.uint32(0) #EDFilter returns true if >=1 gen-matched reco muon is found
+    minNumGenObjectsToPassFilter = cms.uint32(1) #EDFilter returns true if >=1 gen-matched reco muon is found
     )
 
 process.p2 = cms.Path(
 	process.genATauHadSelectorCJ*
 	process.recoTauSelectorCJ*
 	process.genATauMuMatchedRecoTauSelectorCJ*	
+	process.btagging*
 	process.ggh
 )

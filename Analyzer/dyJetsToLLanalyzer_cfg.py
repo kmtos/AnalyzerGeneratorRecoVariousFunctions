@@ -41,9 +41,15 @@ ANY_PT_RANK = -1
 #################
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
+<<<<<<< HEAD
 mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_DY_CleanJets.txt')
 
 process = cms.Process("FAKERATEANALYZER")
+=======
+mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_DYJetsToLL_M-50.txt')
+
+process = cms.Process("ZTTEffAnalyzer")
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 
 ###################################################
 # initialize MessageLogger and output report
@@ -56,6 +62,7 @@ process.options   = cms.untracked.PSet(
 		SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
+<<<<<<< HEAD
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )
 
 #########################################
@@ -111,6 +118,10 @@ process.pfBTagging = cms.Sequence(
 
     )
 )
+=======
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(300000) )
+
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 ####################
 # Input File List
 ####################
@@ -120,6 +131,7 @@ process.source = cms.Source("PoolSource",
     skipEvents = cms.untracked.uint32(0)
     )
 
+<<<<<<< HEAD
 process.ggh = cms.EDAnalyzer("FakeRateAnalyzer",
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots.root'),
    genParticleTag = cms.InputTag("genParticles", "", ""),
@@ -141,10 +153,31 @@ process.ggh = cms.EDAnalyzer("FakeRateAnalyzer",
    genMatchPDGIDTag = cms.int32(23),
    oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
    csvBTag = cms.InputTag("pfCombinedInclusiveSecondaryVertexV2BJetTags", "", "FAKERATEANALYZER")
+=======
+process.ggh = cms.EDAnalyzer("ZTTAnalyzer",
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots.root'),
+   genParticleTag = cms.InputTag("genParticles", "", ""),
+   akJetTag = cms.InputTag("ak4PFJets"),
+   muonsTag = cms.InputTag("muons"),
+   vtxTag = cms.InputTag('offlinePrimaryVertices'),
+   tauRECOTag = cms.InputTag("hpsPFTauProducer", "", "RECO"),
+   pizerosTag = cms.InputTag("hpsPFTauProducer", "pizeros" ),
+   #looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3oldDMwLT", "", "RECO"),
+   #medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3oldDMwLT", "", "RECO"),
+   #tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
+   tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3oldDMwLT", "", "RECO"),
+   decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "RECO")
+
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 )
 
 
 process.p2 = cms.Path(
+<<<<<<< HEAD
 	process.pfBTagging*
+=======
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
 	process.ggh
 )

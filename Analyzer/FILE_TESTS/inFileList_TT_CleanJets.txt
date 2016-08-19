@@ -258,4 +258,7 @@ root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_
 root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/CRAB3_TT_CJ_Lumi13000_JUL25/160802_182012/0000/crabOutput_97.root
 root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/CRAB3_TT_CJ_Lumi13000_JUL25/160802_182012/0000/crabOutput_98.root
 root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/CRAB3_TT_CJ_Lumi13000_JUL25/160802_182012/0000/crabOutput_99.root
+<<<<<<< HEAD
 root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/CRAB3_TT_CJ_Lumi13000_JUL25/160802_182012/0000/log
+=======
+>>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
