@@ -41,7 +41,7 @@ ANY_PT_RANK = -1
 #################
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
-mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_ggH_a9_CleanJets_NUM.txt')
+mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_ggH_a9_CleanJets_NUM.txt')
 
 process = cms.Process("CleanJetsAnalyzer")
 
@@ -68,7 +68,7 @@ process.source = cms.Source("PoolSource",
     )
 
 process.ggh = cms.EDAnalyzer("GGHAnalyzer",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    genParticleTag = cms.InputTag("genParticles", "", "SIM"),
    akJetTag = cms.InputTag("ak4PFJets"),
    muonsTag = cms.InputTag("muons"),
