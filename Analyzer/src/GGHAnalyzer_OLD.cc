@@ -136,7 +136,10 @@ class GGHAnalyzer_OLD : public edm::EDAnalyzer {
       edm::EDGetTokenT<reco::PFTauDiscriminator>  medIsoTagRECO_;
       edm::EDGetTokenT<reco::PFTauDiscriminator> tightIsoTagRECO_;
       edm::EDGetTokenT<reco::PFTauDiscriminator> decayModeFindingTagRECO_;
+      edm::EDGetTokenT<reco::PFTauDiscriminator> isoRawTag_;
       edm::EDGetTokenT<reco::PFJetCollection>  oldJetTag_;
+      edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu3Tag_;
+      edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu12Tag_;
       edm::EDGetTokenT<reco::JetTagCollection> csvBTag_;
 
 
@@ -144,6 +147,10 @@ class GGHAnalyzer_OLD : public edm::EDAnalyzer {
       TH1F* NEvents_;   
       TH1F* NMuRemoved_;
       TH1F* TauMuTauHaddR_;
+      TH1F* MassDiLepGEN_;
+      TH1F* MassDiLepRECO_;
+      TH1F* Mu3LargestPtMatch_;
+      TH1F* Mu3PtMatch_;
       TH1F* MatchedTauMuPt_;
       TH1F* MatchedTauHadPt_;
       TH1F* MatchedTauHadEta_;
@@ -151,6 +158,9 @@ class GGHAnalyzer_OLD : public edm::EDAnalyzer {
       TH1F* MatchedBDiscCSV_;
       TH1F* NEventsCuts_;
       TH1F* NConstituentsCJ_;
+      TH1F* PtOverMassMu1Mu2_;
+      TH1F* PtMu1Mu2_;
+
       TH1F* NTauDecayModeGEN_;
       TH1F* NTauDecayModeRECOCJ_;
       TH1F* NTauDecayModeRECONoCJ_;
@@ -171,6 +181,7 @@ class GGHAnalyzer_OLD : public edm::EDAnalyzer {
       TH2F* RECOPtvsGENdRRECO_;
       TH2F* RECOPtvsGENdRCJMedIso_;
       TH2F* RECOPtvsGENdRRECOMedIso_;
+      TH2F* BDiscCSVvsRawIso_;
 
 
       TH1F* MatchedLooseIsoRECOPt_;
@@ -364,9 +375,11 @@ GGHAnalyzer_OLD::GGHAnalyzer_OLD(const edm::ParameterSet& iConfig):
   medIsoTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("medIsoTagRECO"))),
   tightIsoTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("tightIsoTagRECO"))),
   decayModeFindingTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("decayModeFindingTagRECO"))),
+  isoRawTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("isoRawTag"))),
   oldJetTag_(consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("oldJetTag"))),
+  mu3Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
+  mu12Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
   csvBTag_(consumes<reco::JetTagCollection>(iConfig.getParameter<edm::InputTag>("csvBTag")))
-
 {
   reset(false);    
 }//GGHAnalyzer_OLD
@@ -453,13 +466,33 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   Handle<PFTauDiscriminator> pDMFindingRECO;
   iEvent.getByToken(decayModeFindingTagRECO_, pDMFindingRECO);
 
+  //Get IsoRaw  Collection
+  Handle<PFTauDiscriminator> pIsoRaw;
+  iEvent.getByToken(isoRawTag_, pIsoRaw);
+
   //Old Jet collection for bTagging
   edm::Handle<reco::PFJetCollection> pOldJets;
   iEvent.getByToken(oldJetTag_, pOldJets);
 
+  //Old Jet collection for bTagging
+  edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu3;
+  iEvent.getByToken(mu3Tag_, pMu3);
+
+  //Old Jet collection for bTagging
+  edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu12;
+  iEvent.getByToken(mu12Tag_, pMu12);
+
   //Get combVertMVA JetTagCollection
   edm::Handle<reco::JetTagCollection> pCSV;
   iEvent.getByToken(csvBTag_, pCSV);
+
+
+  //Getting Mu1 and Mu2
+  reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
+  reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
+  reco::LeafCandidate::LorentzVector diMuP4;
+  diMuP4 = mu1Ref->p4();
+  diMuP4 += mu2Ref->p4();
 
 //////////////////////////////
 // Begin Analyzer
@@ -507,8 +540,9 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   double dR_GenMatchCJ1 = 1000, dR_GenMatchCJ2 = 1000, dR_GenMatchCJTEMP1 = 1000, dR_GenMatchCJTEMP2 = 1000, Pt_GenMatchCJ1 = -1, Pt_GenMatchCJ2 = -1, eta_GenMatchCJ1 = 1000, eta_GenMatchCJ2 = 1000;
   unsigned int DMCJ1 = 0, DMCJ2 = 0, MedIsoCJ1 = 0, MedIsoCJ2 = 0, LooseIsoCJ1 = 0, LooseIsoCJ2 = 0, TightIsoCJ1 = 0, TightIsoCJ2 = 0;
   unsigned int tau1DecayModeRECO = -1, tau2DecayModeRECO = -1;
-  double nConstituents = 1000, removedMuonPt = -1, iTauCJKey1 = -1, iTauCJKey2 = -1;
+  double nConstituents = 1000, removedMuonPt = -1, iTauCJKey1 = -1, iTauCJKey2 = -1, rawIsoValue1 = -1, rawIsoValue2 = -1;
   bool removedMu1 = false, removedMu2 = false;
+  reco::MuonRef removedMuonRef;
   if (checkGenMuHad >= 1 )
     NMuRemoved_->Fill(0);
   for (std::vector<reco::PFTau>::const_iterator iTauCJ = pTausCJ->begin(); iTauCJ != pTausCJ->end(); ++iTauCJ)
@@ -549,6 +583,7 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         TauMuTauHaddR_->Fill(dR_tauMu );
  	GenDiTaudRvsCJDiTaudR_->Fill(dR_tauMu_gen, dR_tauMu);      
 	removedMuonPt = removedMuonRefs[iter]->pt(); 
+        removedMuonRef = removedMuonRefs[iter];
 	break;
       }//if
     }//for itre
@@ -567,6 +602,7 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       MedIsoCJ1 = (*pMedIsoDiscCJ)[PFTauRef];
       LooseIsoCJ1 = (*pLooseIsoDiscCJ)[PFTauRef];
       TightIsoCJ1 = (*pTightIsoDiscCJ)[PFTauRef];
+      rawIsoValue1 = (*pIsoRaw)[PFTauRef];
       tau1DecayModeRECO = iTauCJ->decayMode();
       removedMu1 = false;
       if (removedMuonRefs.size() > 0)
@@ -582,6 +618,7 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       MedIsoCJ2 = (*pMedIsoDiscCJ)[PFTauRef];
       LooseIsoCJ2 = (*pLooseIsoDiscCJ)[PFTauRef];      
       TightIsoCJ2 = (*pTightIsoDiscCJ)[PFTauRef];
+      rawIsoValue2 = (*pIsoRaw)[PFTauRef];
       tau2DecayModeRECO = iTauCJ->decayMode();
       removedMu2 = false;
       if (removedMuonRefs.size() > 0)
@@ -605,6 +642,41 @@ void GGHAnalyzer_OLD::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   {
 std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
 
+    PtOverMassMu1Mu2_->Fill(diMuP4.Pt() / diMuP4.M() );
+    PtMu1Mu2_->Fill(diMuP4.Pt() ); //mu1Ref->pt() + mu2Ref->pt() );
+
+    ///////////////////////////
+    //Check Di-Muon resonanice
+    ///////////////////////////
+    MassDiLepRECO_->Fill(diMuP4.M() );
+    reco::LeafCandidate::LorentzVector daughterP4 = tau1Ref->p4() + tau2Ref->p4();
+    MassDiLepGEN_->Fill(daughterP4.M() );
+
+    /////////////////////////////////
+    // Checking if removed mu in mu3
+    /////////////////////////////////
+    double largestPt = -1;
+    for (reco::MuonRefVector::const_iterator iMuon = pMu3->begin(); iMuon!=pMu3->end(); ++iMuon)
+    {
+      if ((**iMuon).pt() > largestPt)
+        largestPt = (**iMuon).pt();
+    }//for iMuon
+
+    bool mu3Match = false;
+    for (reco::MuonRefVector::const_iterator iMuon = pMu3->begin(); iMuon!=pMu3->end(); ++iMuon)
+    {
+      if (deltaR(**iMuon, *removedMuonRef) < .0001 && (fabs((**iMuon).pt() - removedMuonRef->pt() ) / (**iMuon).pt() ) < .0001 )
+      {
+	mu3Match = true;
+        Mu3PtMatch_->Fill((**iMuon).pt() );
+	NEvents_->Fill(7);
+        if ( (fabs((**iMuon).pt() - largestPt) / largestPt ) < .0001)
+          Mu3LargestPtMatch_->Fill((**iMuon).pt() );
+      }// if removed muon and mu3 match
+    }// for Mu3
+    if (mu3Match)
+      NEvents_->Fill(8);
+
     //////////////////////////////
     // Cut Option information
     //////////////////////////////
@@ -612,12 +684,16 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
     MatchedTauHadPt_->Fill(Pt_GenMatchCJ2 );
     MatchedTauMuPt_->Fill(removedMuonPt );
     NEventsCuts_->Fill(0);
+    NEventsCuts_->Fill(10);
     double sumHT = 0;
-    for (reco::PFJetCollection::const_iterator iAkJet = pAkJets->begin(); iAkJet != pAkJets->end(); ++iAkJet)
+    size_t numJets = pAkJets->size();
+    for ( size_t iJet = 0; iJet < numJets; ++iJet )
     {
-      if (iAkJet->pt() > 20.0)
-        sumHT += iAkJet->pt();
-    }//for pAkJets      
+      reco::PFJetRef jetRef(pAkJets, iJet);
+      if (jetRef->pt() > 20.0 && iTauCJKey2 != jetRef.key() )
+        sumHT += jetRef->pt();
+    }//for pAkJets   
+    sumHT = sumHT - Pt_GenMatchCJ2 - mu1Ref->pt() - mu2Ref->pt()   ;
     MatchedHT_->Fill(sumHT);
 
     double BDisc = -1;
@@ -631,19 +707,34 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
         MatchedBDiscCSV_->Fill(BDisc );
       }//if
     }//for iBTagInfo
+    BDiscCSVvsRawIso_->Fill(BDisc, rawIsoValue2 );
 
 
     // Filling nEvents for passing specific cuts
-    if (Pt_GenMatchCJ2 < 200)
+    if (BDisc < .825 ) // BDisc < .9 && sumHT < 300)
       NEventsCuts_->Fill(1);
-    if (removedMuonPt < 100)
+    if (BDisc < .5 ) // BDisc < .9 && sumHT < 300 && MedIsoCJ2 == 1 && DMCJ2 == 1)
       NEventsCuts_->Fill(2);
-    if (eta_GenMatchCJ2 < 1.75 );
+    if (BDisc < .9 )
       NEventsCuts_->Fill(3);
-    if (sumHT < 300)
+    if (BDisc < .9 && MedIsoCJ2 == 1 && DMCJ2 == 1)
       NEventsCuts_->Fill(4);
-    if (BDisc < .5 )
+    if (sumHT < 300)
       NEventsCuts_->Fill(5);
+    if (BDisc < .95) //sumHT < 300 && MedIsoCJ2 == 1 && DMCJ2 == 1)
+      NEventsCuts_->Fill(6);
+    if (sumHT < 400 && BDisc < .9)
+     NEventsCuts_->Fill(7);
+    if (sumHT < 400 && BDisc < .9 && MedIsoCJ2 == 1 && DMCJ2 == 1)
+      NEventsCuts_->Fill(8);
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      NEventsCuts_->Fill(9);
+    if (LooseIsoCJ2 == 1 && DMCJ2 == 1)
+      NEventsCuts_->Fill(11);
+    if (TightIsoCJ2 == 1 && DMCJ2 == 1)
+      NEventsCuts_->Fill(12);
+
+
 
     //////////////////////////////
     // Filling Disc Efficiency 
@@ -707,7 +798,7 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
     else if (tau2DecayModeRECO == 10)
       tau2DecayModeRECO = 4;
 
-    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::cout;
+    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::endl;
     RECOCJTauDMvsGENTauDM_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
     if (MedIsoCJ2 == 1 && DMCJ2 == 1)
       RECOCJTauDMvsGENTauDMMedIso_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
@@ -757,11 +848,14 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
     MatchedTauMuPt_->Fill(removedMuonPt );
     NEventsCuts_->Fill(0);
     double sumHT = 0;
-    for (reco::PFJetCollection::const_iterator iAkJet = pAkJets->begin(); iAkJet != pAkJets->end(); ++iAkJet)
+    size_t numJets = pAkJets->size();
+    for ( size_t iJet = 0; iJet < numJets; ++iJet )
     {
-      if (iAkJet->pt() > 20.0)
-        sumHT += iAkJet->pt();
+      reco::PFJetRef jetRef(pAkJets, iJet);
+      if (jetRef->pt() > 20.0 && iTauCJKey1 != jetRef.key() )
+        sumHT += jetRef->pt();
     }//for pAkJets      
+    sumHT = sumHT - Pt_GenMatchCJ1 - mu1Ref->pt() - mu2Ref->pt();
     MatchedHT_->Fill(sumHT);
 
     double BDisc = -1;
@@ -775,19 +869,32 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
         MatchedBDiscCSV_->Fill(BDisc );
       }//if
     }//for iBTagInfo
+    BDiscCSVvsRawIso_->Fill(BDisc, rawIsoValue1 );
     
 
     // Filling nEvents for passing specific cuts
-    if (Pt_GenMatchCJ1 < 200)
+    if (BDisc < .825)   //BDisc < .9 && sumHT < 300)
       NEventsCuts_->Fill(1);
-    if (removedMuonPt < 100)
+    if (BDisc < .5)     //BDisc < .9 && sumHT < 300 && MedIsoCJ1 == 1 && DMCJ1 == 1)
       NEventsCuts_->Fill(2);
-    if (eta_GenMatchCJ1 < 1.75 );
+    if (BDisc < .9 )
       NEventsCuts_->Fill(3);
-    if (sumHT < 300)
+    if (BDisc < .9 && MedIsoCJ1 == 1 && DMCJ1 == 1)
       NEventsCuts_->Fill(4);
-    if (BDisc < .5 )
+    if (sumHT < 300)
       NEventsCuts_->Fill(5);
+    if (BDisc < .95) //sumHT < 300 && MedIsoCJ1 == 1 && DMCJ1 == 1)
+      NEventsCuts_->Fill(6);
+    if (sumHT < 400 && BDisc < .9)
+     NEventsCuts_->Fill(7);
+    if (sumHT < 400 && BDisc < .9 && MedIsoCJ1 == 1 && DMCJ1 == 1)
+      NEventsCuts_->Fill(8);
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      NEventsCuts_->Fill(9);
+    if (LooseIsoCJ1 == 1 && DMCJ1 == 1)
+      NEventsCuts_->Fill(11);
+    if (TightIsoCJ1 == 1 && DMCJ1 == 1)
+      NEventsCuts_->Fill(12);
 
     //////////////////////////////
     // Disc Efficiencie stuff
@@ -930,7 +1037,7 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
               << "\tremovedMu2= " << removedMu2	 <<  std::endl;
   }//iTauRECO
 
-  if (dR_GenMatchRECO2 != 1000 && checkGenMuHad == 2 && abs(eta_GenMatchCJ2) < 2.3 && Pt_GenMatchRECO2 > 20 && removedMu2 > 20 && genMatchedCJ)
+  if (dR_GenMatchRECO2 != 1000 && checkGenMuHad == 2 && abs(eta_GenMatchCJ2) < 2.3 && Pt_GenMatchRECO2 > 20 && removedMu2 && genMatchedCJ)
   {
 std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
     NTauDecayModeRECONoCJ_->Fill(tau2DecayModeRECO );
@@ -991,7 +1098,7 @@ std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
     else if (tau2DecayModeRECO == 10)
       tau2DecayModeRECO = 4;
 
-    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::cout;
+    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::endl;
     RECONoCJTauDMvsGENTauDM_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
     if (MedIsoRECO2 == 1 && DMRECO2 == 1)
       RECONoCJTauDMvsGENTauDMMedIso_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
@@ -1146,23 +1253,39 @@ void GGHAnalyzer_OLD::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(5, "RECO Gen Match #tau_{had}");
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
+      NEvents_->GetXaxis()->SetBinLabel(8, "Mu3 Tau_#mu match");
+      NEvents_->GetXaxis()->SetBinLabel(9, "Mu3 Tau_#mu no match");
   NMuRemoved_            = new TH1F("NMuRemoved"    , "", 2, -.5, 1.5);
       NMuRemoved_->GetXaxis()->SetBinLabel(1, "#tau_{#mu} + #tau_{Had} Event");
       NMuRemoved_->GetXaxis()->SetBinLabel(2, "and a Removed #mu");
-  TauMuTauHaddR_       = new TH1F("TauMuTauHaddR"    , "", 100, 0, 100);
-  MatchedTauMuPt_       = new TH1F("MatchedTauMuPt"    , "", 200, 0, 500);
-  MatchedTauHadPt_       = new TH1F("MatchedTauHadPt"    , "", 200, 0, 500);
-  MatchedTauHadEta_       = new TH1F("MatchedTauHadEta"    , "", 100, -2.5, 2.5);
-  MatchedHT_       = new TH1F("MatchedHT"    , "", 100, 0, 1000);
-  MatchedBDiscCSV_       = new TH1F("MatchedBDiscCSV"    , "", 100, 0, 1);
-  NEventsCuts_       = new TH1F("NEventsCuts"    , "", 6, -.5, 5.5);
+  TauMuTauHaddR_       = new TH1F("TauMuTauHaddR"    , "", 25, 0, 100);
+  MassDiLepGEN_       = new TH1F("MassDiLepGEN"    , "", 25, 0, 130);
+  MassDiLepRECO_       = new TH1F("MassDiLepRECO"    , "", 25, 70, 120);
+  Mu3LargestPtMatch_       = new TH1F("Mu3LargestPtMatch"    , "", 25, 0, 130);
+  Mu3PtMatch_       = new TH1F("Mu3PtMatch"    , "", 25, 0, 130);
+  MatchedTauMuPt_       = new TH1F("MatchedTauMuPt"    , "", 25, 0, 500);
+  MatchedTauHadPt_       = new TH1F("MatchedTauHadPt"    , "", 25, 0, 500);
+  MatchedTauHadEta_       = new TH1F("MatchedTauHadEta"    , "", 25, -2.5, 2.5);
+  MatchedHT_       = new TH1F("MatchedHT"    , "", 25, 0, 1000);
+  MatchedBDiscCSV_       = new TH1F("MatchedBDiscCSV"    , "", 25, 0, 1);
+  NEventsCuts_       = new TH1F("NEventsCuts"    , "", 13, -.5, 12.5);
       NEventsCuts_->GetXaxis()->SetBinLabel(1, "TotalEvents");
-      NEventsCuts_->GetXaxis()->SetBinLabel(2, "p_{T}(#tau) < 200");
-      NEventsCuts_->GetXaxis()->SetBinLabel(3, "p_{T}(#mu) < 100");
-      NEventsCuts_->GetXaxis()->SetBinLabel(4, "#eta < 1.75");
-      NEventsCuts_->GetXaxis()->SetBinLabel(5, "HT < 300");
-      NEventsCuts_->GetXaxis()->SetBinLabel(6, "BDisc < .5");
-  NConstituentsCJ_        = new TH1F("NConstituentsCJ"    , "", 50, 0, 50);
+      NEventsCuts_->GetXaxis()->SetBinLabel(2, "BD < .825");  //BD < . 9 , HT < 300");
+      NEventsCuts_->GetXaxis()->SetBinLabel(3, "BD < .5");   //BD < . 9 , HT < 300 + MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(4, "BD < .9");
+      NEventsCuts_->GetXaxis()->SetBinLabel(5, "BD < .9 + Med Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(6, "HT < 300");
+      NEventsCuts_->GetXaxis()->SetBinLabel(7, "BD < .95"); // HT < 300 + MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(8, "HT < 400 , BD < .9");
+      NEventsCuts_->GetXaxis()->SetBinLabel(9, "HT < 400 , BD < .9 MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(10, "Removed Muon + Med Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(11, "Removed Muon");
+      NEventsCuts_->GetXaxis()->SetBinLabel(12, "Removed Mu + Loose Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(13, "Removed Mu + Tight Iso");
+  NConstituentsCJ_        = new TH1F("NConstituentsCJ"    , "", 25, 0, 50);
+  PtOverMassMu1Mu2_        = new TH1F("PtOverMassMu1Mu2"    , "", 25, 0, 50);
+  PtMu1Mu2_        = new TH1F("PtMu1Mu2"    , "", 25, 0, 300);
+
   NTauDecayModeGEN_        = new TH1F("NTauDecayModeGEN"    , "", 12, -.5, 11.5);
   NTauDecayModeRECOCJ_        = new TH1F("NTauDecayModeRECOCJ"    , "", 12, -.5, 11.5);
   NTauDecayModeRECONoCJ_        = new TH1F("NTauDecayModeRECONoCJ"    , "", 12, -.5, 11.5);
@@ -1183,6 +1306,7 @@ void GGHAnalyzer_OLD::beginJob()
   RECOPtvsGENdRRECO_ = new TH2F("RECOPtvsGENdRRECO", "", 40, 0, 160, 40, 0, 4);
   RECOPtvsGENdRCJMedIso_ = new TH2F("RECOPtvsGENdRCJMedIso", "", 40, 0, 160, 40, 0, 4);
   RECOPtvsGENdRRECOMedIso_ = new TH2F("RECOPtvsGENdRRECOMedIso", "", 40, 0, 160, 40, 0, 4);
+  BDiscCSVvsRawIso_ = new TH2F("BDiscCSVvsRawIso", "", 10, 0, 1, 20, 0, 20);
 
   RECOCJTauDMvsGENTauDM_->GetXaxis()->SetBinLabel(1, "1prong");
   RECOCJTauDMvsGENTauDM_->GetXaxis()->SetBinLabel(2, "1prong+1#pi^{0}");
@@ -1395,6 +1519,10 @@ void GGHAnalyzer_OLD::endJob()
   TCanvas NEventsCanvas("NEvents","",600,600);
   TCanvas NMuRemovedCanvas("NMuRemoved","",600,600);
   TCanvas TauMuTauHaddRCanvas("TauMuTauHaddR","",600,600);
+  TCanvas MassDiLepGENCanvas("MassDiLepGEN","",600,600);
+  TCanvas MassDiLepRECOCanvas("MassDiLepRECO","",600,600);
+  TCanvas Mu3LargestPtMatchCanvas("Mu3LargestPtMatch","",600,600);
+  TCanvas Mu3PtMatchCanvas("Mu3PtMatch","",600,600);
   TCanvas MatchedTauMuPtCanvas("MatchedTauMuPt","",600,600);
   TCanvas MatchedTauHadPtCanvas("MatchedTauHadPt","",600,600);
   TCanvas MatchedTauHadEtaCanvas("MatchedTauHadEta","",600,600);
@@ -1402,6 +1530,9 @@ void GGHAnalyzer_OLD::endJob()
   TCanvas MatchedBDiscCSVCanvas("MatchedBDiscCSV","",600,600);
   TCanvas NEventsCutsCanvas("NEventsCuts","",600,600);
   TCanvas NConstituentsCJCanvas("NConstituentsCJ","",600,600);
+  TCanvas PtOverMassMu1Mu2Canvas("PtOverMassMu1Mu2","",600,600);
+  TCanvas PtMu1Mu2Canvas("PtMu1Mu2","",600,600);
+
   TCanvas NTauDecayModeGENCanvas("NTauDecayModeGEN","",600,600);
   TCanvas NTauDecayModeRECOCJCanvas("NTauDecayModeRECOCJ","",600,600);
   TCanvas NTauDecayModeRECONoCJCanvas("NTauDecayModeRECONoCJ","",600,600);
@@ -1422,6 +1553,7 @@ void GGHAnalyzer_OLD::endJob()
   TCanvas RECOPtvsGENdRRECOCanvas("RECOPtvsGENdRRECO","",600,600);
   TCanvas RECOPtvsGENdRCJMedIsoCanvas("RECOPtvsGENdRCJMedIso","",600,600);
   TCanvas RECOPtvsGENdRRECOMedIsoCanvas("RECOPtvsGENdRRECOMedIso","",600,600);
+  TCanvas BDiscCSVvsRawIsoCanvas("BDiscCSVvsRawIso","",600,600);
 
   std::cout << "\nRECOCJTauDMvsGENTauDM by column" << std::endl;
   for (int x = 1; x < 5; x++)
@@ -1708,6 +1840,7 @@ void GGHAnalyzer_OLD::endJob()
   TCanvas FinalEffMedIsoSAMEPtGenOverDMCanvas("FinalEffMedIsoSAMEPtGenOverDM","",600,600);
   TCanvas FinalEffTightIsoSAMEPtGenOverDMCanvas("FinalEffTightIsoSAMEPtGenOverDM","",600,600);
 
+/*
   FinalEffLooseIsoRECOPt_->Divide(MatchedLooseIsoRECOPt_, MatchedRECOPt_);
   FinalEffMedIsoRECOPt_->Divide(MatchedMedIsoRECOPt_,     MatchedRECOPt_);
   FinalEffTightIsoRECOPt_->Divide(MatchedTightIsoRECOPt_, MatchedRECOPt_);
@@ -1770,7 +1903,7 @@ void GGHAnalyzer_OLD::endJob()
   FinalOneProngOnePizDMRECOPt_->Divide(OneProngOnePizDMRECOPt_, MatchedOneProngOnePizRECOPt_);
   FinalOneProngTwoPizDMRECOPt_->Divide(OneProngTwoPizDMRECOPt_, MatchedOneProngTwoPizRECOPt_);
   FinalThreeProngDMRECOPt_->Divide(ThreeProngDMRECOPt_, MatchedThreeProngRECOPt_);
-
+*/
 std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 
   //Format the 1D plots and Draw (canvas, hist, grid, log y, log z, color, size, style, xAxisTitle, xTitleSize, xLabelSize, xTitleOffSet, yAxisTitle, yTitleSize, yLabelSize, yTitleOffset)
@@ -1780,6 +1913,14 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 	 1, 0, 0, kBlack, 7, 20, "N #mu Removed", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(TauMuTauHaddRCanvas, TauMuTauHaddR_,
 	 1, 0, 0, kBlack, 7, 20, "#DeltaR(#tau_{mu} + #tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MassDiLepGENCanvas, MassDiLepGEN_,
+         1, 0, 0, kBlack, 7, 20, "Gen m_{di-lept}", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MassDiLepRECOCanvas, MassDiLepRECO_,
+         1, 0, 0, kBlack, 7, 20, "RECO m_{di-lep}", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(Mu3LargestPtMatchCanvas, Mu3LargestPtMatch_,
+         1, 0, 0, kBlack, 7, 20, "Largest p_{T} (Mu3) matched to Tau", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(Mu3PtMatchCanvas, Mu3PtMatch_,
+         1, 0, 0, kBlack, 7, 20, "p_{T} (Mu3) matched to Tau", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauMuPtCanvas, MatchedTauMuPt_,
          1, 0, 0, kBlack, 7, 20, "p_{T}(#tau_{mu})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadPtCanvas, MatchedTauHadPt_,
@@ -1794,6 +1935,11 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 7, 20, "", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(NConstituentsCJCanvas, NConstituentsCJ_,
          1, 0, 0, kBlack, 7, 20, "Number of Constituents", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PtOverMassMu1Mu2Canvas, PtOverMassMu1Mu2_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2}) / Mass(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu1Mu2Canvas, PtMu1Mu2_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+
   VariousFunctions::formatAndDrawCanvasAndHist1D(NTauDecayModeGENCanvas, NTauDecayModeGEN_,
          1, 0, 0, kBlack, 7, 20, "TauDecayMode GEN ", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(NTauDecayModeRECOCJCanvas, NTauDecayModeRECOCJ_,
@@ -1834,6 +1980,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 7, 20, "RECO CJ p_{T} + MedIso", .04, .04, 1.1, "GEN #DeltaR(#tau#tau)", .04, .04, 1.6, "", .04, .04, 1.0);
   VariousFunctions::formatAndDrawCanvasAndHist2D(RECOPtvsGENdRRECOMedIsoCanvas, RECOPtvsGENdRRECOMedIso_,
          1, 0, 0, kBlack, 7, 20, "RECO No CJ p_{T} + MedIso", .04, .04, 1.1, "GEN #DeltaR(#tau#tau)", .04, .04, 1.6, "", .04, .04, 1.0);
+  VariousFunctions::formatAndDrawCanvasAndHist2D(BDiscCSVvsRawIsoCanvas, BDiscCSVvsRawIso_,
+         1, 0, 0, kBlack, 7, 20, "BDisc CSV", .04, .04, 1.1, "Raw Iso Value", .04, .04, 1.6, "", .04, .04, 1.0);
 
 
 
@@ -2414,6 +2562,10 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   NEventsCanvas.Write();
   NMuRemovedCanvas.Write();
   TauMuTauHaddRCanvas.Write();
+  MassDiLepGENCanvas.Write();
+  MassDiLepRECOCanvas.Write();
+  Mu3LargestPtMatchCanvas.Write();
+  Mu3PtMatchCanvas.Write();
   MatchedTauMuPtCanvas.Write();
   MatchedTauHadPtCanvas.Write();
   MatchedTauHadEtaCanvas.Write();
@@ -2421,6 +2573,9 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   MatchedBDiscCSVCanvas.Write();
   NEventsCutsCanvas.Write();
   NConstituentsCJCanvas.Write();
+  PtOverMassMu1Mu2Canvas.Write();
+  PtMu1Mu2Canvas.Write();
+
   NTauDecayModeGENCanvas.Write();
   NTauDecayModeRECOCJCanvas.Write();
   NTauDecayModeRECONoCJCanvas.Write();
@@ -2441,6 +2596,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   RECOPtvsGENdRRECOCanvas.Write();
   RECOPtvsGENdRCJMedIsoCanvas.Write();
   RECOPtvsGENdRRECOMedIsoCanvas.Write();
+  BDiscCSVvsRawIsoCanvas.Write();
 
   MatchedLooseIsoRECOPtCanvas.Write();
   MatchedMedIsoRECOPtCanvas.Write();
@@ -2625,6 +2781,14 @@ void GGHAnalyzer_OLD::reset(const bool doDelete)
   NMuRemoved_ = NULL;
   if ((doDelete) && (TauMuTauHaddR_ != NULL)) delete TauMuTauHaddR_;
   TauMuTauHaddR_ = NULL;
+  if ((doDelete) && (MassDiLepGEN_ != NULL)) delete MassDiLepGEN_;
+  MassDiLepGEN_ = NULL;
+  if ((doDelete) && (MassDiLepRECO_ != NULL)) delete MassDiLepRECO_;
+  MassDiLepRECO_ = NULL;
+  if ((doDelete) && (Mu3LargestPtMatch_ != NULL)) delete Mu3LargestPtMatch_;
+  Mu3LargestPtMatch_ = NULL;
+  if ((doDelete) && (Mu3PtMatch_ != NULL)) delete Mu3PtMatch_;
+  Mu3PtMatch_ = NULL;
   if ((doDelete) && (MatchedTauMuPt_ != NULL)) delete MatchedTauMuPt_;
   MatchedTauMuPt_ = NULL;
   if ((doDelete) && (MatchedTauHadPt_ != NULL)) delete MatchedTauHadPt_;
@@ -2639,6 +2803,11 @@ void GGHAnalyzer_OLD::reset(const bool doDelete)
   NEventsCuts_ = NULL;
   if ((doDelete) && (NConstituentsCJ_ != NULL)) delete NConstituentsCJ_;
   NConstituentsCJ_ = NULL;
+  if ((doDelete) && (PtOverMassMu1Mu2_ != NULL)) delete PtOverMassMu1Mu2_;
+  PtOverMassMu1Mu2_ = NULL;
+  if ((doDelete) && (PtMu1Mu2_ != NULL)) delete PtMu1Mu2_;
+  PtMu1Mu2_ = NULL;
+
   if ((doDelete) && (NTauDecayModeGEN_ != NULL)) delete NTauDecayModeGEN_;
   NTauDecayModeGEN_ = NULL;
   if ((doDelete) && (NTauDecayModeRECOCJ_ != NULL)) delete NTauDecayModeRECOCJ_;
@@ -2679,6 +2848,8 @@ void GGHAnalyzer_OLD::reset(const bool doDelete)
   RECOPtvsGENdRCJMedIso_ = NULL;
   if ((doDelete) && (RECOPtvsGENdRRECOMedIso_ != NULL)) delete RECOPtvsGENdRRECOMedIso_;
   RECOPtvsGENdRRECOMedIso_ = NULL;
+  if ((doDelete) && (BDiscCSVvsRawIso_ != NULL)) delete BDiscCSVvsRawIso_;
+  BDiscCSVvsRawIso_ = NULL;
 
   if ((doDelete) && (MatchedLooseIsoRECOPt_ != NULL)) delete MatchedLooseIsoRECOPt_;
   MatchedLooseIsoRECOPt_ = NULL;

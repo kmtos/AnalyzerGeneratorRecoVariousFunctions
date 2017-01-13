@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    FakeRateAnalyzer
-// Class:      FakeRateAnalyzer
+// Package:    GGHAnalyzer_CJOnly
+// Class:      GGHAnalyzer_CJOnly
 // 
-/**\class FakeRateAnalyzer FakeRateAnalyzer.cc Analyzer/src/FakeRateAnalyzer.cc
+/**\class GGHAnalyzer_CJOnly GGHAnalyzer_CJOnly.cc Analyzer/src/GGHAnalyzer_CJOnly.cc
 
  Description: [one line class summary]
 
@@ -82,7 +82,6 @@
 #include "TGraphAsymmErrors.h"
 #include "TMultiGraph.h"
 
-
 using namespace std;
 using namespace edm;
 using namespace reco;
@@ -93,11 +92,11 @@ using namespace trigger;
 // class declaration
 //
 
-class FakeRateAnalyzer : public edm::EDAnalyzer {
+class GGHAnalyzer_CJOnly : public edm::EDAnalyzer {
    public:
       typedef reco::JetFloatAssociation::Container JetBCEnergyRatioCollection;
-      explicit FakeRateAnalyzer(const edm::ParameterSet&);
-      ~FakeRateAnalyzer();
+      explicit GGHAnalyzer_CJOnly(const edm::ParameterSet&);
+      ~GGHAnalyzer_CJOnly();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -122,46 +121,39 @@ class FakeRateAnalyzer : public edm::EDAnalyzer {
       //name of output root file
       std::string outFileName_;
       edm::EDGetTokenT<vector<reco::GenParticle> > genParticleTag_;
-      edm::EDGetTokenT<vector<reco::GenJet> > genJetTag_;
       edm::EDGetTokenT<vector<reco::PFJet> > akJetTag_;
       edm::EDGetTokenT<vector<reco::Muon> > muonsTag_;
       edm::EDGetTokenT<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > > muonMapTag_;
       edm::EDGetTokenT<edm::ValueMap<reco::PFJetRef> >  jetValMapTag_;
+      edm::EDGetTokenT<vector<reco::PFTau> > tauRECOTag_;
       edm::EDGetTokenT<vector<reco::PFTau> > tauCJTag_;
       edm::EDGetTokenT<vector<reco::RecoTauPiZero> > pizerosTag_;      
       edm::EDGetTokenT<reco::PFTauDiscriminator>  looseIsoTagCJ_;
       edm::EDGetTokenT<reco::PFTauDiscriminator>  medIsoTagCJ_;
       edm::EDGetTokenT<reco::PFTauDiscriminator> tightIsoTagCJ_;
       edm::EDGetTokenT<reco::PFTauDiscriminator> decayModeFindingTagCJ_;
-      int genMatchPDGIDTag_;
+      edm::EDGetTokenT<reco::PFTauDiscriminator>  looseIsoTagRECO_;
+      edm::EDGetTokenT<reco::PFTauDiscriminator>  medIsoTagRECO_;
+      edm::EDGetTokenT<reco::PFTauDiscriminator> tightIsoTagRECO_;
+      edm::EDGetTokenT<reco::PFTauDiscriminator> decayModeFindingTagRECO_;
       edm::EDGetTokenT<reco::PFTauDiscriminator> isoRawTag_;
       edm::EDGetTokenT<reco::PFJetCollection>  oldJetTag_;
-      edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu3Tag_;
-      edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu12Tag_;
       edm::EDGetTokenT<reco::JetTagCollection> csvBTag_;
-      //edm::EDGetTokenT<edm::AssociationVector<edm::RefToBaseProd<reco::Jet>,vector<float>,edm::RefToBase<reco::Jet>,unsigned int,edm::helper::AssociationIdenticalKeyReference> > csvBTag_;
+
 
       //Histograms
       TH1F* NEvents_;   
-      TH1F* GenMatchType_; 
-      TH1F* GenMatchPDGID_; 
-      TH1F* GenMatchPDGIDwithLargeEta_;
       TH1F* NMuRemoved_;
       TH1F* TauMuTauHaddR_;
       TH1F* MassDiLepGEN_;
       TH1F* MassDiLepRECO_;
       TH1F* Mu3LargestPtMatch_;
       TH1F* Mu3PtMatch_;
-      TH1F* MatchedTauMuPtLepton_;
-      TH1F* MatchedTauHadPtLepton_;
-      TH1F* MatchedTauHadEtaLepton_;
-      TH1F* MatchedHTLepton_;
-      TH1F* MatchedBDiscCSVLepton_;
-      TH1F* MatchedTauMuPtJet_;
-      TH1F* MatchedTauHadPtJet_;
-      TH1F* MatchedTauHadEtaJet_;
-      TH1F* MatchedHTJet_;
-      TH1F* MatchedBDiscCSVJet_;
+      TH1F* MatchedTauMuPt_;
+      TH1F* MatchedTauHadPt_;
+      TH1F* MatchedTauHadEta_;
+      TH1F* MatchedHT_;
+      TH1F* MatchedBDiscCSV_;
       TH1F* NEventsCuts_;
       TH1F* NConstituentsCJ_;
       TH1F* PtOverMassMu1Mu2_;
@@ -187,7 +179,6 @@ class FakeRateAnalyzer : public edm::EDAnalyzer {
       TH2F* RECOPtvsGENdRRECO_;
       TH2F* RECOPtvsGENdRCJMedIso_;
       TH2F* RECOPtvsGENdRRECOMedIso_;
-      TH2F* MatchedTauHadEtavsTauHadPt_;
       TH2F* BDiscCSVvsRawIso_;
 
 
@@ -364,35 +355,34 @@ class FakeRateAnalyzer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-FakeRateAnalyzer::FakeRateAnalyzer(const edm::ParameterSet& iConfig):
+GGHAnalyzer_CJOnly::GGHAnalyzer_CJOnly(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
   genParticleTag_(consumes<vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("genParticleTag"))),
-  genJetTag_(consumes<vector<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("genJetTag"))),
   akJetTag_(consumes<vector<reco::PFJet> >(iConfig.getParameter<edm::InputTag>("akJetTag"))),
   muonsTag_(consumes<vector<reco::Muon> >(iConfig.getParameter<edm::InputTag>("muonsTag"))),
   muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
   jetValMapTag_(consumes<edm::ValueMap<reco::PFJetRef> >(iConfig.getParameter<edm::InputTag>("jetValMapTag"))),
+  tauRECOTag_(consumes<vector<reco::PFTau> >(iConfig.getParameter<edm::InputTag>("tauRECOTag"))),
   tauCJTag_(consumes<vector<reco::PFTau> >(iConfig.getParameter<edm::InputTag>("tauCJTag"))),
   pizerosTag_(consumes<vector<reco::RecoTauPiZero> >(iConfig.getParameter<edm::InputTag>("pizerosTag"))),
   looseIsoTagCJ_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("looseIsoTagCJ"))),
   medIsoTagCJ_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("medIsoTagCJ"))),
   tightIsoTagCJ_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("tightIsoTagCJ"))),
   decayModeFindingTagCJ_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("decayModeFindingTagCJ"))),
-  genMatchPDGIDTag_(iConfig.getParameter<int>("genMatchPDGIDTag")),
+  looseIsoTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("looseIsoTagRECO"))),
+  medIsoTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("medIsoTagRECO"))),
+  tightIsoTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("tightIsoTagRECO"))),
+  decayModeFindingTagRECO_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("decayModeFindingTagRECO"))),
   isoRawTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("isoRawTag"))),
   oldJetTag_(consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("oldJetTag"))),
-  mu3Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
-  mu12Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
   csvBTag_(consumes<reco::JetTagCollection>(iConfig.getParameter<edm::InputTag>("csvBTag")))
-  //csvBTag_(consumes<edm::AssociationVector<edm::RefToBaseProd<reco::Jet>,vector<float>,edm::RefToBase<reco::Jet>,unsigned int,edm::helper::AssociationIdenticalKeyReference> >(iConfig.getParameter<edm::InputTag>("csvBTag")))
 {
-  std::cout << "genMatchPDGIDTag_= " << genMatchPDGIDTag_ << std::endl;
   reset(false);    
-}//FakeRateAnalyzer
+}//GGHAnalyzer_CJOnly
 
 
 
-FakeRateAnalyzer::~FakeRateAnalyzer()
+GGHAnalyzer_CJOnly::~GGHAnalyzer_CJOnly()
 {
   reset(true);
 }
@@ -403,7 +393,7 @@ FakeRateAnalyzer::~FakeRateAnalyzer()
 //
 
 // ------------ method called for each event  ------------
-void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void GGHAnalyzer_CJOnly::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   std::cout << "\n<------------THIS IS A NEW EVENT------------>" << std::endl;
   NEvents_->Fill(0);
@@ -411,10 +401,6 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   //Get gen particle collection
   edm::Handle<reco::GenParticleCollection> pGenParts;
   iEvent.getByToken(genParticleTag_, pGenParts);
-
-  //Get ak4Jets particle collection
-  edm::Handle<std::vector<reco::GenJet> > pGenJets;
-  iEvent.getByToken(genJetTag_, pGenJets);
 
   //Get ak4Jets particle collection
   edm::Handle<std::vector<reco::PFJet> > pAkJets;
@@ -431,6 +417,10 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   //get old-new jet map
   edm::Handle<edm::ValueMap<reco::PFJetRef> > pJetValMap;
   iEvent.getByToken(jetValMapTag_, pJetValMap);
+
+  //Get RECO Taus particle collection
+  edm::Handle<std::vector<reco::PFTau> > pTausRECO;
+  iEvent.getByToken(tauRECOTag_, pTausRECO);
 
   //Get CleanJets Tau particle collection
   edm::Handle<std::vector<reco::PFTau> > pTausCJ;
@@ -456,6 +446,22 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   Handle<PFTauDiscriminator> pDMFindingCJ; 
   iEvent.getByToken(decayModeFindingTagCJ_, pDMFindingCJ);
 
+  //Get Loose Iso Collection
+  Handle<PFTauDiscriminator> pLooseIsoDiscRECO;
+  iEvent.getByToken(looseIsoTagRECO_, pLooseIsoDiscRECO);
+
+  //Get Medium Iso Collection
+  Handle<PFTauDiscriminator> pMedIsoDiscRECO;
+  iEvent.getByToken(medIsoTagRECO_, pMedIsoDiscRECO);
+
+  //Get Tight Iso Collection
+  Handle<PFTauDiscriminator> pTightIsoDiscRECO;
+  iEvent.getByToken(tightIsoTagRECO_, pTightIsoDiscRECO);
+
+  //Get Decay Mode Finding Collection
+  Handle<PFTauDiscriminator> pDMFindingRECO;
+  iEvent.getByToken(decayModeFindingTagRECO_, pDMFindingRECO);
+
   //Get IsoRaw  Collection
   Handle<PFTauDiscriminator> pIsoRaw;
   iEvent.getByToken(isoRawTag_, pIsoRaw);
@@ -464,38 +470,73 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   edm::Handle<reco::PFJetCollection> pOldJets;
   iEvent.getByToken(oldJetTag_, pOldJets);
 
-  //Old Jet collection for bTagging
-  edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu3;
-  iEvent.getByToken(mu3Tag_, pMu3);
-
-  //Old Jet collection for bTagging
-  edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu12;
-  iEvent.getByToken(mu12Tag_, pMu12);
-
   //Get combVertMVA JetTagCollection
   edm::Handle<reco::JetTagCollection> pCSV;
   iEvent.getByToken(csvBTag_, pCSV);
 
+
 //////////////////////////////
 // Begin Analyzer
 //////////////////////////////
-  ///////////////////////////
-  // iterating over the taus
-  /////////////////////////// 
-  unsigned int DMCJ = 0, MedIsoCJ = 0, LooseIsoCJ = 0, TightIsoCJ = 0;
-  double nConstituents = 1000, rawIsoValue = -1;
+  NTausRECOvsCLEANJETS_->Fill(pTausRECO->size(), pTausCJ->size() );
+  reco::GenParticleRef tau1Ref, tau2Ref;
+  int checkGenMuHad = false;
+  for (reco::GenParticleCollection::const_iterator iGenParticle = pGenParts->begin(); iGenParticle != pGenParts->end(); ++iGenParticle)
+  {
+    if(iGenParticle->pdgId() == 36 && iGenParticle->numberOfDaughters() == 2 && fabs(iGenParticle->daughter(0)->pdgId() ) == 15 )
+    {
+      tau1Ref = iGenParticle->daughterRef(0);
+      tau2Ref = iGenParticle->daughterRef(1);
+      
+      //This finds the status 2 taus by seeing if a tau is the daughter of the current tau ref
+      while(VariousFunctions::findIfInDaughters(tau1Ref, 15, true) || VariousFunctions::findIfInDaughters(tau2Ref, 15, true))
+      {
+        if(VariousFunctions::findIfInDaughters(tau1Ref, 15, true))
+          tau1Ref = VariousFunctions::findDaughterInDaughters(tau1Ref, 15, true);
+        if(VariousFunctions::findIfInDaughters(tau2Ref, 15, true))
+          tau2Ref = VariousFunctions::findDaughterInDaughters(tau2Ref, 15, true);
+      }//while
+
+      if (VariousFunctions::tauDecayMode(tau1Ref) == 7  && VariousFunctions::tauDecayMode(tau2Ref) < 5 )
+      {
+        NEvents_->Fill(2);
+        checkGenMuHad = 2;
+      }//if tau2 Ref
+      else if (VariousFunctions::tauDecayMode(tau2Ref) == 7  && VariousFunctions::tauDecayMode(tau1Ref) < 5 ) 
+      {
+        NEvents_->Fill(2);
+        checkGenMuHad = 1;
+      }//if
+    }//ir found a1 and it decayed to taus
+  }//for iGen Particle
+
+  double dPhi_gen = reco::deltaPhi(tau1Ref->phi(), tau2Ref->phi() ), dR_tauMu_gen = sqrt( (tau1Ref->eta() - tau2Ref->eta())*(tau1Ref->eta() - tau2Ref->eta())  +  dPhi_gen * dPhi_gen );
+  reco::LeafCandidate::LorentzVector GenTau1Visible = VariousFunctions::sumTauP4(tau1Ref, VariousFunctions::tauDecayMode(tau1Ref), false); 
+  reco::LeafCandidate::LorentzVector GenTau2Visible = VariousFunctions::sumTauP4(tau2Ref, VariousFunctions::tauDecayMode(tau2Ref), false);  
+  std::cout << "Tauhad is tauRef #" << checkGenMuHad << "   hpsPFTauProducer CleanJets size()= " << pTausCJ->size() << "  hpsPFTauProducer RECO size()= " << pTausRECO->size() << std::endl;
+
+/////////////////////// 
+// Analyze
+/////////////////////// 
+  double dR_GenMatchCJ1 = 1000, dR_GenMatchCJ2 = 1000, dR_GenMatchCJTEMP1 = 1000, dR_GenMatchCJTEMP2 = 1000, Pt_GenMatchCJ1 = -1, Pt_GenMatchCJ2 = -1, eta_GenMatchCJ1 = 1000, eta_GenMatchCJ2 = 1000;
+  unsigned int DMCJ1 = 0, DMCJ2 = 0, MedIsoCJ1 = 0, MedIsoCJ2 = 0, LooseIsoCJ1 = 0, LooseIsoCJ2 = 0, TightIsoCJ1 = 0, TightIsoCJ2 = 0;
+  unsigned int tau1DecayModeRECO = -1, tau2DecayModeRECO = -1;
+  double nConstituents = 1000;
+  bool removedMu1 = false, removedMu2 = false;
+  reco::MuonRef removedMuonRef;
+  if (checkGenMuHad >= 1 )
+    NMuRemoved_->Fill(0);
   for (std::vector<reco::PFTau>::const_iterator iTauCJ = pTausCJ->begin(); iTauCJ != pTausCJ->end(); ++iTauCJ)
   {
     const reco::PFJetRef& tauJetRef = (*iTauCJ).jetRef();
     const reco::MuonRefVector& removedMuons = (*pMuonMap)[tauJetRef];
     std::vector<reco::PFCandidatePtr> JetPFCands = tauJetRef->getPFConstituents();
     nConstituents = JetPFCands.size();
-    reco::PFTauRef PFTauRef(pTausCJ, iTauCJ - pTausCJ->begin());
 
     //find the highest pT associated muon
     std::vector<reco::MuonRef> removedMuonRefs;
     for (reco::MuonRefVector::const_iterator iMuon = removedMuons.begin(); iMuon != removedMuons.end(); ++iMuon) {removedMuonRefs.push_back(*iMuon);}//for iMuon
-    std::cout << "\tremovedMuonRefs.size= " << removedMuonRefs.size() << std::endl;
+    std::cout << "\tremovedMuons= " << removedMuons.size() << "\tremovedMuonRefs.size= " << removedMuonRefs.size() << std::endl;
     for (unsigned int iter = 0; iter < removedMuonRefs.size(); iter++)
     {
       for (unsigned int jter = iter + 1; jter < removedMuonRefs.size(); jter++)
@@ -510,10 +551,6 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }//for iter
 
     //Calculate Tau_mu tau_H dR
-    double Pt_GenMatchCJ = -1, dR_tauRemovedMu = 10000;
-    reco::MuonRef removedMuonRef;
-    bool removedMu = false;
-    int tauDecayModeRECO = -1;
     for (unsigned int iter = 0; iter < removedMuonRefs.size(); iter++)
     {
       double dPhi = reco::deltaPhi(removedMuonRefs[iter]->phi(), iTauCJ->phi() );
@@ -525,308 +562,509 @@ void FakeRateAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 	NConstituentsCJ_->Fill(nConstituents );
         TauHadnConstvsPt_->Fill(nConstituents, iTauCJ->pt() );
         TauMuTauHaddR_->Fill(dR_tauMu );
- 	GenDiTaudRvsCJDiTaudR_->Fill(dR_tauMu, dR_tauMu);       
-        DMCJ = (*pDMFindingCJ)[PFTauRef];
-        MedIsoCJ = (*pMedIsoDiscCJ)[PFTauRef];
-        LooseIsoCJ = (*pLooseIsoDiscCJ)[PFTauRef];
-        TightIsoCJ = (*pTightIsoDiscCJ)[PFTauRef];
-        rawIsoValue = (*pIsoRaw)[PFTauRef];
-        tauDecayModeRECO = iTauCJ->decayMode();
-	removedMu = true;
-	dR_tauRemovedMu = dR_tauMu;
-	Pt_GenMatchCJ = iTauCJ->pt();
-	removedMuonRef = removedMuonRefs[iter];
+ 	GenDiTaudRvsCJDiTaudR_->Fill(dR_tauMu_gen, dR_tauMu);      
+        removedMuonRef = removedMuonRefs[iter];
 	break;
       }//if
-    }//for itr
+    }//for itre
 
-std::cout << "removedMu= " << removedMu << "  abs(iTauCJ->eta() )= " << abs(iTauCJ->eta() ) << " Pt_GenMatchCJ= " << Pt_GenMatchCJ << std::endl;
-
-
-    if (removedMu && abs(iTauCJ->eta() ) < 2.3 && Pt_GenMatchCJ > 20)
+    //Gen Match the CleanJets taus
+    double dPhi1 = reco::deltaPhi(tau1Ref->phi(), iTauCJ->phi() ), dPhi2 = reco::deltaPhi(tau2Ref->phi(), iTauCJ->phi() );
+    dR_GenMatchCJTEMP1 = sqrt( (tau1Ref->eta() - iTauCJ->eta() ) * (tau1Ref->eta() - iTauCJ->eta() )  +  dPhi1 * dPhi1);
+    dR_GenMatchCJTEMP2 = sqrt( (tau2Ref->eta() - iTauCJ->eta() ) * (tau2Ref->eta() - iTauCJ->eta() )  +  dPhi2 * dPhi2); 
+    reco::PFTauRef PFTauRef(pTausCJ, iTauCJ - pTausCJ->begin()); 
+    //first 2 checks are basic requirements, the 2 in the "or" are making sure it doesn't matche better with the second tau
+    if (dR_GenMatchCJTEMP1 < .1 && dR_GenMatchCJTEMP1 < dR_GenMatchCJ1 && checkGenMuHad == 1) // && (dR_GenMatchCJTEMP1 < dR_GenMatchCJTEMP2 || dR_GenMatchCJTEMP2 > dR_GenMatchCJ2) )
     {
-      //Getting Mu1 and Mu2
-      reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
-      reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
-      reco::LeafCandidate::LorentzVector diMuP4;
-      diMuP4 = mu1Ref->p4();
-      diMuP4 += mu2Ref->p4();
-      PtOverMassMu1Mu2_->Fill(diMuP4.Pt() / diMuP4.M() );
-      PtMu1Mu2_->Fill(diMuP4.Pt() );  //mu1Ref->pt() + mu2Ref->pt() );
+      dR_GenMatchCJ1 = dR_GenMatchCJTEMP1;
+      Pt_GenMatchCJ1 = iTauCJ->pt();
+      DMCJ1 = (*pDMFindingCJ)[PFTauRef];
+      MedIsoCJ1 = (*pMedIsoDiscCJ)[PFTauRef];
+      LooseIsoCJ1 = (*pLooseIsoDiscCJ)[PFTauRef];
+      TightIsoCJ1 = (*pTightIsoDiscCJ)[PFTauRef];
+      tau1DecayModeRECO = iTauCJ->decayMode();
+      removedMu1 = false;
+      if (removedMuonRefs.size() > 0)
+	removedMu1 = true;
+      eta_GenMatchCJ1 =  iTauCJ->eta() ;
+    }//if iTauCJ matches tau1Ref 
+    else if (dR_GenMatchCJTEMP2 < .1 && dR_GenMatchCJTEMP2 < dR_GenMatchCJ2  && checkGenMuHad == 2)// &&(dR_GenMatchCJTEMP2 < dR_GenMatchCJTEMP1 || dR_GenMatchCJTEMP1 > dR_GenMatchCJ1) )
+    {
+      dR_GenMatchCJ2 = dR_GenMatchCJTEMP2;
+      Pt_GenMatchCJ2 = iTauCJ->pt();
+      DMCJ2 = (*pDMFindingCJ)[PFTauRef];
+      MedIsoCJ2 = (*pMedIsoDiscCJ)[PFTauRef];
+      LooseIsoCJ2 = (*pLooseIsoDiscCJ)[PFTauRef];      
+      TightIsoCJ2 = (*pTightIsoDiscCJ)[PFTauRef];
+      tau2DecayModeRECO = iTauCJ->decayMode();
+      removedMu2 = false;
+      if (removedMuonRefs.size() > 0)
+        removedMu2 = true;
+      eta_GenMatchCJ2 = iTauCJ->eta();
+    }//else
 
-      ////////////////////////////////////////////////////////////////////////
-      // Looping through the Signal Particles searching for the di-tau GM 
-      ////////////////////////////////////////////////////////////////////////
-      bool leptonGenMatched = false, jetGenMatched = false;
-      double dRGMlep = 1000000000000000, dRGMjet = 1000000000000000;
-      int leptonPdgIdGM = genMatchPDGIDTag_, jetPdgIdGM = genMatchPDGIDTag_;
-      for (reco::GenParticleCollection::const_iterator iGenParticle = pGenParts->begin(); iGenParticle != pGenParts->end(); ++iGenParticle)
-      {
-        if (abs(iGenParticle->pdgId() ) == genMatchPDGIDTag_ && iGenParticle->status() == 62)
-        {
-	  // Loop through children
-	  reco::LeafCandidate::LorentzVector daughterP4;
-          for (unsigned int iChild = 0; iChild < iGenParticle->numberOfDaughters(); ++iChild)
-	  {
-	    reco::GenParticleRef childRef = iGenParticle->daughterRef(iChild);
-            if (iChild == 0)
-              daughterP4 = childRef->p4();
-	    else
-	      daughterP4 += childRef->p4();
-            double dPhiGM = reco::deltaPhi(iTauCJ->phi(), childRef->phi() ), dEtaGM = iTauCJ->eta() - childRef->eta(), dRGMTemp = sqrt( dEtaGM*dEtaGM + dPhiGM*dPhiGM );
-            std::cout << "\tMom= " << iGenParticle->pdgId() << "\tchild= " << childRef->pdgId() << "\tdRGMTemp= " << dRGMTemp << std::endl;
-            if (dRGMTemp < .05 && abs(childRef->pdgId() ) <= 16 && abs(childRef->pdgId() ) >= 11 && dRGMlep > dRGMTemp) 
-            {
-              leptonPdgIdGM = abs(childRef->pdgId() );
-              leptonGenMatched = true;
-              dRGMlep = dRGMTemp;
-            }//if
-            else if (dRGMTemp < .05 && dRGMjet > dRGMTemp)
-            {
-              jetGenMatched = true;
-              jetPdgIdGM = abs(childRef->pdgId() );
-              dRGMjet = dRGMTemp;
-            }//else
+    std::cout << "\t\tdR_GenMatchCJ1= " << dR_GenMatchCJ1 << "  \tdR_GenMatchCJTEMP1= " << dR_GenMatchCJTEMP1 << "  \tPtDiff1= " << abs(Pt_GenMatchCJ1 - iTauCJ->pt() ) 
+              << "\tremovedMu1= " << removedMu1 <<  std::endl;
+    std::cout << "\t\tdR_GenMatchCJ2= " << dR_GenMatchCJ2 << "  \tdR_GenMatchCJTEMP2= " << dR_GenMatchCJTEMP2 << "  \tPtDiff2= " << abs(Pt_GenMatchCJ2 - iTauCJ->pt() ) 
+              << "\tremovedMu2= " << removedMu2 << std::endl;
+  }//for auto iTauCJ
 
-	    //Loop Through grandchildren
-            for (unsigned int iChild2 = 0; iChild2 < childRef->numberOfDaughters(); ++iChild2)
-            {
-              reco::GenParticleRef grandChildRef = childRef->daughterRef(iChild2 );
-	      double dPhiGM2 = reco::deltaPhi(iTauCJ->phi(), grandChildRef->phi() ), dEtaGM2 = iTauCJ->eta() - grandChildRef->eta(), dRGM2Temp = sqrt( dEtaGM2*dEtaGM2 + dPhiGM2*dPhiGM2 );
-              std::cout << "\tMom= " << iGenParticle->pdgId() << "\tchild= " << childRef->pdgId() << "\tgrandChild= " << grandChildRef->pdgId() << "\tdRGM2Temp= " << dRGM2Temp << std::endl;
-              if (dRGM2Temp < .05)
-              {
-	 	if (abs(grandChildRef->pdgId() ) <= 16 && abs(grandChildRef->pdgId() ) >= 11 && dRGMlep < dRGM2Temp)
-		{
-		  leptonPdgIdGM = abs(grandChildRef->pdgId() );
-                  leptonGenMatched = true;
-		  dRGMlep = dRGM2Temp;
-		}//if
-		else if (dRGMjet < dRGM2Temp)
-		{
-		  jetGenMatched = true;
-		  jetPdgIdGM = abs(grandChildRef->pdgId() );
-		  dRGMjet = dRGM2Temp;
-		}//else
-              }//if drGM < .05
-	    }//for iChild2
-	  }//for iChild
-	  MassDiLepGEN_->Fill(daughterP4.M() );
-        }// if leptonGenMatched
-      }//for iGen Particle
+  unsigned int tau1DecayModeGEN = VariousFunctions::tauDecayMode(tau1Ref), tau2DecayModeGEN = VariousFunctions::tauDecayMode(tau2Ref);
+  bool genMatchedCJ = false;
+  if (checkGenMuHad >= 1 && (removedMu2 || removedMu1) )
+    NMuRemoved_->Fill(1);
 
-      /////////////////////////////////////////////////////////////////
-      // Looping through the ak4PFJets searching for di-tau GM
-      /////////////////////////////////////////////////////////////////
-      for (reco::GenJetCollection::const_iterator iGenJet = pGenJets->begin(); iGenJet != pGenJets->end(); ++iGenJet)
-      {
-        double dPhiGM = reco::deltaPhi(iTauCJ->phi(), iGenJet->phi() ), dEtaGM = iTauCJ->eta() - iGenJet->eta(), dRGMTemp = sqrt( dEtaGM*dEtaGM + dPhiGM*dPhiGM );
-        if (dRGMTemp < .05 && dRGMjet > dRGMTemp)
-        {
-	  dRGMjet = dRGMTemp;
-	  jetGenMatched = true;
-	  jetPdgIdGM = abs(iTauCJ->pdgId() );
-	}//if
-      }//for iGenJet
+  if (dR_GenMatchCJ2 != 1000 && checkGenMuHad == 2 && abs(eta_GenMatchCJ2) < 2.3 && Pt_GenMatchCJ2 > 20 && removedMu2)
+  {
+std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
 
-      if (leptonGenMatched  || jetGenMatched)
-      {
-	std::cout << "\tdRGMlep= " << dRGMlep << " \tdRGMjet= " << dRGMjet << std::endl;
-        ///////////////////////////////////////
-        // Filling Cut Option Histograms
-        ///////////////////////////////////////
-        std::cout << "\t\tRemoved Mu" << std::endl;
-        NEventsCuts_->Fill(0);
-        double sumHT = 0;
-        size_t numJets = pAkJets->size();
- 	for ( size_t iJet = 0; iJet < numJets; ++iJet ) 
-	{
-	  reco::PFJetRef jetRef(pAkJets, iJet);
-          if (jetRef->pt() > 20.0 && tauJetRef.key() != jetRef.key() )
-            sumHT += jetRef->pt();
-        }//for pAkJets      
- 
-        double BDisc = -1;
-        for (unsigned int iBTagInfo = 0; iBTagInfo != pCSV->size(); ++iBTagInfo)
-        {
-          if (reco::PFJetRef(pOldJets, iBTagInfo).key() == ((*iTauCJ).jetRef()).key() )
-          {
-            const reco::JetTagCollection& bTags = *(pCSV.product());
-            BDisc = bTags[iBTagInfo].second;
-          }//if
-        }//for iBTagInfo
-        BDiscCSVvsRawIso_->Fill(BDisc, rawIsoValue );
 
-        if (leptonGenMatched && (!jetGenMatched || dRGMlep < dRGMjet) )
-        {
-          GenMatchPDGID_->Fill(leptonPdgIdGM );
-	  if (abs(iTauCJ->eta() ) > 1.5 )
-            GenMatchPDGIDwithLargeEta_->Fill(leptonPdgIdGM );
-          MatchedTauHadEtaLepton_->Fill(iTauCJ->eta() );
-          MatchedTauHadPtLepton_->Fill(iTauCJ->pt() );
-          MatchedTauMuPtLepton_->Fill(removedMuonRefs[0]->pt() );
- 	  sumHT = sumHT - mu1Ref->pt() - mu2Ref->pt() - removedMuonRef->pt(); ;
-          MatchedHTLepton_->Fill(sumHT);
-          MatchedBDiscCSVLepton_->Fill(BDisc );
-	  MatchedTauHadEtavsTauHadPt_->Fill(iTauCJ->eta(), iTauCJ->pt() );
-          if (leptonPdgIdGM <= 6)
-            GenMatchType_->Fill(3);
-          if (leptonPdgIdGM == 15 || leptonPdgIdGM == 16)
-            GenMatchType_->Fill(0);
-          if (leptonPdgIdGM == 13 || leptonPdgIdGM == 14)
-            GenMatchType_->Fill(1);
-          if (leptonPdgIdGM == 11 || leptonPdgIdGM == 12)
-            GenMatchType_->Fill(2);
+    //////////////////////////////
+    // Filling Disc Efficiency 
+    //////////////////////////////
+    genMatchedCJ = true;
+    NTauDecayModeRECOCJ_->Fill(tau2DecayModeRECO );
+    NEvents_->Fill(3);
+    RECOPtvsGENVisiblePtCJ_->Fill(Pt_GenMatchCJ2, GenTau2Visible.Pt() );
+    RECOPtvsGENdRCJ_->Fill(Pt_GenMatchCJ2, dR_tauMu_gen);
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      RECOPtvsGENdRCJMedIso_->Fill(Pt_GenMatchCJ2, dR_tauMu_gen);
+    MatchedCJPt_->Fill(Pt_GenMatchCJ2 );
+    if (DMCJ2 == 1)
+      MatchedDMFindCJPt_->Fill(Pt_GenMatchCJ2 );
+    if (TightIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedTightIsoCJPt_->Fill(Pt_GenMatchCJ2 );
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedMedIsoCJPt_->Fill(Pt_GenMatchCJ2 );
+    if (LooseIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedLooseIsoCJPt_->Fill(Pt_GenMatchCJ2 );
   
-	  std::cout << "Lepton particel is closer" << std::endl;
-          NEventsCuts_->Fill(18);
-          if (BDisc < .825) //BDisc < .9 && sumHT < 300)
-            NEventsCuts_->Fill(1);
-          if (BDisc < .5) //BDisc < .9 && sumHT < 300 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(2);
-          if (BDisc < .9 )
-            NEventsCuts_->Fill(3);
-          if (BDisc < .9 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(4);
-          if (sumHT < 300)
-            NEventsCuts_->Fill(5);
-          if (BDisc < .95) //sumHT < 300 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(6);
-          if (sumHT < 400 && BDisc < .9)
-           NEventsCuts_->Fill(7);
-          if (sumHT < 400 && BDisc < .9 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(8);
-          if (MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(20);
-          if (LooseIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(22);
-          if (TightIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(23);
-          NEventsCuts_->Fill(21);
-        }// Lepton Counting
+    MatchedCJdR_->Fill(dR_tauMu_gen );
+    if (DMCJ2 == 1)
+      MatchedDMFindCJdR_->Fill(dR_tauMu_gen );
+    if (TightIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedTightIsoCJdR_->Fill(dR_tauMu_gen );
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedMedIsoCJdR_->Fill(dR_tauMu_gen );
+    if (LooseIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedLooseIsoCJdR_->Fill(dR_tauMu_gen );
 
-        else if (jetGenMatched && (!leptonGenMatched || dRGMlep > dRGMjet) )    
-        {
-          GenMatchPDGID_->Fill(jetPdgIdGM );
-          if (abs(iTauCJ->eta() ) > 1.5 )
-            GenMatchPDGIDwithLargeEta_->Fill(jetPdgIdGM );
-          MatchedTauHadEtaJet_->Fill(iTauCJ->eta() );
-          MatchedTauHadPtJet_->Fill(iTauCJ->pt() );
-          MatchedTauMuPtJet_->Fill(removedMuonRefs[0]->pt() );
-          sumHT = sumHT - mu1Ref->pt() - mu2Ref->pt() - removedMuonRef->pt();
-          MatchedHTJet_->Fill(sumHT);
-          MatchedBDiscCSVJet_->Fill(BDisc );
-          MatchedTauHadEtavsTauHadPt_->Fill(iTauCJ->eta(), iTauCJ->pt() );
-          if (jetPdgIdGM <= 6)
-            GenMatchType_->Fill(3);
-          if (jetPdgIdGM == 15 || jetPdgIdGM == 16)
-            GenMatchType_->Fill(0);
-          if (jetPdgIdGM == 13 || jetPdgIdGM == 14)
-            GenMatchType_->Fill(1);
-          if (jetPdgIdGM == 11 || jetPdgIdGM == 12)
-            GenMatchType_->Fill(2);
+    if (Pt_GenMatchCJ2 > 20)
+    {
+      MatchedCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (DMCJ2 == 1)
+        MatchedDMFindCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (TightIsoCJ2 == 1 && DMCJ2 == 1)
+        MatchedTightIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+        MatchedMedIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (LooseIsoCJ2 == 1 && DMCJ2 == 1)
+        MatchedLooseIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+    }//if Pt_GenMatchCJ2 > 20
 
-          std::cout << "Jet particel is closer" << std::endl;
-          NEventsCuts_->Fill(17);
-          if (BDisc < .825) //BDisc < .9 && sumHT < 300)
-            NEventsCuts_->Fill(9);
-          if (BDisc < .5 ) // BDisc < .9 && sumHT < 300 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(10);
-          if (BDisc < .9 )
-            NEventsCuts_->Fill(11);
-          if (BDisc < .9 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(12);
-          if (sumHT < 300)
-            NEventsCuts_->Fill(13);
-          if (BDisc < .95) //sumHT < 300 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(14);
-          if (sumHT < 400 && BDisc < .9)
-            NEventsCuts_->Fill(15);
-          if (sumHT < 400 && BDisc < .9 && MedIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(16);
-	  if (MedIsoCJ == 1 && DMCJ == 1)
-	    NEventsCuts_->Fill(20);
-          if (LooseIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(22);
-          if (TightIsoCJ == 1 && DMCJ == 1)
-            NEventsCuts_->Fill(23);
-          NEventsCuts_->Fill(21);
-        }//if leptonGenMatched  
+    MatchedCJPtGen_->Fill(GenTau2Visible.Pt() );
+    if (DMCJ2 == 1)
+      MatchedDMFindCJPtGen_->Fill(GenTau2Visible.Pt() );
+    if (TightIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedTightIsoCJPtGen_->Fill(GenTau2Visible.Pt() );
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedMedIsoCJPtGen_->Fill(GenTau2Visible.Pt() );
+    if (LooseIsoCJ2 == 1 && DMCJ2 == 1)
+      MatchedLooseIsoCJPtGen_->Fill(GenTau2Visible.Pt() );
 
-        if (jetGenMatched && leptonGenMatched)
-          NEventsCuts_->Fill(19);
-        
-	/////////////////////////////////
- 	// Checking if removed mu in mu3
-	/////////////////////////////////
-	double largestPt = -1;
-	for (reco::MuonRefVector::const_iterator iMuon = pMu3->begin(); iMuon!=pMu3->end(); ++iMuon)
-	{
-	  if ((**iMuon).pt() > largestPt)
-	    largestPt = (**iMuon).pt();
-	}//for iMuon
+    if (tau2DecayModeRECO == 0)
+      tau2DecayModeRECO = 1;
+    else if (tau2DecayModeRECO == 1)
+      tau2DecayModeRECO = 2;
+    else if (tau2DecayModeRECO == 2)
+      tau2DecayModeRECO = 3;
+    else if (tau2DecayModeRECO == 10)
+      tau2DecayModeRECO = 4;
 
-        for (reco::MuonRefVector::const_iterator iMuon = pMu3->begin(); iMuon!=pMu3->end(); ++iMuon)
-        {
-	  if (deltaR(**iMuon, *removedMuonRef) < .0001 && (fabs((**iMuon).pt() - removedMuonRef->pt() ) / (**iMuon).pt() ) < .0001 )
-	  {
-	    Mu3PtMatch_->Fill((**iMuon).pt() );
-	    if ( (fabs((**iMuon).pt() - largestPt) / largestPt ) < .0001)
-	      Mu3LargestPtMatch_->Fill((**iMuon).pt() );
-	  }// if removed muon and mu3 match
-	}// for Mu3
+    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::endl;
+    RECOCJTauDMvsGENTauDM_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
+    if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+      RECOCJTauDMvsGENTauDMMedIso_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
+    if (tau2DecayModeRECO == tau2DecayModeGEN)
+      GenVisiblePtvsRecoCJPtIfCorrDM_->Fill(Pt_GenMatchCJ2, GenTau2Visible.Pt() );
 
-        ///////////////////////////
-        //Check Di-Muon resonanice
-        ///////////////////////////
-        MassDiLepRECO_->Fill(diMuP4.M() );
- 
-	/////////////////////////////////////////////////////////////////
-	//Getting the Event Counts for the Reconstruction Efficiencies
-	/////////////////////////////////////////////////////////////////
-        NTauDecayModeRECOCJ_->Fill(tauDecayModeRECO );
-        NEvents_->Fill(3);
-        MatchedCJPt_->Fill(Pt_GenMatchCJ );
- 	std::cout << "DMCJ= " << DMCJ << "\tTightIsoCJ= " << TightIsoCJ << "\tMedIsoCJ= " << MedIsoCJ << "\tLooseIsoCJ= " << LooseIsoCJ << std::endl;
-        if (DMCJ == 1)
-          MatchedDMFindCJPt_->Fill(Pt_GenMatchCJ );
-        if (TightIsoCJ == 1 && DMCJ == 1)
-          MatchedTightIsoCJPt_->Fill(Pt_GenMatchCJ );
-        if (MedIsoCJ == 1 && DMCJ == 1)
-          MatchedMedIsoCJPt_->Fill(Pt_GenMatchCJ );
-        if (LooseIsoCJ == 1 && DMCJ == 1)
-          MatchedLooseIsoCJPt_->Fill(Pt_GenMatchCJ );
-      
-        MatchedCJdR_->Fill(dR_tauRemovedMu );
-        if (DMCJ == 1)
-          MatchedDMFindCJdR_->Fill(dR_tauRemovedMu );
-        if (TightIsoCJ == 1 && DMCJ == 1)
-          MatchedTightIsoCJdR_->Fill(dR_tauRemovedMu );
-        if (MedIsoCJ == 1 && DMCJ == 1)
-          MatchedMedIsoCJdR_->Fill(dR_tauRemovedMu );
-        if (LooseIsoCJ == 1 && DMCJ == 1)
-          MatchedLooseIsoCJdR_->Fill(dR_tauRemovedMu );
+    if (tau2DecayModeGEN == 1)
+    {
+      NTauDecayModeGEN_->Fill(1);
+      MatchedOneProngCJPt_->Fill(GenTau2Visible.Pt() );
+      if (DMCJ2 == 1 && MedIsoCJ2 == 1)
+	OneProngDMCJPt_->Fill(GenTau2Visible.Pt() );     
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 2)
+    {
+      NTauDecayModeGEN_->Fill(2);
+      MatchedOneProngOnePizCJPt_->Fill(GenTau2Visible.Pt() );
+      if (DMCJ2 == 1 && MedIsoCJ2 == 1)
+        OneProngOnePizDMCJPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 3)
+    {
+      NTauDecayModeGEN_->Fill(3);
+      NTauDecayModeRECOCJIfGen3_->Fill(tau2DecayModeRECO );
+      MatchedOneProngTwoPizCJPt_->Fill(GenTau2Visible.Pt() );
+      if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+        OneProngTwoPizDMCJPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 4)
+    {
+      NTauDecayModeGEN_->Fill(4);
+      MatchedThreeProngCJPt_->Fill(GenTau2Visible.Pt() );
+      if (MedIsoCJ2 == 1 && DMCJ2 == 1)
+        ThreeProngDMCJPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+
+  }//if GEN tau2Ref is the had in mu+had and it is matched to CleanJets Jet
+  else if (dR_GenMatchCJ1 != 1000 && checkGenMuHad == 1 && abs(eta_GenMatchCJ1) < 2.3 && Pt_GenMatchCJ1 > 20 && removedMu1)
+  {
+std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
+
+    //////////////////////////////
+    // Disc Efficiencie stuff
+    //////////////////////////////
+    genMatchedCJ = true;
+    NTauDecayModeRECOCJ_->Fill(tau1DecayModeRECO );
+    NEvents_->Fill(3);
+    RECOPtvsGENVisiblePtCJ_->Fill(Pt_GenMatchCJ1, GenTau1Visible.Pt() );
+    RECOPtvsGENdRCJ_->Fill(Pt_GenMatchCJ1, dR_tauMu_gen);
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      RECOPtvsGENdRCJMedIso_->Fill(Pt_GenMatchCJ1, dR_tauMu_gen);
+    MatchedCJPt_->Fill(Pt_GenMatchCJ1 );
+    if (DMCJ1 == 1)
+      MatchedDMFindCJPt_->Fill(Pt_GenMatchCJ1 );
+    if (TightIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedTightIsoCJPt_->Fill(Pt_GenMatchCJ1 );
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedMedIsoCJPt_->Fill(Pt_GenMatchCJ1 );
+    if (LooseIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedLooseIsoCJPt_->Fill(Pt_GenMatchCJ1 );
+
+    MatchedCJdR_->Fill(dR_tauMu_gen );
+    if (DMCJ1 == 1)
+      MatchedDMFindCJdR_->Fill(dR_tauMu_gen );
+    if (TightIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedTightIsoCJdR_->Fill(dR_tauMu_gen );
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedMedIsoCJdR_->Fill(dR_tauMu_gen );
+    if (LooseIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedLooseIsoCJdR_->Fill(dR_tauMu_gen );
+
+    if (Pt_GenMatchCJ1 > 20)
+    { 
+      MatchedCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (DMCJ1 == 1)
+        MatchedDMFindCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (TightIsoCJ1 == 1 && DMCJ1 == 1)
+        MatchedTightIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+        MatchedMedIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+      if (LooseIsoCJ1 == 1 && DMCJ1 == 1)
+        MatchedLooseIsoCJdRPtCut_->Fill(dR_tauMu_gen );
+    }//if Pt_GenMatchCJ1 > 20
     
-        if (Pt_GenMatchCJ > 100)
-        {
-          MatchedCJdRPtCut_->Fill(dR_tauRemovedMu );
-          if (DMCJ == 1)
-            MatchedDMFindCJdRPtCut_->Fill(dR_tauRemovedMu );
-          if (TightIsoCJ == 1 && DMCJ == 1)
-            MatchedTightIsoCJdRPtCut_->Fill(dR_tauRemovedMu );
-          if (MedIsoCJ == 1 && DMCJ == 1)
-            MatchedMedIsoCJdRPtCut_->Fill(dR_tauRemovedMu );
-          if (LooseIsoCJ == 1 && DMCJ == 1)
-            MatchedLooseIsoCJdRPtCut_->Fill(dR_tauRemovedMu );
-        }//if Pt_GenMatchCJ > 100
-      }//if jetGenMatched
-    }//if GEN tau1Ref is the had in mu+had and it is matched to CleanJets Jet
-  }//iTauCJ
-}//End FakeRateAnalyzer::analyze
+    MatchedCJPtGen_->Fill(GenTau1Visible.Pt() );
+    if (DMCJ1 == 1)
+      MatchedDMFindCJPtGen_->Fill(GenTau1Visible.Pt() );
+    if (TightIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedTightIsoCJPtGen_->Fill(GenTau1Visible.Pt() );
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedMedIsoCJPtGen_->Fill(GenTau1Visible.Pt() );
+    if (LooseIsoCJ1 == 1 && DMCJ1 == 1)
+      MatchedLooseIsoCJPtGen_->Fill(GenTau1Visible.Pt() );
+
+    if (tau1DecayModeRECO == 0)
+      tau1DecayModeRECO = 1;
+    else if (tau1DecayModeRECO == 1)
+      tau1DecayModeRECO = 2;
+    else if (tau1DecayModeRECO == 2)
+      tau1DecayModeRECO = 3;
+    else if (tau1DecayModeRECO == 10)
+      tau1DecayModeRECO = 4;
+
+    std::cout << "\t\ttau1DecayModeRECO= " << tau1DecayModeRECO << "\t tau1DecayModeGEN= " << tau1DecayModeGEN << std::endl;
+    RECOCJTauDMvsGENTauDM_->Fill(tau1DecayModeRECO, tau1DecayModeGEN);
+    if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+      RECOCJTauDMvsGENTauDMMedIso_->Fill(tau1DecayModeRECO, tau1DecayModeGEN);
+    if (tau1DecayModeRECO == tau1DecayModeGEN)
+      GenVisiblePtvsRecoCJPtIfCorrDM_->Fill(Pt_GenMatchCJ1, GenTau1Visible.Pt() );
+
+    if (tau1DecayModeGEN == 1)
+    {
+      NTauDecayModeGEN_->Fill(1);
+      MatchedOneProngCJPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+        OneProngDMCJPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 2)
+    {
+      NTauDecayModeGEN_->Fill(2);
+      MatchedOneProngOnePizCJPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+        OneProngOnePizDMCJPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 3)
+    {
+      NTauDecayModeGEN_->Fill(3);
+      NTauDecayModeRECOCJIfGen3_->Fill(tau1DecayModeRECO );     
+      MatchedOneProngTwoPizCJPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+        OneProngTwoPizDMCJPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 4)
+    {
+      NTauDecayModeGEN_->Fill(4);
+      MatchedThreeProngCJPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoCJ1 == 1 && DMCJ1 == 1)
+        ThreeProngDMCJPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+
+  }//if GEN tau1Ref is the had in mu+had and it is matched to CleanJets Jet
+
+//////////////////////////
+// Matching to RECO Taus
+//////////////////////////
+  double dR_GenMatchRECO1 = 1000, dR_GenMatchRECO2 = 1000, dR_GenMatchRECOTEMP1 = 1000, dR_GenMatchRECOTEMP2 = 1000, Pt_GenMatchRECO1 = -1, Pt_GenMatchRECO2 = -1;
+  unsigned int DMRECO1 = 0, DMRECO2 = 0, MedIsoRECO1 = 0, MedIsoRECO2 = 0, LooseIsoRECO1 = 0, LooseIsoRECO2 = 0, TightIsoRECO1 = 0, TightIsoRECO2 = 0;
+  for (std::vector<reco::PFTau>::const_iterator iTauRECO = pTausRECO->begin(); iTauRECO != pTausRECO->end(); ++iTauRECO)
+  {
+    //Gen Match the CleanJets taus
+    double dPhi1 = reco::deltaPhi(tau1Ref->phi(), iTauRECO->phi() ), dPhi2 = reco::deltaPhi(tau2Ref->phi(), iTauRECO->phi() );
+    dR_GenMatchRECOTEMP1 = sqrt( (tau1Ref->eta() - iTauRECO->eta() ) * (tau1Ref->eta() - iTauRECO->eta() )  +  dPhi1 * dPhi1);
+    dR_GenMatchRECOTEMP2 = sqrt( (tau2Ref->eta() - iTauRECO->eta() ) * (tau2Ref->eta() - iTauRECO->eta() )  +  dPhi2 * dPhi2);
+    reco::PFTauRef PFTauRef(pTausRECO, iTauRECO - pTausRECO->begin());
+    //first 2 checks are basic requirements, the 2 in the "or" are making sure it doesn't matche better with the second tau
+    if (dR_GenMatchRECOTEMP1 < .1 && dR_GenMatchRECOTEMP1 < dR_GenMatchRECO1 && checkGenMuHad == 1) //&& (dR_GenMatchRECOTEMP1 < dR_GenMatchRECOTEMP2 || dR_GenMatchRECOTEMP2 > dR_GenMatchRECO2) )
+    {
+      dR_GenMatchRECO1 = dR_GenMatchRECOTEMP1;
+      Pt_GenMatchRECO1 = iTauRECO->pt();
+      DMRECO1 = (*pDMFindingRECO)[PFTauRef];
+      MedIsoRECO1 = (*pMedIsoDiscRECO)[PFTauRef];
+      LooseIsoRECO1 = (*pLooseIsoDiscRECO)[PFTauRef];
+      TightIsoRECO1 = (*pTightIsoDiscRECO)[PFTauRef];
+      tau1DecayModeRECO = iTauRECO->decayMode();
+    }//if iTauRECO matches tau1Ref 
+    else if (dR_GenMatchRECOTEMP2 < .1 && dR_GenMatchRECOTEMP2 < dR_GenMatchRECO2 && checkGenMuHad == 2) // && (dR_GenMatchRECOTEMP2 < dR_GenMatchRECOTEMP1 || dR_GenMatchRECOTEMP1 > dR_GenMatchRECO1) )
+    {
+      dR_GenMatchRECO2 = dR_GenMatchRECOTEMP2;
+      Pt_GenMatchRECO2 = iTauRECO->pt();
+      DMRECO2 = (*pDMFindingRECO)[PFTauRef];
+      MedIsoRECO2 = (*pMedIsoDiscRECO)[PFTauRef];
+      LooseIsoRECO2 = (*pLooseIsoDiscRECO)[PFTauRef]; 
+      TightIsoRECO2 = (*pTightIsoDiscRECO)[PFTauRef];
+      tau2DecayModeRECO = iTauRECO->decayMode();
+    }//else
+
+    std::cout << "\t\tdR_GenMatchRECO1= " << dR_GenMatchRECO1 << "  \tdR_GenMatchRECOTEMP1= " << dR_GenMatchRECOTEMP1 << "  \tPtDiff1= " << abs(Pt_GenMatchRECO1 - iTauRECO->pt() )
+              << "\tremovedMu1= " << removedMu1 <<  std::endl;
+    std::cout << "\t\tdR_GenMatchRECO2= " << dR_GenMatchRECO2 << "  \tdR_GenMatchRECOTEMP2= " << dR_GenMatchRECOTEMP2 << "  \tPtDiff2= " << abs(Pt_GenMatchRECO2 - iTauRECO->pt() )
+              << "\tremovedMu2= " << removedMu2	 <<  std::endl;
+  }//iTauRECO
+
+  if (dR_GenMatchRECO2 != 1000 && checkGenMuHad == 2 && abs(eta_GenMatchCJ2) < 2.3 && Pt_GenMatchRECO2 > 20 && removedMu2 && genMatchedCJ)
+  {
+std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
+    NTauDecayModeRECONoCJ_->Fill(tau2DecayModeRECO );
+    RECOPtvsGENVisiblePtRECO_->Fill(Pt_GenMatchRECO2, GenTau2Visible.Pt() );
+    NEvents_->Fill(4);
+    RECOPtvsGENdRRECO_->Fill(Pt_GenMatchRECO2, dR_tauMu_gen);
+    if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+      RECOPtvsGENdRRECOMedIso_->Fill(Pt_GenMatchRECO2, dR_tauMu_gen);
+    MatchedRECOPt_->Fill(Pt_GenMatchRECO2 );
+    if (DMRECO2 == 1)
+      MatchedDMFindRECOPt_->Fill(Pt_GenMatchRECO2 );
+    if (TightIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedTightIsoRECOPt_->Fill(Pt_GenMatchRECO2 );
+    if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedMedIsoRECOPt_->Fill(Pt_GenMatchRECO2 );
+    if (LooseIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedLooseIsoRECOPt_->Fill(Pt_GenMatchRECO2 );
+
+    MatchedRECOdR_->Fill(dR_tauMu_gen );
+    if (DMRECO2 == 1)
+      MatchedDMFindRECOdR_->Fill(dR_tauMu_gen );
+    if (TightIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedTightIsoRECOdR_->Fill(dR_tauMu_gen );
+    if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedMedIsoRECOdR_->Fill(dR_tauMu_gen );
+    if (LooseIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedLooseIsoRECOdR_->Fill(dR_tauMu_gen );
+
+    if (Pt_GenMatchRECO2 > 20) 
+    {
+      MatchedRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (DMRECO2 == 1)
+        MatchedDMFindRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (TightIsoRECO2 == 1 && DMRECO2 == 1)
+        MatchedTightIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+        MatchedMedIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (LooseIsoRECO2 == 1 && DMRECO2 == 1)
+        MatchedLooseIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+    }//Pt_GenMatchRECO2 > 20
+
+    MatchedRECOPtGen_->Fill(GenTau2Visible.Pt() );
+    if (DMRECO2 == 1)
+      MatchedDMFindRECOPtGen_->Fill(GenTau2Visible.Pt() );
+    if (TightIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedTightIsoRECOPtGen_->Fill(GenTau2Visible.Pt() );
+    if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedMedIsoRECOPtGen_->Fill(GenTau2Visible.Pt() );
+    if (LooseIsoRECO2 == 1 && DMRECO2 == 1)
+      MatchedLooseIsoRECOPtGen_->Fill(GenTau2Visible.Pt() );
+
+    if (tau2DecayModeRECO == 0)
+      tau2DecayModeRECO = 1;
+    else if (tau2DecayModeRECO == 1)
+      tau2DecayModeRECO = 2;
+    else if (tau2DecayModeRECO == 2)
+      tau2DecayModeRECO = 3;
+    else if (tau2DecayModeRECO == 10)
+      tau2DecayModeRECO = 4;
+
+    std::cout << "\t\ttau2DecayModeRECO= " << tau2DecayModeRECO << "\t tau2DecayModeGEN= " << tau2DecayModeGEN << std::endl;
+    RECONoCJTauDMvsGENTauDM_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
+    if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+      RECONoCJTauDMvsGENTauDMMedIso_->Fill(tau2DecayModeRECO, tau2DecayModeGEN);
+    if (tau2DecayModeRECO == tau2DecayModeGEN)
+      GenVisiblePtvsRecoNoCJPtIfCorrDM_->Fill(Pt_GenMatchRECO2, GenTau2Visible.Pt() );
+
+
+    if (tau2DecayModeGEN == 1)
+    {
+      MatchedOneProngRECOPt_->Fill(GenTau2Visible.Pt() );
+      if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+        OneProngDMRECOPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 2)
+    {
+      MatchedOneProngOnePizRECOPt_->Fill(GenTau2Visible.Pt() );
+      if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+        OneProngOnePizDMRECOPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 3)
+    {
+      MatchedOneProngTwoPizRECOPt_->Fill(GenTau2Visible.Pt() );
+      NTauDecayModeRECONoCJIfGen3_->Fill(tau2DecayModeRECO );
+      if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+        OneProngTwoPizDMRECOPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau2DecayModeGEN == 4)
+    {
+      MatchedThreeProngRECOPt_->Fill(GenTau2Visible.Pt() );
+      if (MedIsoRECO2 == 1 && DMRECO2 == 1)
+        ThreeProngDMRECOPt_->Fill(GenTau2Visible.Pt() );
+    }//if decayMode == 1
+
+  }//if GEN tau2Ref is the had in mu+had and it is matched to CleanJets Jet
+
+  else if (dR_GenMatchRECO1 != 1000 && checkGenMuHad == 1 && abs(eta_GenMatchCJ1) < 2.3 && Pt_GenMatchRECO1 > 20 && removedMu1 && genMatchedCJ)
+  {
+std::cout << "\t\tPASSED GEN MATCH and MU REMOVAL" << std::endl;
+   NTauDecayModeRECONoCJ_->Fill(tau1DecayModeRECO );
+   RECOPtvsGENVisiblePtRECO_->Fill(Pt_GenMatchRECO1, GenTau1Visible.Pt() );
+   NEvents_->Fill(4);
+   RECOPtvsGENdRRECO_->Fill(Pt_GenMatchRECO1, dR_tauMu_gen);
+   if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+     RECOPtvsGENdRRECOMedIso_->Fill(Pt_GenMatchRECO1, dR_tauMu_gen);
+   MatchedRECOPt_->Fill(Pt_GenMatchRECO1 );
+   if (DMRECO1 == 1)
+     MatchedDMFindRECOPt_->Fill(Pt_GenMatchRECO1 );
+   if (TightIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedTightIsoRECOPt_->Fill(Pt_GenMatchRECO1 );
+   if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedMedIsoRECOPt_->Fill(Pt_GenMatchRECO1 );
+   if (LooseIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedLooseIsoRECOPt_->Fill(Pt_GenMatchRECO1 );
+   
+   MatchedRECOdR_->Fill(dR_tauMu_gen );
+   if (DMRECO1 == 1)
+     MatchedDMFindRECOdR_->Fill(dR_tauMu_gen );
+   if (TightIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedTightIsoRECOdR_->Fill(dR_tauMu_gen );
+   if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedMedIsoRECOdR_->Fill(dR_tauMu_gen );
+   if (LooseIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedLooseIsoRECOdR_->Fill(dR_tauMu_gen );
+
+    if (Pt_GenMatchRECO1 > 20)
+    {
+      MatchedRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (DMRECO1 == 1)
+        MatchedDMFindRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (TightIsoRECO1 == 1 && DMRECO1 == 1)
+        MatchedTightIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+        MatchedMedIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+      if (LooseIsoRECO1 == 1 && DMRECO1 == 1)
+        MatchedLooseIsoRECOdRPtCut_->Fill(dR_tauMu_gen );
+    }//Pt_GenMatchRECO1 > 20
+
+   
+   MatchedRECOPtGen_->Fill(GenTau1Visible.Pt() );
+   if (DMRECO1 == 1)
+     MatchedDMFindRECOPtGen_->Fill(GenTau1Visible.Pt() );
+   if (TightIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedTightIsoRECOPtGen_->Fill(GenTau1Visible.Pt() );
+   if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedMedIsoRECOPtGen_->Fill(GenTau1Visible.Pt() );
+   if (LooseIsoRECO1 == 1 && DMRECO1 == 1)
+     MatchedLooseIsoRECOPtGen_->Fill(GenTau1Visible.Pt() );
+
+    if (tau1DecayModeRECO == 0)
+      tau1DecayModeRECO = 1;
+    else if (tau1DecayModeRECO == 1)
+      tau1DecayModeRECO = 2;
+    else if (tau1DecayModeRECO == 2)
+      tau1DecayModeRECO = 3;
+    else if (tau1DecayModeRECO == 10)
+      tau1DecayModeRECO = 4;
+
+    std::cout << "\t\ttau1DecayModeRECO= " << tau1DecayModeRECO << "\t tau1DecayModeGEN= " << tau1DecayModeGEN << std::endl;
+    RECONoCJTauDMvsGENTauDM_->Fill(tau1DecayModeRECO, tau1DecayModeGEN);
+    if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+      RECONoCJTauDMvsGENTauDMMedIso_->Fill(tau1DecayModeRECO, tau1DecayModeGEN);
+    if (tau1DecayModeRECO == tau1DecayModeGEN)
+      GenVisiblePtvsRecoNoCJPtIfCorrDM_->Fill(Pt_GenMatchRECO1, GenTau1Visible.Pt() );
+
+
+    if (tau1DecayModeGEN == 1)
+    {
+      MatchedOneProngRECOPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+        OneProngDMRECOPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 2)
+    {
+      MatchedOneProngOnePizRECOPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+        OneProngOnePizDMRECOPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 3)
+    {
+      MatchedOneProngTwoPizRECOPt_->Fill(GenTau1Visible.Pt() );
+      NTauDecayModeRECONoCJIfGen3_->Fill(tau1DecayModeRECO );
+      if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+        OneProngTwoPizDMRECOPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+    else if (tau1DecayModeGEN == 4)
+    {
+      MatchedThreeProngRECOPt_->Fill(GenTau1Visible.Pt() );
+      if (MedIsoRECO1 == 1 && DMRECO1 == 1)
+        ThreeProngDMRECOPt_->Fill(GenTau1Visible.Pt() );
+    }//if decayMode == 1
+
+  }//if GEN tau1Ref is the had in mu+had and it is matched to CleanJets Jet
+
+ 
+}//End GGHAnalyzer_CJOnly::analyze
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void FakeRateAnalyzer::beginJob()
+void GGHAnalyzer_CJOnly::beginJob()
 {
   std::cout << "Begin Job" << std::endl;
 
@@ -842,56 +1080,35 @@ void FakeRateAnalyzer::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(5, "RECO Gen Match #tau_{had}");
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
-  GenMatchType_     = new TH1F("GenMatchType"    , "", 4, -.5, 3.5);
-      GenMatchType_->GetXaxis()->SetBinLabel(1, "#tau GenMatch");
-      GenMatchType_->GetXaxis()->SetBinLabel(2, "#mu GenMatch");
-      GenMatchType_->GetXaxis()->SetBinLabel(3, "elec GenMatch");
-      GenMatchType_->GetXaxis()->SetBinLabel(4, "Had GenMatch");
-  GenMatchPDGID_     = new TH1F("GenMatchPDGID"    , "", 1001, -.5, 1000.5);
-  GenMatchPDGIDwithLargeEta_     = new TH1F("GenMatchPDGIDwithLargeEta"    , "", 1001, -.5, 1000.5);
+      NEvents_->GetXaxis()->SetBinLabel(8, "Mu3 Tau_#mu match");
+      NEvents_->GetXaxis()->SetBinLabel(9, "Mu3 Tau_#mu no match");
   NMuRemoved_            = new TH1F("NMuRemoved"    , "", 2, -.5, 1.5);
       NMuRemoved_->GetXaxis()->SetBinLabel(1, "#tau_{#mu} + #tau_{Had} Event");
       NMuRemoved_->GetXaxis()->SetBinLabel(2, "and a Removed #mu");
-  TauMuTauHaddR_       = new TH1F("TauMuTauHaddR"    , "", 25, 0, 8);
+  TauMuTauHaddR_       = new TH1F("TauMuTauHaddR"    , "", 25, 0, 100);
   MassDiLepGEN_       = new TH1F("MassDiLepGEN"    , "", 25, 0, 130);
   MassDiLepRECO_       = new TH1F("MassDiLepRECO"    , "", 25, 70, 120);
   Mu3LargestPtMatch_       = new TH1F("Mu3LargestPtMatch"    , "", 25, 0, 130);
   Mu3PtMatch_       = new TH1F("Mu3PtMatch"    , "", 25, 0, 130);
-  MatchedTauMuPtLepton_       = new TH1F("MatchedTauMuPtLepton", "", 25, 0, 500);
-  MatchedTauHadPtLepton_       = new TH1F("MatchedTauHadPtLepton" , "", 25, 0, 500);
-  MatchedTauHadEtaLepton_       = new TH1F("MatchedTauHadEtaLepton", "", 25, -2.5, 2.5);
-  MatchedHTLepton_       = new TH1F("MatchedHTLepton", "", 25, 0, 1000);
-  MatchedBDiscCSVLepton_       = new TH1F("MatchedBDiscCSVLepton", "", 25, 0, 1);
-  MatchedTauMuPtJet_       = new TH1F("MatchedTauMuPtJet", "", 25, 0, 500);
-  MatchedTauHadPtJet_       = new TH1F("MatchedTauHadPtJet", "", 25, 0, 500);
-  MatchedTauHadEtaJet_       = new TH1F("MatchedTauHadEtaJet", "", 25, -2.5, 2.5);
-  MatchedHTJet_       = new TH1F("MatchedHTJet", "", 25, 0, 1000);
-  MatchedBDiscCSVJet_       = new TH1F("MatchedBDiscCSVJet", "", 25, 0, 1);
-  NEventsCuts_       = new TH1F("NEventsCuts", "", 24, -.5, 23.5);
+  MatchedTauMuPt_       = new TH1F("MatchedTauMuPt"    , "", 25, 0, 500);
+  MatchedTauHadPt_       = new TH1F("MatchedTauHadPt"    , "", 25, 0, 500);
+  MatchedTauHadEta_       = new TH1F("MatchedTauHadEta"    , "", 25, -2.5, 2.5);
+  MatchedHT_       = new TH1F("MatchedHT"    , "", 25, 0, 1000);
+  MatchedBDiscCSV_       = new TH1F("MatchedBDiscCSV"    , "", 25, 0, 1);
+  NEventsCuts_       = new TH1F("NEventsCuts"    , "", 13, -.5, 12.5);
       NEventsCuts_->GetXaxis()->SetBinLabel(1, "TotalEvents");
-      NEventsCuts_->GetXaxis()->SetBinLabel(2, "L: BD < .825"); //BD < . 9 , HT < 300");
-      NEventsCuts_->GetXaxis()->SetBinLabel(3, "L: BD < .5"); //BD < . 9 , HT < 300 + MedIso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(4, "L: BD < .9");
-      NEventsCuts_->GetXaxis()->SetBinLabel(5, "L: BD < .9 + Med Iso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(6, "L: HT < 300");
-      NEventsCuts_->GetXaxis()->SetBinLabel(7, "L: BD < .95");  //HT < 300 + MedIso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(8, "L: HT < 400 , BD < .9");
-      NEventsCuts_->GetXaxis()->SetBinLabel(9, "L: HT < 400 , BD < .9 MedIso"); 
-      NEventsCuts_->GetXaxis()->SetBinLabel(10, "J: BD < .825"); //BD < . 9 , HT < 300");
-      NEventsCuts_->GetXaxis()->SetBinLabel(11, "J: BD < .5"); //BD < . 9 , HT < 300 + MedIso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(12, "J: BD < .9");
-      NEventsCuts_->GetXaxis()->SetBinLabel(13, "J: BD < .9 + Med Iso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(14, "J: HT < 300");
-      NEventsCuts_->GetXaxis()->SetBinLabel(15, "J: BD < .95");  // HT < 300 + MedIso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(16, "J: HT < 400 , BD < .9");
-      NEventsCuts_->GetXaxis()->SetBinLabel(17, "J: HT < 400 , BD < .9 MedIso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(18, "Jet GM");
-      NEventsCuts_->GetXaxis()->SetBinLabel(19, "Lep GM");
-      NEventsCuts_->GetXaxis()->SetBinLabel(20, "Jet and Lep");
-      NEventsCuts_->GetXaxis()->SetBinLabel(21, "Removed Mu + Med Iso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(22, "Removed Muon");
-      NEventsCuts_->GetXaxis()->SetBinLabel(23, "Removed Mu + Loose Iso");
-      NEventsCuts_->GetXaxis()->SetBinLabel(24, "Removed Mu + Tight Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(2, "BD < .825");  //BD < . 9 , HT < 300");
+      NEventsCuts_->GetXaxis()->SetBinLabel(3, "BD < .5");   //BD < . 9 , HT < 300 + MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(4, "BD < .9");
+      NEventsCuts_->GetXaxis()->SetBinLabel(5, "BD < .9 + Med Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(6, "HT < 300");
+      NEventsCuts_->GetXaxis()->SetBinLabel(7, "BD < .95"); // HT < 300 + MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(8, "HT < 400 , BD < .9");
+      NEventsCuts_->GetXaxis()->SetBinLabel(9, "HT < 400 , BD < .9 MedIso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(10, "Removed Muon + Med Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(11, "Removed Muon");
+      NEventsCuts_->GetXaxis()->SetBinLabel(12, "Removed Mu + Loose Iso");
+      NEventsCuts_->GetXaxis()->SetBinLabel(13, "Removed Mu + Tight Iso");
   NConstituentsCJ_        = new TH1F("NConstituentsCJ"    , "", 25, 0, 50);
   PtOverMassMu1Mu2_        = new TH1F("PtOverMassMu1Mu2"    , "", 25, 0, 50);
   PtMu1Mu2_        = new TH1F("PtMu1Mu2"    , "", 25, 0, 300);
@@ -916,7 +1133,6 @@ void FakeRateAnalyzer::beginJob()
   RECOPtvsGENdRRECO_ = new TH2F("RECOPtvsGENdRRECO", "", 40, 0, 160, 40, 0, 4);
   RECOPtvsGENdRCJMedIso_ = new TH2F("RECOPtvsGENdRCJMedIso", "", 40, 0, 160, 40, 0, 4);
   RECOPtvsGENdRRECOMedIso_ = new TH2F("RECOPtvsGENdRRECOMedIso", "", 40, 0, 160, 40, 0, 4);
-  MatchedTauHadEtavsTauHadPt_ = new TH2F("MatchedTauHadEtavsTauHadPt", "", 100, -2.5, 2.5, 100, 0, 300);
   BDiscCSVvsRawIso_ = new TH2F("BDiscCSVvsRawIso", "", 10, 0, 1, 20, 0, 20);
 
   RECOCJTauDMvsGENTauDM_->GetXaxis()->SetBinLabel(1, "1prong");
@@ -1124,29 +1340,21 @@ void FakeRateAnalyzer::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void FakeRateAnalyzer::endJob()
+void GGHAnalyzer_CJOnly::endJob()
 {
   //Make the Canvases
   TCanvas NEventsCanvas("NEvents","",600,600);
-  TCanvas GenMatchTypeCanvas("GenMatchType","",600,600);
-  TCanvas GenMatchPDGIDCanvas("GenMatchPDGID","",600,600);
-  TCanvas GenMatchPDGIDwithLargeEtaCanvas("GenMatchPDGIDwithLargeEta","",600,600);
   TCanvas NMuRemovedCanvas("NMuRemoved","",600,600);
   TCanvas TauMuTauHaddRCanvas("TauMuTauHaddR","",600,600);
   TCanvas MassDiLepGENCanvas("MassDiLepGEN","",600,600);
   TCanvas MassDiLepRECOCanvas("MassDiLepRECO","",600,600);
   TCanvas Mu3LargestPtMatchCanvas("Mu3LargestPtMatch","",600,600);
   TCanvas Mu3PtMatchCanvas("Mu3PtMatch","",600,600);
-  TCanvas MatchedTauMuPtLeptonCanvas("MatchedTauMuPtLepton","",600,600);
-  TCanvas MatchedTauHadPtLeptonCanvas("MatchedTauHadPtLepton","",600,600);
-  TCanvas MatchedTauHadEtaLeptonCanvas("MatchedTauHadEtaLepton","",600,600);
-  TCanvas MatchedHTLeptonCanvas("MatchedHTLepton","",600,600); 
-  TCanvas MatchedBDiscCSVLeptonCanvas("MatchedBDiscCSVLepton","",600,600);
-  TCanvas MatchedTauMuPtJetCanvas("MatchedTauMuPtJet","",600,600);
-  TCanvas MatchedTauHadPtJetCanvas("MatchedTauHadPtJet","",600,600);
-  TCanvas MatchedTauHadEtaJetCanvas("MatchedTauHadEtaJet","",600,600);
-  TCanvas MatchedHTJetCanvas("MatchedHTJet","",600,600);
-  TCanvas MatchedBDiscCSVJetCanvas("MatchedBDiscCSVJet","",600,600);
+  TCanvas MatchedTauMuPtCanvas("MatchedTauMuPt","",600,600);
+  TCanvas MatchedTauHadPtCanvas("MatchedTauHadPt","",600,600);
+  TCanvas MatchedTauHadEtaCanvas("MatchedTauHadEta","",600,600);
+  TCanvas MatchedHTCanvas("MatchedHT","",600,600);
+  TCanvas MatchedBDiscCSVCanvas("MatchedBDiscCSV","",600,600);
   TCanvas NEventsCutsCanvas("NEventsCuts","",600,600);
   TCanvas NConstituentsCJCanvas("NConstituentsCJ","",600,600);
   TCanvas PtOverMassMu1Mu2Canvas("PtOverMassMu1Mu2","",600,600);
@@ -1172,7 +1380,6 @@ void FakeRateAnalyzer::endJob()
   TCanvas RECOPtvsGENdRRECOCanvas("RECOPtvsGENdRRECO","",600,600);
   TCanvas RECOPtvsGENdRCJMedIsoCanvas("RECOPtvsGENdRCJMedIso","",600,600);
   TCanvas RECOPtvsGENdRRECOMedIsoCanvas("RECOPtvsGENdRRECOMedIso","",600,600);
-  TCanvas MatchedTauHadEtavsTauHadPtCanvas("MatchedTauHadEtavsTauHadPt","",600,600);
   TCanvas BDiscCSVvsRawIsoCanvas("BDiscCSVvsRawIso","",600,600);
 
   std::cout << "\nRECOCJTauDMvsGENTauDM by column" << std::endl;
@@ -1459,6 +1666,7 @@ void FakeRateAnalyzer::endJob()
   TCanvas FinalEffLooseIsoSAMEPtGenOverDMCanvas("FinalEffLooseIsoSAMEPtGenOverDM","",600,600);
   TCanvas FinalEffMedIsoSAMEPtGenOverDMCanvas("FinalEffMedIsoSAMEPtGenOverDM","",600,600);
   TCanvas FinalEffTightIsoSAMEPtGenOverDMCanvas("FinalEffTightIsoSAMEPtGenOverDM","",600,600);
+
 /*
   FinalEffLooseIsoRECOPt_->Divide(MatchedLooseIsoRECOPt_, MatchedRECOPt_);
   FinalEffMedIsoRECOPt_->Divide(MatchedMedIsoRECOPt_,     MatchedRECOPt_);
@@ -1528,16 +1736,10 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
   //Format the 1D plots and Draw (canvas, hist, grid, log y, log z, color, size, style, xAxisTitle, xTitleSize, xLabelSize, xTitleOffSet, yAxisTitle, yTitleSize, yLabelSize, yTitleOffset)
   VariousFunctions::formatAndDrawCanvasAndHist1D(NEventsCanvas, NEvents_,
 	 1, 0, 0, kBlack, 7, 20, "", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(GenMatchTypeCanvas, GenMatchType_,
-         1, 0, 0, kBlack, 7, 20, "", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(GenMatchPDGIDCanvas, GenMatchPDGID_,
-         1, 0, 0, kBlack, 7, 20, "PDG ID #", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(GenMatchPDGIDwithLargeEtaCanvas, GenMatchPDGIDwithLargeEta_,
-         1, 0, 0, kBlack, 7, 20, "PDG ID # if |#eta| > 1.5", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(NMuRemovedCanvas, NMuRemoved_,
 	 1, 0, 0, kBlack, 7, 20, "N #mu Removed", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(TauMuTauHaddRCanvas, TauMuTauHaddR_,
-         1, 0, 0, kBlack, 7, 20, "#DeltaR(#tau_{mu} + #tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+	 1, 0, 0, kBlack, 7, 20, "#DeltaR(#tau_{mu} + #tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(MassDiLepGENCanvas, MassDiLepGEN_,
          1, 0, 0, kBlack, 7, 20, "Gen m_{di-lept}", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(MassDiLepRECOCanvas, MassDiLepRECO_,
@@ -1546,30 +1748,20 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 7, 20, "Largest p_{T} (Mu3) matched to Tau", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(Mu3PtMatchCanvas, Mu3PtMatch_,
          1, 0, 0, kBlack, 7, 20, "p_{T} (Mu3) matched to Tau", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauMuPtLeptonCanvas, MatchedTauMuPtLepton_,
-         1, 0, 0, kBlack, 7, 20, "Lepton: p_{T}(#tau_{mu})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadPtLeptonCanvas, MatchedTauHadPtLepton_,
-         1, 0, 0, kBlack, 7, 20, "Lepton: p_{T}(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadEtaLeptonCanvas, MatchedTauHadEtaLepton_,
-         1, 0, 0, kBlack, 7, 20, "Lepton: #eta(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedHTLeptonCanvas, MatchedHTLepton_,
-         1, 0, 0, kBlack, 7, 20, "Lepton: H_{T} of ak4PFJet with p_{T} > 20", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedBDiscCSVLeptonCanvas, MatchedBDiscCSVLepton_,
-         1, 0, 0, kBlack, 7, 20, "Lepton: CSV B Discriminant Value", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauMuPtJetCanvas, MatchedTauMuPtJet_,
-         1, 0, 0, kBlack, 7, 20, "Jet: p_{T}(#tau_{mu})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadPtJetCanvas, MatchedTauHadPtJet_,
-         1, 0, 0, kBlack, 7, 20, "Jet: p_{T}(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadEtaJetCanvas, MatchedTauHadEtaJet_,
-         1, 0, 0, kBlack, 7, 20, "Jet: #eta(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedHTJetCanvas, MatchedHTJet_,
-         1, 0, 0, kBlack, 7, 20, "Jet: H_{T} of ak4PFJet with p_{T} > 20", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedBDiscCSVJetCanvas, MatchedBDiscCSVJet_,
-         1, 0, 0, kBlack, 7, 20, "Jet: CSV B Discriminant Value", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauMuPtCanvas, MatchedTauMuPt_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#tau_{mu})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadPtCanvas, MatchedTauHadPt_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedTauHadEtaCanvas, MatchedTauHadEta_,
+         1, 0, 0, kBlack, 7, 20, "#eta(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedHTCanvas, MatchedHT_,
+         1, 0, 0, kBlack, 7, 20, "H_{T} of ak4PFJet with p_{T} > 20", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(MatchedBDiscCSVCanvas, MatchedBDiscCSV_,
+         1, 0, 0, kBlack, 7, 20, "CSV B Discriminant Value", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(NEventsCutsCanvas, NEventsCuts_,
          1, 0, 0, kBlack, 7, 20, "", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(NConstituentsCJCanvas, NConstituentsCJ_,
-         1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2}) / M(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 7, 20, "Number of Constituents", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtOverMassMu1Mu2Canvas, PtOverMassMu1Mu2_,
          1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2}) / Mass(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu1Mu2Canvas, PtMu1Mu2_,
@@ -1615,10 +1807,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 7, 20, "RECO CJ p_{T} + MedIso", .04, .04, 1.1, "GEN #DeltaR(#tau#tau)", .04, .04, 1.6, "", .04, .04, 1.0);
   VariousFunctions::formatAndDrawCanvasAndHist2D(RECOPtvsGENdRRECOMedIsoCanvas, RECOPtvsGENdRRECOMedIso_,
          1, 0, 0, kBlack, 7, 20, "RECO No CJ p_{T} + MedIso", .04, .04, 1.1, "GEN #DeltaR(#tau#tau)", .04, .04, 1.6, "", .04, .04, 1.0);
- VariousFunctions::formatAndDrawCanvasAndHist2D(MatchedTauHadEtavsTauHadPtCanvas, MatchedTauHadEtavsTauHadPt_,
-        1, 0, 0, kBlack, 7, 20, "GM #eta(#tau_{H})", .04, .04, 1.1, "GM p_{T}(#tau_{H})", .04, .04, 1.6, "", .04, .04, 1.0);
   VariousFunctions::formatAndDrawCanvasAndHist2D(BDiscCSVvsRawIsoCanvas, BDiscCSVvsRawIso_,
-         1, 0, 0, kBlack, 7, 20, "pfBTag CSV Value", .04, .04, 1.1, "Raw Iso Value", .04, .04, 1.6, "", .04, .04, 1.0);
+         1, 0, 0, kBlack, 7, 20, "BDisc CSV", .04, .04, 1.1, "Raw Iso Value", .04, .04, 1.6, "", .04, .04, 1.0);
 
 
 
@@ -2197,25 +2387,17 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   out_->cd();
 
   NEventsCanvas.Write();
-  GenMatchTypeCanvas.Write();
-  GenMatchPDGIDCanvas.Write();
-  GenMatchPDGIDwithLargeEtaCanvas.Write();
   NMuRemovedCanvas.Write();
   TauMuTauHaddRCanvas.Write();
   MassDiLepGENCanvas.Write();
   MassDiLepRECOCanvas.Write();
   Mu3LargestPtMatchCanvas.Write();
   Mu3PtMatchCanvas.Write();
-  MatchedTauMuPtLeptonCanvas.Write();
-  MatchedTauHadPtLeptonCanvas.Write();
-  MatchedTauHadEtaLeptonCanvas.Write();
-  MatchedHTLeptonCanvas.Write();
-  MatchedBDiscCSVLeptonCanvas.Write();
-  MatchedTauMuPtJetCanvas.Write();
-  MatchedTauHadPtJetCanvas.Write();
-  MatchedTauHadEtaJetCanvas.Write();
-  MatchedHTJetCanvas.Write();
-  MatchedBDiscCSVJetCanvas.Write();
+  MatchedTauMuPtCanvas.Write();
+  MatchedTauHadPtCanvas.Write();
+  MatchedTauHadEtaCanvas.Write();
+  MatchedHTCanvas.Write();
+  MatchedBDiscCSVCanvas.Write();
   NEventsCutsCanvas.Write();
   NConstituentsCJCanvas.Write();
   PtOverMassMu1Mu2Canvas.Write();
@@ -2241,7 +2423,6 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   RECOPtvsGENdRRECOCanvas.Write();
   RECOPtvsGENdRCJMedIsoCanvas.Write();
   RECOPtvsGENdRRECOMedIsoCanvas.Write();
-  MatchedTauHadEtavsTauHadPtCanvas.Write();
   BDiscCSVvsRawIsoCanvas.Write();
 
   MatchedLooseIsoRECOPtCanvas.Write();
@@ -2407,28 +2588,22 @@ std::cout << "DONE" << std::endl;
 }//EndJob
 
 // ------------ method called when starting to processes a run  ------------
-void FakeRateAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&) {}
+void GGHAnalyzer_CJOnly::beginRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a run  ------------
-void FakeRateAnalyzer::endRun(edm::Run const&, edm::EventSetup const&) {}
+void GGHAnalyzer_CJOnly::endRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void FakeRateAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void GGHAnalyzer_CJOnly::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-void FakeRateAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void GGHAnalyzer_CJOnly::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 //Delete Memory
-void FakeRateAnalyzer::reset(const bool doDelete)
+void GGHAnalyzer_CJOnly::reset(const bool doDelete)
 {
   if ((doDelete) && (NEvents_ != NULL)) delete NEvents_;
   NEvents_ = NULL;
-  if ((doDelete) && (GenMatchType_ != NULL)) delete GenMatchType_;
-  GenMatchType_ = NULL;
-  if ((doDelete) && (GenMatchPDGID_ != NULL)) delete GenMatchPDGID_;
-  GenMatchPDGID_ = NULL;
-  if ((doDelete) && (GenMatchPDGIDwithLargeEta_ != NULL)) delete GenMatchPDGIDwithLargeEta_;
-  GenMatchPDGIDwithLargeEta_ = NULL;
   if ((doDelete) && (NMuRemoved_ != NULL)) delete NMuRemoved_;
   NMuRemoved_ = NULL;
   if ((doDelete) && (TauMuTauHaddR_ != NULL)) delete TauMuTauHaddR_;
@@ -2441,26 +2616,16 @@ void FakeRateAnalyzer::reset(const bool doDelete)
   Mu3LargestPtMatch_ = NULL;
   if ((doDelete) && (Mu3PtMatch_ != NULL)) delete Mu3PtMatch_;
   Mu3PtMatch_ = NULL;
-  if ((doDelete) && (MatchedTauMuPtLepton_ != NULL)) delete MatchedTauMuPtLepton_;
-  MatchedTauMuPtLepton_ = NULL;
-  if ((doDelete) && (MatchedTauHadPtLepton_ != NULL)) delete MatchedTauHadPtLepton_;
-  MatchedTauHadPtLepton_ = NULL;
-  if ((doDelete) && (MatchedTauHadEtaLepton_ != NULL)) delete MatchedTauHadEtaLepton_;
-  MatchedTauHadEtaLepton_ = NULL;
-  if ((doDelete) && (MatchedHTLepton_ != NULL)) delete MatchedHTLepton_;
-  MatchedHTLepton_ = NULL;
-  if ((doDelete) && (MatchedBDiscCSVLepton_ != NULL)) delete MatchedBDiscCSVLepton_;
-  MatchedBDiscCSVLepton_ = NULL;
-  if ((doDelete) && (MatchedTauMuPtJet_ != NULL)) delete MatchedTauMuPtJet_;
-  MatchedTauMuPtJet_ = NULL;
-  if ((doDelete) && (MatchedTauHadPtJet_ != NULL)) delete MatchedTauHadPtJet_;
-  MatchedTauHadPtJet_ = NULL;
-  if ((doDelete) && (MatchedTauHadEtaJet_ != NULL)) delete MatchedTauHadEtaJet_;
-  MatchedTauHadEtaJet_ = NULL;
-  if ((doDelete) && (MatchedHTJet_ != NULL)) delete MatchedHTJet_;
-  MatchedHTJet_ = NULL;
-  if ((doDelete) && (MatchedBDiscCSVJet_ != NULL)) delete MatchedBDiscCSVJet_;
-  MatchedBDiscCSVJet_ = NULL;
+  if ((doDelete) && (MatchedTauMuPt_ != NULL)) delete MatchedTauMuPt_;
+  MatchedTauMuPt_ = NULL;
+  if ((doDelete) && (MatchedTauHadPt_ != NULL)) delete MatchedTauHadPt_;
+  MatchedTauHadPt_ = NULL;
+  if ((doDelete) && (MatchedTauHadEta_ != NULL)) delete MatchedTauHadEta_;
+  MatchedTauHadEta_ = NULL;
+  if ((doDelete) && (MatchedHT_ != NULL)) delete MatchedHT_;
+  MatchedHT_ = NULL;
+  if ((doDelete) && (MatchedBDiscCSV_ != NULL)) delete MatchedBDiscCSV_;
+  MatchedBDiscCSV_ = NULL;
   if ((doDelete) && (NEventsCuts_ != NULL)) delete NEventsCuts_;
   NEventsCuts_ = NULL;
   if ((doDelete) && (NConstituentsCJ_ != NULL)) delete NConstituentsCJ_;
@@ -2510,8 +2675,6 @@ void FakeRateAnalyzer::reset(const bool doDelete)
   RECOPtvsGENdRCJMedIso_ = NULL;
   if ((doDelete) && (RECOPtvsGENdRRECOMedIso_ != NULL)) delete RECOPtvsGENdRRECOMedIso_;
   RECOPtvsGENdRRECOMedIso_ = NULL;
-  if ((doDelete) && (MatchedTauHadEtavsTauHadPt_ != NULL)) delete MatchedTauHadEtavsTauHadPt_;
-  MatchedTauHadEtavsTauHadPt_ = NULL;
   if ((doDelete) && (BDiscCSVvsRawIso_ != NULL)) delete BDiscCSVvsRawIso_;
   BDiscCSVvsRawIso_ = NULL;
 
@@ -2727,10 +2890,10 @@ void FakeRateAnalyzer::reset(const bool doDelete)
   FinalEffDMFindCJPtGen_ = NULL;
 
 
-}//void FakeRateAnalyzer
+}//void GGHAnalyzer_CJOnly
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void FakeRateAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void GGHAnalyzer_CJOnly::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -2739,4 +2902,4 @@ void FakeRateAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descript
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(FakeRateAnalyzer);
+DEFINE_FWK_MODULE(GGHAnalyzer_CJOnly);
