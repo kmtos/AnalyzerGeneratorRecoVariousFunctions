@@ -55,7 +55,7 @@ process.options   = cms.untracked.PSet(
 		SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(200) )
 
 ####################
 # Input File List
@@ -72,13 +72,10 @@ process.ggh = cms.EDAnalyzer("SkimCheck",
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
    jetValMapTag = cms.InputTag("CleanJets", "jetValMap", "SKIM"),
    tauTag = cms.InputTag("muHadIsoTauSelector", "", "SKIM"),
-   medIsoTag = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
-   medIsoTagMVA = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVArun2v1DBnewDMwLT", "", "SKIM"),
    tightIsoTag = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVArun2v1DBnewDMwLT", "", "SKIM"),
    veryTightIsoTag = cms.InputTag("hpsPFTauDiscriminationByVTightIsolationMVArun2v1DBnewDMwLT", "", "SKIM"),
    decayModeFindingTag = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingNewDMs", "", "SKIM"),
    isoRawTag = cms.InputTag("hpsPFTauDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
-   isoRawTagMVA = cms.InputTag("hpsPFTauDiscriminationByIsolationMVArun2v1DBnewDMwLTraw", "", "SKIM"),
    oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'SKIM'),
    mu12Tag = cms.InputTag('Isolate'),
    mu3Tag = cms.InputTag('Mu3ID'),

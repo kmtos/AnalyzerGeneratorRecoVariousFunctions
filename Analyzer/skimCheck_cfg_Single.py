@@ -62,6 +62,11 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 ####################
 process.source = cms.Source("PoolSource",
          fileNames = cms.untracked.vstring(
+#####   Random   ####
+#'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/QCD_Pt-300to470_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8/QCD_300to470_NoIsoDiTau_NoMassCut_FEB9/170227_194021/0000/RegionB_selection_NUM.root')
+'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/DY1JetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/DYLowMass_NoIsoDiMu_NoMassCut_NoMassCut_FEB9/170305_153020/0000/RegionB_selection_NUM.root')
+
+
 ####   SameSignDiMu   ####
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/DYHighMass_SameSignDiMu_FEB9/170222_164750/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/DY1JetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/DYLowMass_SameSignDiMu_FEB9/170222_164806/0000/RegionB_selection_NUM.root')
@@ -122,7 +127,7 @@ process.source = cms.Source("PoolSource",
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/QCD_Pt-800to1000_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8/QCD_800to1000_NoIsoDiTau_FEB9/170214_213039/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/QCD_Pt-80to120_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8/QCD_80to120_NoIsoDiTau_FEB9/170217_231315/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TTBar_NoIsoDiTau_FEB9/170214_213116/0000/RegionB_selection_NUM.root')
-'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/SignalH125a19_NoIsoDiTau_FEB9/170217_224000/0000/RegionB_selection_NUM.root')
+#'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/SignalH125a19_NoIsoDiTau_FEB9/170217_224000/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/SignalH125a5_NoIsoDiTau_FEB9/170214_223043/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/SignalH125a9_NoIsoDiTau_FEB9/170214_223247/0000/RegionB_selection_NUM.root')
 #'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/SignalH750a9_NoIsoDiTau_FEB9/170217_223956/0000/RegionB_selection_NUM.root')

@@ -18,11 +18,12 @@ cd BSUB/$dir_name
 path=$(pwd)
 echo "path= $path"
 
+cp ../../src/GGHAnalyzer_IndivCJ.cc ../../src/GGHAnalyzer_IndivRECO.cc ../../src/GGHAnalyzer_OLD.cc ../../src/ZTTAnalyzer.cc ../../src/FakeRateAnalyzer.cc ../../src/SkimCheck.cc .
+
 COUNT=1
 while [ $COUNT -le  $divisions ]; do
   echo "DIRNAME    = ${dir_name}"
   echo "python file= ${cfg_name}_${dir_name}_${COUNT}.py"
-  cp ../../src/GGHAnalyzer.cc GGHAnalyzer_${dir_name}.cc
   echo "Script name= ${script_name}_${dir_name}_${COUNT}.sh"
   sed -e "s%DIRNAME%${dir_name}%g" -e "s%NUM%${COUNT}%g" ../../${cfg_name}.py > ${cfg_name}_${dir_name}_${COUNT}.py
   sed -e "s%ANALYZER%${cfg_name}_${dir_name}_${COUNT}%g" -e "s%DIRNAME%${dir_name}%g" -e "s%NUM%${COUNT}%g" ../../${script_name}.sh > ${script_name}_${dir_name}_${COUNT}.sh
