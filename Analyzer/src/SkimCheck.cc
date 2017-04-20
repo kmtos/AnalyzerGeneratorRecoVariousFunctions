@@ -263,18 +263,27 @@ void SkimCheck::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<reco::JetTagCollection> pCSV;
   iEvent.getByToken(csvBTag_, pCSV);
 
+  std::cout << "Declared objects" << std::endl;
 //////////////////////////////
 // Begin Analyzer
 //////////////////////////////
   //Getting Mu1 and Mu2
   reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
+  std::cout << "check1" << std::endl;
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
+  std::cout << "check2" << std::endl;
   reco::LeafCandidate::LorentzVector diMuP4;
+  std::cout << "check3" << std::endl;
   diMuP4 = mu1Ref->p4();
+  std::cout << "check4" << std::endl;
   diMuP4 += mu2Ref->p4();
+  std::cout << "check5" << std::endl;
   PtOverMassMu1Mu2_->Fill(diMuP4.Pt() / diMuP4.M() );
+  std::cout << "check6" << std::endl;
   MassDiMuRECO_->Fill(diMuP4.M() );
+  std::cout << "check7" << std::endl;
   PtMu1Mu2_->Fill(diMuP4.Pt() );  //mu1Ref->pt() + mu2Ref->pt() );
+  std::cout << "Filled DiMu Stuff" << std::endl;
 
   // Getting Tau_Had
   size_t numTauHad = pTaus->size(), tauHadIndex = -1;
@@ -287,6 +296,7 @@ void SkimCheck::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       largestPt = reco::PFTauRef((*pTaus)[iTau] )->pt();
     }//if largets tauHad pt
   }//for
+  std::cout << "Getting largest pt tau_had" << std::endl;
   reco::PFTauRef tauHadRef = reco::PFTauRef((*pTaus)[tauHadIndex] );
   const reco::PFJetRef& tauJetRef = (*tauHadRef).jetRef();
   unsigned int TightIso = (*pTightIsoDisc)[tauHadRef], VTightIso = (*pVTightIsoDisc)[tauHadRef], DM = (*pDMFinding)[tauHadRef];
