@@ -41,12 +41,7 @@ ANY_PT_RANK = -1
 #################
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
-<<<<<<< HEAD
-mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_ggH300_a9_CleanJets.txt')
-=======
-mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_7_6_3/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_ggH125_a9_CleanJets.txt')
->>>>>>> 3ec953b4f9b58e1126afc333ff858db8e9e35a36
-
+#mylist = FileUtils.loadListFromFile('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/inFileList_ggH750_a9_Trig_CJ_OldMVA.txt')
 process = cms.Process("CleanJetsAnalyzer")
 
 ###################################################
@@ -62,75 +57,55 @@ process.options   = cms.untracked.PSet(
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
-#########################################
-# Rerunning bTaggin on CleanJets Sample
-#########################################
-process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load("Configuration.Geometry.GeometryRecoDB_cff")  #Configuration.StandardSequences.Geometry_cff")
-process.load("Configuration.StandardSequences.Reconstruction_cff")
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff") #Configuration.StandardSequences.FrontierConditions_CMS.GlobalTag_cff")
-process.GlobalTag.globaltag = cms.string('76X_dataRun2_v15') #'IDEAL_V9::All'
-process.impactParameterTagInfos.jetTracks = cms.InputTag("ak4JetTracksAssociatorAtVertex")
-process.ak4JetTracksAssociatorAtVertex.jets = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS')
-process.ak4JetTracksAssociatorAtVertex.tracks = cms.InputTag("generalTracks")
-
-process.btagging = cms.Sequence(
-    process.ak4JetTracksAssociatorAtVertex*
-    # impact parameters and IP-only algorithms
-    process.impactParameterTagInfos*
-    (process.trackCountingHighEffBJetTags +
-     process.trackCountingHighPurBJetTags +
-     process.jetProbabilityBJetTags +
-     process.jetBProbabilityBJetTags +
-     # SV tag infos depending on IP tag infos, and SV (+IP) based algos
-     process.secondaryVertexTagInfos*
-     (process.simpleSecondaryVertexHighEffBJetTags +
-      process.simpleSecondaryVertexHighPurBJetTags +
-      process.combinedSecondaryVertexBJetTags) +
-     process.ghostTrackVertexTagInfos*
-     process.ghostTrackBJetTags)
-)
-
 ####################
 # Input File List
 ####################
-readFiles = cms.untracked.vstring(*mylist)
 process.source = cms.Source("PoolSource",
-    fileNames = readFiles,
-    skipEvents = cms.untracked.uint32(0)
-    )
+        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a19_Mu2Loose_DEC2/161213_165941/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H750_a9_Mu2Loose_DEC2/161213_165902/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a5_Mu2Loose_DEC2/161213_165854/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a9_Mu2Loose_DEC2/161213_165839/0000/Background_edm_output_NUM.root')
+
+)
+#readFiles = cms.untracked.vstring(*mylist)
+#process.source = cms.Source("PoolSource",
+#    fileNames = readFiles,
+#    skipEvents = cms.untracked.uint32(0)
+#    )
 
 process.ggh = cms.EDAnalyzer("GGHAnalyzer_OLD",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_6/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots.root'),
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    genParticleTag = cms.InputTag("genParticles", "", ""),
    akJetTag = cms.InputTag("ak4PFJets"),
    muonsTag = cms.InputTag("muons"),
    vtxTag = cms.InputTag('offlinePrimaryVertices'),
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
-   jetValMapTag = cms.InputTag("CleanJets", "jetValMap", "CLEANJETS"),
+   jetValMapTag = cms.InputTag("CleanJets", "jetValMap", "SKIM"),
    tauRECOTag = cms.InputTag("hpsPFTauProducer", "", "RECO"),
-   tauCJTag = cms.InputTag("hpsPFTauProducer", "", "CLEANJETS"),
+   tauCJTag = cms.InputTag("hpsPFTauProducer", "", "SKIM"),
    pizerosTag = cms.InputTag("hpsPFTauProducer", "pizeros" ),
-   #looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
-   looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3oldDMwLT", "", "CLEANJETS"),   
-   #medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
-   medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3oldDMwLT", "", "CLEANJETS"),   
-   #tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "CLEANJETS"),
-   tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3oldDMwLT", "", "CLEANJETS"),   
-   decayModeFindingTagCJ = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "CLEANJETS"),
+   #looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
+   looseIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVArun2v1DBoldDMwLT", "", "SKIM"),   
+   #medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
+   medIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVArun2v1DBoldDMwLT", "", "SKIM"),   
+   #tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
+   tightIsoTagCJ = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVArun2v1DBoldDMwLT", "", "SKIM"),   
+   decayModeFindingTagCJ = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "SKIM"),
    #looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
-   looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVA3oldDMwLT", "", "RECO"),   
+   looseIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByLooseIsolationMVArun2v1DBoldDMwLT", "", "RECO"),   
    #medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
-   medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVA3oldDMwLT", "", "RECO"),   
+   medIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByMediumIsolationMVArun2v1DBoldDMwLT", "", "RECO"),   
    #tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightCombinedIsolationDBSumPtCorr3Hits", "", "RECO"),
-   tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVA3oldDMwLT", "", "RECO"),
+   tightIsoTagRECO = cms.InputTag("hpsPFTauDiscriminationByTightIsolationMVArun2v1DBoldDMwLT", "", "RECO"),
    decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingOldDMs", "", "RECO"),
-   oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'CLEANJETS'),
-   csvBTag = cms.InputTag("combinedSecondaryVertexBJetTags", "", "CleanJetsAnalyzer")
+   isoRawTag = cms.InputTag("hpsPFTauDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits","", "SKIM"),
+   oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'SKIM'),
+   mu12Tag = cms.InputTag('Isolation'),
+   mu3Tag = cms.InputTag('Mu3ID'),
+   csvBTag = cms.InputTag("pfCombinedInclusiveSecondaryVertexV2BJetTags", "", "SKIM")
 )
 
 
 process.p2 = cms.Path(
-	process.btagging*
-	process.ggh
-)
+	process.ggh)
+

@@ -61,16 +61,17 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 # Input File List
 ####################
 process.source = cms.Source("PoolSource",
-#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a19_Mu2Loose_DEC2/161213_165941/0000/Background_edm_output_NUM.root')
-#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H750_a9_Mu2Loose_DEC2/161213_165902/0000/Background_edm_output_NUM.root')
-#       fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a5_Mu2Loose_DEC2/161213_165854/0000/Background_edm_output_NUM.root')
-#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a9_Mu2Loose_DEC2/161213_165839/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a19_CJMu3Only_DEC2/170109_202131/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H750_a9_CJMu3Only_DEC2/170109_202512/0000/Background_edm_output_NUM.root')
+#       fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a5_CJMu3Only_DEC2/170109_202135/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a9_CJMu3Only_DEC2/170109_202136/0000/Background_edm_output_NUM.root')
 
-## These are just for the Tau CJ efficiencies
-#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a19_CJOnly_DEC2/170106_044801/0000/Background_edm_output_NUM.root')
-        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H750_a9_CJOnly_DEC2/170106_174616/0000/Background_edm_output_NUM.root')
-#       fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a5_CJOnly_DEC2/170106_174616/0000/Background_edm_output_NUM.root')
-#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a9_CJOnly_DEC2/170106_053407/0000/Background_edm_output_NUM.root')
+###### NO Filters
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-19_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a19_CJOnlyNoFilter_DEC2/170109_202810/0000/Background_edm_output_NUM.root')
+#        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H750_a9_CJOnlyNoFilter_DEC2/170109_202847/0000/Background_edm_output_NUM.root')
+#       fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a5_CJOnlyNoFilter_DEC2/170109_202832/0000/Background_edm_output_NUM.root')
+        fileNames = cms.untracked.vstring('root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-9_TuneCUETP8M1_13TeV_madgraph_pythia8/CRAB3_H125_a9_CJOnlyNoFilter_DEC2/170109_202825/0000/Background_edm_output_NUM.root')
+
 )
 
 #readFiles = cms.untracked.vstring(*mylist)
@@ -79,7 +80,7 @@ process.source = cms.Source("PoolSource",
 #    skipEvents = cms.untracked.uint32(0)
 #    )
 
-process.ggh = cms.EDAnalyzer("GGHAnalyzer_OLD",
+process.ggh = cms.EDAnalyzer("GGHAnalyzer_CJOnly",
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    genParticleTag = cms.InputTag("genParticles", "", ""),
    akJetTag = cms.InputTag("ak4PFJets"),
@@ -106,8 +107,6 @@ process.ggh = cms.EDAnalyzer("GGHAnalyzer_OLD",
    decayModeFindingTagRECO = cms.InputTag("hpsPFTauDiscriminationByDecayModeFindingNewDMs", "", "RECO"),
    isoRawTag = cms.InputTag("hpsPFTauDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits", "", "SKIM"),
    oldJetTag = cms.InputTag('CleanJets', 'ak4PFJetsNoMu', 'SKIM'),
-   mu12Tag = cms.InputTag('Isolation'),
-   mu3Tag = cms.InputTag('Mu3ID'),
    csvBTag = cms.InputTag("pfCombinedInclusiveSecondaryVertexV2BJetTags", "", "SKIM")
 )
 
