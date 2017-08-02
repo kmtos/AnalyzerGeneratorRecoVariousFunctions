@@ -130,9 +130,9 @@ class SkimCheck_Upsilon : public edm::EDAnalyzer {
       TH1F* NEventsCuts_;
       TH1F* PtOverMassMu1Mu2_;
       TH1F* PtMu1Mu2_;
-      TH1F* PCSVBDisc_;
-      TH1F* SumHT_;
-      TH1F* IsoRaw_;
+      TH1F* PtMu1_;
+      TH1F* PTMu2_;
+      TH1F* dRMu1Mu2_;
       TH1F* RelIsoRaw_;
       TH1F* IsoRawCutBased_;
 };
@@ -192,21 +192,17 @@ void SkimCheck_Upsilon::analyze(const edm::Event& iEvent, const edm::EventSetup&
 //////////////////////////////
   //Getting Mu1 and Mu2
   reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
-  std::cout << "check1" << std::endl;
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
-  std::cout << "check2" << std::endl;
+  PtMu1_->Fill(mu1Ref->pt() );
+  PTMu2_->Fill(mu2Ref->pt() );
+  double dPhi = reco::deltaPhi(mu1Ref->phi(), mu2Ref->phi() ), dEta = mu1Ref->eta() - mu2Ref->eta();
+  dRMu1Mu2_->Fill( sqrt( dPhi*dPhi + dEta*dEta) );
   reco::LeafCandidate::LorentzVector diMuP4;
-  std::cout << "check3" << std::endl;
   diMuP4 = mu1Ref->p4();
-  std::cout << "check4" << std::endl;
   diMuP4 += mu2Ref->p4();
-  std::cout << "check5" << std::endl;
   PtOverMassMu1Mu2_->Fill(diMuP4.Pt() / diMuP4.M() );
-  std::cout << "check6" << std::endl;
   MassDiMuRECO_->Fill(diMuP4.M() );
-  std::cout << "check7" << std::endl;
   PtMu1Mu2_->Fill(diMuP4.Pt() );  //mu1Ref->pt() + mu2Ref->pt() );
-  std::cout << "Filled DiMu Stuff" << std::endl;
 }//End SkimCheck_Upsilon::analyze
 
 
@@ -236,9 +232,9 @@ void SkimCheck_Upsilon::beginJob()
       NEventsCuts_->GetXaxis()->SetBinLabel(13, "VTight Iso");
   PtOverMassMu1Mu2_        = new TH1F("PtOverMassMu1Mu2"    , "", 50, 0, 50);
   PtMu1Mu2_        = new TH1F("PtMu1Mu2"    , "", 50, 0, 700);
-  PCSVBDisc_        = new TH1F("PCSVBDisc"    , "", 50, 0, 1);
-  SumHT_        = new TH1F("SumHT"    , "", 50, 0, 800);
-  IsoRaw_        = new TH1F("IsoRaw"    , "", 100, 0, 10);
+  PtMu1_        = new TH1F("PtMu1"    , "", 100, 0, 500);
+  PTMu2_        = new TH1F("PTMu2"    , "", 100, 0, 500);
+  dRMu1Mu2_        = new TH1F("dRMu1Mu2"    , "", 100, 0, 5);
   RelIsoRaw_        = new TH1F("RelIsoRaw"    , "", 100, 0, 5);
   IsoRawCutBased_        = new TH1F("IsoRawCutBased"    , "", 100, 0, 10);
 
@@ -252,9 +248,9 @@ void SkimCheck_Upsilon::endJob()
   TCanvas NEventsCutsCanvas("NEventsCuts","",600,600);
   TCanvas PtOverMassMu1Mu2Canvas("PtOverMassMu1Mu2","",600,600);
   TCanvas PtMu1Mu2Canvas("PtMu1Mu2","",600,600);
-  TCanvas PCSVBDiscCanvas("PCSVBDisc","",600,600);
-  TCanvas SumHTCanvas("SumHT","",600,600);
-  TCanvas IsoRawCanvas("IsoRaw","",600,600);
+  TCanvas PtMu1Canvas("PtMu1","",600,600);
+  TCanvas PTMu2Canvas("PTMu2","",600,600);
+  TCanvas dRMu1Mu2Canvas("dRMu1Mu2","",600,600);
   TCanvas RelIsoRawCanvas("RelIsoRaw","",600,600);
   TCanvas IsoRawCutBasedCanvas("IsoRawCutBased","",600,600);
 
@@ -269,12 +265,12 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2}) / Mass(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu1Mu2Canvas, PtMu1Mu2_,
          1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(PCSVBDiscCanvas, PCSVBDisc_,
-         1, 0, 0, kBlack, 7, 20, "pCSV BDiscriminant Value", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(SumHTCanvas, SumHT_,
-         1, 0, 0, kBlack, 7, 20, "HT(sum p_{T}(ak4 Jet > 20) - p_{T}(#tau_{had},#mu_{1},#mu_{2} if > 20)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(IsoRawCanvas, IsoRaw_,
-         1, 0, 0, kBlack, 7, 20, "Raw Isolation Value", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu1Canvas, PtMu1_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{1}) ", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PTMu2Canvas, PTMu2_,
+         1, 0, 0, kBlack, 7, 20, "p_{T}(#mu_{2}) ", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(dRMu1Mu2Canvas, dRMu1Mu2_,
+         1, 0, 0, kBlack, 7, 20, "#Delta R(#mu_{1}#mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(RelIsoRawCanvas, RelIsoRaw_,
          1, 0, 0, kBlack, 7, 20, "Raw Isolation Value / p_{T}(#tau_{Had})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(IsoRawCutBasedCanvas, IsoRawCutBased_,
@@ -291,9 +287,9 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   NEventsCutsCanvas.Write();
   PtOverMassMu1Mu2Canvas.Write();
   PtMu1Mu2Canvas.Write();
-  PCSVBDiscCanvas.Write();
-  SumHTCanvas.Write();
-  IsoRawCanvas.Write();
+  PtMu1Canvas.Write();
+  PTMu2Canvas.Write();
+  dRMu1Mu2Canvas.Write();
   RelIsoRawCanvas.Write();
   IsoRawCutBasedCanvas.Write();
 
@@ -325,12 +321,12 @@ void SkimCheck_Upsilon::reset(const bool doDelete)
   PtOverMassMu1Mu2_ = NULL;
   if ((doDelete) && (PtMu1Mu2_ != NULL)) delete PtMu1Mu2_;
   PtMu1Mu2_ = NULL;
-  if ((doDelete) && (PCSVBDisc_ != NULL)) delete PCSVBDisc_;
-  PCSVBDisc_ = NULL;
-  if ((doDelete) && (SumHT_ != NULL)) delete SumHT_;
-  SumHT_ = NULL;
-  if ((doDelete) && (IsoRaw_ != NULL)) delete IsoRaw_;
-  IsoRaw_ = NULL;
+  if ((doDelete) && (PtMu1_ != NULL)) delete PtMu1_;
+  PtMu1_ = NULL;
+  if ((doDelete) && (PTMu2_ != NULL)) delete PTMu2_;
+  PTMu2_ = NULL;
+  if ((doDelete) && (dRMu1Mu2_ != NULL)) delete dRMu1Mu2_;
+  dRMu1Mu2_ = NULL;
   if ((doDelete) && (RelIsoRaw_ != NULL)) delete RelIsoRaw_;
   RelIsoRaw_ = NULL;
   if ((doDelete) && (IsoRawCutBased_ != NULL)) delete IsoRawCutBased_;

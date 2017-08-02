@@ -2480,8 +2480,6 @@ void FakeRateAnalyzer::reset(const bool doDelete)
   NTauDecayModeRECOCJIfGen3_ = NULL;
   if ((doDelete) && (NTauDecayModeRECONoCJIfGen3_ != NULL)) delete NTauDecayModeRECONoCJIfGen3_;
   NTauDecayModeRECONoCJIfGen3_ = NULL;
-  if ((doDelete) && (NTausRECOvsCLEANJETS_ != NULL)) delete NTausRECOvsCLEANJETS_;
-  NTausRECOvsCLEANJETS_ = NULL;
   if ((doDelete) && (GenDiTaudRvsCJDiTaudR_ != NULL)) delete GenDiTaudRvsCJDiTaudR_;
   GenDiTaudRvsCJDiTaudR_ = NULL;
   if ((doDelete) && (TauHadnConstvsPt_ != NULL)) delete TauHadnConstvsPt_;

@@ -32,7 +32,7 @@ do
   echo "path= $path"
   cp ../../src/GGHAnalyzer_IndivCJ.cc ../../src/GGHAnalyzer_IndivRECO.cc ../../src/GGHAnalyzer_OLD.cc ../../src/ZTTAnalyzer.cc ../../src/FakeRateAnalyzer.cc ../../src/SkimCheck.cc .
 
-  divisions=$((divisions + 10))
+  divisions=$((divisions + 20))
   COUNT=1
   while [ $COUNT -le  $divisions ]; do
     echo "DIRNAME    = ${dir_name}"
