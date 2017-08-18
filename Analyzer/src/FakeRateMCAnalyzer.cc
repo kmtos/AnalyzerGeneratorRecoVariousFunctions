@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    FakeRateWithWeightsAnalyzer
-// Class:      FakeRateWithWeightsAnalyzer
+// Package:    FakeRateMCAnalyzer
+// Class:      FakeRateMCAnalyzer
 // 
-/**\class FakeRateWithWeightsAnalyzer FakeRateWithWeightsAnalyzer.cc Analyzer/src/FakeRateWithWeightsAnalyzer.cc
+/**\class FakeRateMCAnalyzer FakeRateMCAnalyzer.cc Analyzer/src/FakeRateMCAnalyzer.cc
 
  Description: [one line class summary]
 
@@ -93,11 +93,11 @@ using namespace trigger;
 // class declaration
 //
 
-class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
+class FakeRateMCAnalyzer : public edm::EDAnalyzer {
    public:
       typedef reco::JetFloatAssociation::Container JetBCEnergyRatioCollection;
-      explicit FakeRateWithWeightsAnalyzer(const edm::ParameterSet&);
-      ~FakeRateWithWeightsAnalyzer();
+      explicit FakeRateMCAnalyzer(const edm::ParameterSet&);
+      ~FakeRateMCAnalyzer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -118,7 +118,6 @@ class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       //pointer to output file object
       TFile* out_;
-      TFile* TH2File;
 
       //name of output root file
       std::string outFileName_;
@@ -136,7 +135,6 @@ class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > > muonMapTag_;
       bool requireRemovedMuon_;
       edm::EDGetTokenT<MuonRefVector> muonSrc_;
-      std::string TH2FileName_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -165,7 +163,7 @@ class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-FakeRateWithWeightsAnalyzer::FakeRateWithWeightsAnalyzer(const edm::ParameterSet& iConfig):
+FakeRateMCAnalyzer::FakeRateMCAnalyzer(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
   akJetTag_(consumes<vector<reco::PFJet> >(iConfig.getParameter<edm::InputTag>("akJetTag"))),
   tauTag_(consumes<vector<reco::PFTau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
@@ -180,15 +178,14 @@ FakeRateWithWeightsAnalyzer::FakeRateWithWeightsAnalyzer(const edm::ParameterSet
   muonsTag_(consumes<vector<reco::Muon> >(iConfig.getParameter<edm::InputTag>("muonsTag"))),
   muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
-  muonSrc_(consumes<MuonRefVector>(iConfig.getParameter<edm::InputTag>("muonSrc"))),
-  TH2FileName_(iConfig.getParameter<std::string>("TH2FileName"))
+  muonSrc_(consumes<MuonRefVector>(iConfig.getParameter<edm::InputTag>("muonSrc")))
 {
   reset(false);    
-}//FakeRateWithWeightsAnalyzer
+}//FakeRateMCAnalyzer
 
 
 
-FakeRateWithWeightsAnalyzer::~FakeRateWithWeightsAnalyzer()
+FakeRateMCAnalyzer::~FakeRateMCAnalyzer()
 {
   reset(true);
 }
@@ -199,7 +196,7 @@ FakeRateWithWeightsAnalyzer::~FakeRateWithWeightsAnalyzer()
 //
 
 // ------------ method called for each event  ------------
-void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   std::cout << "\n<------------THIS IS A NEW EVENT------------>" << std::endl;
   NEvents_->Fill(0);
@@ -319,79 +316,30 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
       InvMassTauMuMu2_->Fill(diMuP4_2.M() );
     }//if removed Mu
 
-    TH2File = new TFile(TH2FileName_.c_str());
-    //TCanvas* FinalFakeRateMedIsoEtavsPtCanvas = (TCanvas*)TH2File->Get("FinalFakeRateMedIsoEtavsPtCanvas");
-    //TH2F* FinalFakeRateMedIsoEtavsPt_ = (TH2F*)FinalFakeRateMedIsoEtavsPtCanvas->GetPrimitive("FakeRateMedIsoEtavsPt");
-    TCanvas* FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas = (TCanvas*)TH2File->Get("FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas");
-    TH2F* FinalFakeRateDMtoMedIsoOnlyEtavsPt_ = (TH2F*)FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas->GetPrimitive("FakeRateDMFindEtavsPt");
-    TAxis *xaxis = FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetXaxis();
-    TAxis *yaxis = FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetYaxis();
-    Int_t binx = xaxis->FindBin(iTau->pt()  );
-    Int_t biny = yaxis->FindBin(iTau->eta() );
-    double rate= FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetBinContent(binx, biny);
-    while (rate == 0 && binx > 0)
-    {
-      std::cout << "\tBin(" << binx << "," << biny << ")=0. New bin is (" << binx-1 << "," << biny << ")" << std::endl;
-      binx--;
-      rate= FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetBinContent(binx, biny);
-    }
-    double weight = rate / (1 - rate);
-
-    InvMassFakeWeight_->Fill(diMuP4.M(),  weight);
-    InvMassFakeWeightZoom_->Fill(diMuP4.M(),  weight);
+    InvMassFakeWeight_->Fill(diMuP4.M() );
+    InvMassFakeWeightZoom_->Fill(diMuP4.M() );
     reco::LeafCandidate::LorentzVector diTauP4 =  iTau->p4() + removedMuonRef->p4();
-    TauVisMass_->Fill(diTauP4.M(),  weight);
-    TauVisMassZoom_->Fill(diTauP4.M(),  weight);
-    PtMu1FakeWeight_->Fill(mu1Ref->pt(), weight);
-    PtMu2FakeWeight_->Fill(mu2Ref->pt(), weight);
-    EtaFakeWeight_->Fill(mu1Ref->eta(), weight);
+    TauVisMass_->Fill(diTauP4.M() );
+    TauVisMassZoom_->Fill(diTauP4.M() );
+    PtMu1FakeWeight_->Fill(mu1Ref->pt() );
+    PtMu2FakeWeight_->Fill(mu2Ref->pt() );
+    EtaFakeWeight_->Fill(mu1Ref->eta() );
     double dPhi = reco::deltaPhi(mu1Ref->phi(), mu2Ref->phi() );
     double dR_tauMu = sqrt( (mu1Ref->eta() - mu2Ref->eta() ) * (mu1Ref->eta() - mu2Ref->eta() ) +  dPhi * dPhi);
-    DRFakeWeight_->Fill(dR_tauMu, weight);
-    DRFakeWeightZoom_->Fill(dR_tauMu, weight);
+    DRFakeWeight_->Fill(dR_tauMu );
+    DRFakeWeightZoom_->Fill(dR_tauMu );
   }//iTau
-}//End FakeRateWithWeightsAnalyzer::analyze
+}//End FakeRateMCAnalyzer::analyze
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void FakeRateWithWeightsAnalyzer::beginJob()
+void FakeRateMCAnalyzer::beginJob()
 {
   std::cout << "Begin Job" << std::endl;
 
   //Open output file
   out_ = new TFile(outFileName_.c_str(), "RECREATE");
   
-//  TCanvas* FinalFakeRateLooseIsoEtavsPtCanvas = (TCanvas*)TH2File.Get("FinalFakeRateLooseIsoEtavsPtCanvas");
-//  TCanvas* FinalFakeRateMedIsoEtavsPtCanvas = (TCanvas*)TH2File.Get("FinalFakeRateMedIsoEtavsPtCanvas");
-//  TCanvas* FinalFakeRateTightIsoEtavsPtCanvas = (TCanvas*)TH2File.Get("FinalFakeRateTightIsoEtavsPtCanvas");
-//  TCanvas* FinalFakeRateEtavsPtCanvas = (TCanvas*)TH2File.Get("FinalFakeRateEtavsPtCanvas");
-
-//  TH2F* FinalFakeRateLooseIsoEtavsPt_ = (TH2F*)FinalFakeRateLooseIsoEtavsPtCanvas->GetPrimitive("FakeRateLooseIsoEtavsPt");
-//  TH2F* FinalFakeRateMedIsoEtavsPt_ = (TH2F*)FinalFakeRateMedIsoEtavsPtCanvas->GetPrimitive("FakeRateMedIsoEtavsPt");
-//  TH2F* FinalFakeRateTightIsoEtavsPt_ = (TH2F*)FinalFakeRateTightIsoEtavsPtCanvas->GetPrimitive("FakeRateTightIsoEtavsPt");
-//  TH2F* FinalFakeRateEtavsPt_ = (TH2F*)FinalFakeRateEtavsPtCanvas->GetPrimitive("FakeRateEtavsPt");
-
-//  TCanvas* FinalFakeRateLooseIsoEtavsPtSoftMuonCanvas = (TCanvas*)TH2File.Get("FinalFakeRateLooseIsoEtavsPtSoftMuonCanvas");
-//  TCanvas* FinalFakeRateMedIsoEtavsPtSoftMuonCanvas = (TCanvas*)TH2File.Get("FinalFakeRateMedIsoEtavsPtSoftMuonCanvas");
-//  TCanvas* FinalFakeRateTightIsoEtavsPtSoftMuonCanvas = (TCanvas*)TH2File.Get("FinalFakeRateTightIsoEtavsPtSoftMuonCanvas");
-//  TCanvas* FinalFakeRateEtavsPtSoftMuonCanvas = (TCanvas*)TH2File.Get("FinalFakeRateEtavsPtSoftMuonCanvas");
-
-//  TH2F* FinalFakeRateLooseIsoEtavsPtSoftMuon_ = (TH2F*)FinalFakeRateLooseIsoEtavsPtSoftMuonCanvas->GetPrimitive("FakeRateLooseIsoEtavsPtSoftMuon");
-//  TH2F* FinalFakeRateMedIsoEtavsPtSoftMuon_ = (TH2F*)FinalFakeRateMedIsoEtavsPtSoftMuonCanvas->GetPrimitive("FakeRateMedIsoEtavsPtSoftMuon");
-//  TH2F* FinalFakeRateTightIsoEtavsPtSoftMuon_ = (TH2F*)FinalFakeRateTightIsoEtavsPtSoftMuonCanvas->GetPrimitive("FakeRateTightIsoEtavsPtSoftMuon");
-//  TH2F* FinalFakeRateEtavsPtSoftMuon_ = (TH2F*)FinalFakeRateEtavsPtSoftMuonCanvas->GetPrimitive("FakeRateEtavsPtSoftMuon");
-
-//  TCanvas* FinalFakeRateLooseIsoEtavsPtSoftMuon_noMuCanvas = (TCanvas*)TH2File.Get("FinalFakeRateLooseIsoEtavsPtSoftMuon_noMuCanvas");
-//  TCanvas* FinalFakeRateMedIsoEtavsPtSoftMuon_noMuCanvas = (TCanvas*)TH2File.Get("FinalFakeRateMedIsoEtavsPtSoftMuon_noMuCanvas");
-//  TCanvas* FinalFakeRateTightIsoEtavsPtSoftMuon_noMuCanvas = (TCanvas*)TH2File.Get("FinalFakeRateTightIsoEtavsPtSoftMuon_noMuCanvas");
-//  TCanvas* FinalFakeRateEtavsPtSoftMuon_noMuCanvas = (TCanvas*)TH2File.Get("FinalFakeRateEtavsPtSoftMuon_noMuCanvas");
-
-//  TH2F* FinalFakeRateLooseIsoEtavsPtSoftMuon_noMu_ = (TH2F*)FinalFakeRateLooseIsoEtavsPtSoftMuon_noMuCanvas->GetPrimitive("FakeRateLooseIsoEtavsPtSoftMuon_noMu");
-//  TH2F* FinalFakeRateMedIsoEtavsPtSoftMuon_noMu_ = (TH2F*)FinalFakeRateMedIsoEtavsPtSoftMuon_noMuCanvas->GetPrimitive("FakeRateMedIsoEtavsPtSoftMuon_noMu");
-//  TH2F* FinalFakeRateTightIsoEtavsPtSoftMuon_noMu_ = (TH2F*)FinalFakeRateTightIsoEtavsPtSoftMuon_noMuCanvas->GetPrimitive("FakeRateTightIsoEtavsPtSoftMuon_noMu");
-//  TH2F* FinalFakeRateEtavsPtSoftMuon_noMu_ = (TH2F*)FinalFakeRateEtavsPtSoftMuon_noMuCanvas->GetPrimitive("FakeRateEtavsPtSoftMuon_noMu");
-
-
   //Book histograms
   NEvents_     = new TH1F("NEvents"    , "", 9, -.5, 8.5);
       NEvents_->GetXaxis()->SetBinLabel(1, "TotalEvents"); 
@@ -415,7 +363,7 @@ void FakeRateWithWeightsAnalyzer::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void FakeRateWithWeightsAnalyzer::endJob()
+void FakeRateMCAnalyzer::endJob()
 {
   //Make the Canvases
   TCanvas NEventsCanvas("NEvents","",600,600);
@@ -490,19 +438,19 @@ std::cout << "DONE" << std::endl;
 }//EndJob
 
 // ------------ method called when starting to processes a run  ------------
-void FakeRateWithWeightsAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&) {}
+void FakeRateMCAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a run  ------------
-void FakeRateWithWeightsAnalyzer::endRun(edm::Run const&, edm::EventSetup const&) {}
+void FakeRateMCAnalyzer::endRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void FakeRateWithWeightsAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void FakeRateMCAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-void FakeRateWithWeightsAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void FakeRateMCAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 //Delete Memory
-void FakeRateWithWeightsAnalyzer::reset(const bool doDelete)
+void FakeRateMCAnalyzer::reset(const bool doDelete)
 {
   if ((doDelete) && (NEvents_ != NULL)) delete NEvents_;
   NEvents_ = NULL;
@@ -532,7 +480,7 @@ void FakeRateWithWeightsAnalyzer::reset(const bool doDelete)
 
 }
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void FakeRateWithWeightsAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void FakeRateMCAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -541,4 +489,4 @@ void FakeRateWithWeightsAnalyzer::fillDescriptions(edm::ConfigurationDescription
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(FakeRateWithWeightsAnalyzer);
+DEFINE_FWK_MODULE(FakeRateMCAnalyzer);

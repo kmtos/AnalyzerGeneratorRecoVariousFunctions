@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    FakeRateNoGenAnalyzer
-// Class:      FakeRateNoGenAnalyzer
+// Package:    InvMass
+// Class:      InvMass
 // 
-/**\class FakeRateNoGenAnalyzer FakeRateNoGenAnalyzer.cc Analyzer/src/FakeRateNoGenAnalyzer.cc
+/**\class InvMass InvMass.cc Analyzer/src/InvMass.cc
 
  Description: [one line class summary]
 
@@ -93,11 +93,11 @@ using namespace trigger;
 // class declaration
 //
 
-class FakeRateNoGenAnalyzer : public edm::EDAnalyzer {
+class InvMass : public edm::EDAnalyzer {
    public:
       typedef reco::JetFloatAssociation::Container JetBCEnergyRatioCollection;
-      explicit FakeRateNoGenAnalyzer(const edm::ParameterSet&);
-      ~FakeRateNoGenAnalyzer();
+      explicit InvMass(const edm::ParameterSet&);
+      ~InvMass();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -121,25 +121,13 @@ class FakeRateNoGenAnalyzer : public edm::EDAnalyzer {
 
       //name of output root file
       std::string outFileName_;
-      edm::EDGetTokenT<vector<reco::PFJet> > akJetTag_;
-      edm::EDGetTokenT<vector<reco::PFTau> > tauTag_;
-      edm::EDGetTokenT<reco::PFTauDiscriminator>  looseIsoTag_;
-      edm::EDGetTokenT<reco::PFTauDiscriminator>  medIsoTag_;
-      edm::EDGetTokenT<reco::PFTauDiscriminator> tightIsoTag_;
-      edm::EDGetTokenT<reco::PFTauDiscriminator> decayModeFindingTag_;
-      edm::EDGetTokenT<reco::PFTauDiscriminator> isoRawTag_;
-      edm::EDGetTokenT<reco::PFJetCollection>  oldJetTag_;
-      edm::EDGetTokenT<reco::JetTagCollection> csvBTag_;
       edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu12Tag_;
-      edm::EDGetTokenT<vector<reco::Muon> > muonsTag_;
-      edm::EDGetTokenT<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > > muonMapTag_;
-      bool requireRemovedMuon_;
-      edm::EDGetTokenT<MuonRefVector> muonSrc_;
 
       //Histograms
       TH1F* NEvents_;   
       TH1F* InvMassTauMuMu1_;
       TH1F* InvMassMu1Mu2_;
+      TH1F* InvMassMu1Mu2Zoom_;
       TH1F* InvMassTauMuMu2_;
 
       TH2F* EtavsPtTauLooseIso_;
@@ -223,29 +211,16 @@ class FakeRateNoGenAnalyzer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-FakeRateNoGenAnalyzer::FakeRateNoGenAnalyzer(const edm::ParameterSet& iConfig):
+InvMass::InvMass(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
-  akJetTag_(consumes<vector<reco::PFJet> >(iConfig.getParameter<edm::InputTag>("akJetTag"))),
-  tauTag_(consumes<vector<reco::PFTau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
-  looseIsoTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("looseIsoTag"))),
-  medIsoTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("medIsoTag"))),
-  tightIsoTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("tightIsoTag"))),
-  decayModeFindingTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("decayModeFindingTag"))),
-  isoRawTag_(consumes<reco::PFTauDiscriminator>(iConfig.getParameter<edm::InputTag>("isoRawTag"))),
-  oldJetTag_(consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("oldJetTag"))),
-  csvBTag_(consumes<reco::JetTagCollection>(iConfig.getParameter<edm::InputTag>("csvBTag"))),
-  mu12Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
-  muonsTag_(consumes<vector<reco::Muon> >(iConfig.getParameter<edm::InputTag>("muonsTag"))),
-  muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
-  requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
-  muonSrc_(consumes<MuonRefVector>(iConfig.getParameter<edm::InputTag>("muonSrc")))
+  mu12Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu12Tag")))
 {
   reset(false);    
-}//FakeRateNoGenAnalyzer
+}//InvMass
 
 
 
-FakeRateNoGenAnalyzer::~FakeRateNoGenAnalyzer()
+InvMass::~InvMass()
 {
   reset(true);
 }
@@ -256,46 +231,9 @@ FakeRateNoGenAnalyzer::~FakeRateNoGenAnalyzer()
 //
 
 // ------------ method called for each event  ------------
-void FakeRateNoGenAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void InvMass::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   std::cout << "\n<------------THIS IS A NEW EVENT------------>" << std::endl;
-  NEvents_->Fill(0);
-
-  //Get ak4Jets particle collection
-  edm::Handle<std::vector<reco::PFJet> > pAkJets;
-  iEvent.getByToken(akJetTag_, pAkJets);
-
-  //Get CleanJets Tau particle collection
-  edm::Handle<std::vector<reco::PFTau> > pTaus;
-  iEvent.getByToken(tauTag_, pTaus);
-
-  //Get Loose Iso Collection
-  Handle<PFTauDiscriminator> pLooseIsoDisc; 
-  iEvent.getByToken(looseIsoTag_, pLooseIsoDisc); 
-
-  //Get Medium Iso Collection
-  Handle<PFTauDiscriminator> pMedIsoDisc; 
-  iEvent.getByToken(medIsoTag_, pMedIsoDisc);
-
-  //Get Tight Iso Collection
-  Handle<PFTauDiscriminator> pTightIsoDisc; 
-  iEvent.getByToken(tightIsoTag_, pTightIsoDisc);
-
-  //Get Decay Mode Finding Collection
-  Handle<PFTauDiscriminator> pDMFinding; 
-  iEvent.getByToken(decayModeFindingTag_, pDMFinding);
-
-  //Get IsoRaw  Collection
-  Handle<PFTauDiscriminator> pIsoRaw;
-  iEvent.getByToken(isoRawTag_, pIsoRaw);
-
-  //Old Jet collection for bTagging
-  edm::Handle<reco::PFJetCollection> pOldJets;
-  iEvent.getByToken(oldJetTag_, pOldJets);
-
-  //Get combVertMVA JetTagCollection
-  edm::Handle<reco::JetTagCollection> pCSV;
-  iEvent.getByToken(csvBTag_, pCSV);
 
   //Old Jet collection for bTagging
   edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu12;
@@ -304,190 +242,12 @@ void FakeRateNoGenAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSe
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
   reco::LeafCandidate::LorentzVector diMuP4 = mu1Ref->p4() + mu2Ref->p4();
   InvMassMu1Mu2_->Fill(diMuP4.M() );
-
-  //Get RECO Muons particle collection
-  edm::Handle<std::vector<reco::Muon> > pMuons;
-  iEvent.getByToken(muonsTag_, pMuons);
-
-  //Get the Muon Refs
-  Handle<MuonRefVector> muons;
-  iEvent.getByToken(muonSrc_, muons);
-  std::vector<unsigned int> muonRefKeys;
-  for (MuonRefVector::const_iterator iMuon = muons->begin(); iMuon != muons->end(); ++iMuon)
-    muonRefKeys.push_back(iMuon->key());
-
-  //get jet-muon map
-  edm::Handle<edm::ValueMap<reco::MuonRefVector> > pMuonMap;
-  iEvent.getByToken(muonMapTag_, pMuonMap);
-
-
-//////////////////////////////
-// Begin Analyzer
-//////////////////////////////
-  unsigned int DM = 0, MedIso = 0, LooseIso = 0, TightIso = 0, tauDecayMode = -1;
-  for (std::vector<reco::PFTau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
-  {
-    // Now Do some muon stuff and seeing if a muon was removed
-    reco::PFTauRef PFTauRef(pTaus, iTau - pTaus->begin());
-    const reco::PFJetRef& tauJetRef = (*iTau).jetRef();
-    const reco::MuonRefVector& removedMuons = (*pMuonMap)[tauJetRef];
-    std::vector<reco::MuonRef> removedMuonRefs;
-    for (reco::MuonRefVector::const_iterator iMuon = removedMuons.begin(); iMuon != removedMuons.end(); ++iMuon) 
-      removedMuonRefs.push_back(*iMuon);//for iMuon
-    for (unsigned int iter = 0; iter < removedMuonRefs.size(); iter++)
-    {
-      for (unsigned int jter = iter + 1; jter < removedMuonRefs.size(); jter++)
-      {
-        if (removedMuonRefs[jter]->pt() > removedMuonRefs[iter]->pt())
-        {
-          reco::MuonRef TEMPRef = removedMuonRefs[iter];
-          removedMuonRefs[iter] = removedMuonRefs[jter];
-          removedMuonRefs[jter] = TEMPRef;
-        }//if jter > iter
-      }//for jter
-    }//for iter
-
-    reco::MuonRef removedMuonRef;
-    bool removedMu = false;
-    for (unsigned int iter = 0; iter < removedMuonRefs.size(); iter++)
-    { 
-      double dPhi = reco::deltaPhi(removedMuonRefs[iter]->phi(), iTau->phi() );
-      double dR_tauMu = sqrt( (removedMuonRefs[iter]->eta() - iTau->eta() ) * (removedMuonRefs[iter]->eta() - iTau->eta() )  +  dPhi * dPhi );
-      std::cout << "\t\t\tMuRef->pt()= " << removedMuonRefs[iter]->pt() << "  \tdR_tauMu= " << dR_tauMu << std::endl;
-      if (dR_tauMu < .5)
-      {
-        removedMu = true; 
-        removedMuonRef = removedMuonRefs[iter];
-        break;
-      }//if
-    }//for iter
-        
-    if ( (!removedMu && requireRemovedMuon_) || iTau->pt() < 20.0 || fabs(iTau->eta() ) > 2.4)
-      continue;
-
-    if (removedMu)
-    {
-      reco::LeafCandidate::LorentzVector diMuP4_1, diMuP4_2;    
-      diMuP4_1 = mu1Ref->p4();
-      diMuP4_1 += removedMuonRef->p4();
- 
-      diMuP4_2 = mu2Ref->p4();
-      diMuP4_2 += removedMuonRef->p4();
-
-      InvMassTauMuMu1_->Fill(diMuP4_1.M() );
-      InvMassTauMuMu2_->Fill(diMuP4_2.M() );
-    }//if removed Mu
-
-    DM = (*pDMFinding)[PFTauRef];
-    MedIso = (*pMedIsoDisc)[PFTauRef];
-    LooseIso = (*pLooseIsoDisc)[PFTauRef];
-    TightIso = (*pTightIsoDisc)[PFTauRef];
-    tauDecayMode = iTau->decayMode();
-
-    if (DM == 1)
-    {
-      TauDMFindPt_->Fill(iTau->pt() );
-      TauDMFindEta_->Fill(iTau->eta() );
-      EtavsPtTauDMFind_->Fill(iTau->pt(), iTau->eta() );
-      if (tauDecayMode == 0)
-      {
-        OneProngDMEta_->Fill(iTau->eta() );
-        OneProngDMPt_->Fill(iTau->pt() );  
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 1)
-      {
-        OneProngOnePizDMEta_->Fill(iTau->eta() );
-        OneProngOnePizDMPt_->Fill(iTau->pt() );  
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 2)
-      {
-        OneProngTwoPizDMEta_->Fill(iTau->eta() );
-        OneProngTwoPizDMPt_->Fill(iTau->pt() );  
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 10)
-      {
-        ThreeProngDMEta_->Fill(iTau->eta() );
-        ThreeProngDMPt_->Fill(iTau->pt() );  
-      }//else if tauDecayMode == 1
-    }//if DM == 1
-
-    if (TightIso == 1 && DM == 1)
-    {
-      TauTightIsoPt_->Fill(iTau->pt() );
-      TauTightIsoEta_->Fill(iTau->eta() );
-      EtavsPtTauTightIso_->Fill(iTau->pt(), iTau->eta() );
-    }//if TightIso == 1 &&DM == 1
-
-    if (MedIso == 1 && DM == 1)
-    {
-      TauMedIsoPt_->Fill(iTau->pt() );
-      TauMedIsoEta_->Fill(iTau->eta() );
-      EtavsPtTauMedIso_->Fill(iTau->pt(), iTau->eta() );
-      if (tauDecayMode == 0)
-      {
-        OneProngMedIsoEta_->Fill(iTau->eta() );
-        OneProngMedIsoPt_->Fill(iTau->pt() );  
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 1)
-      {
-        OneProngOnePizMedIsoEta_->Fill(iTau->eta() );
-        OneProngOnePizMedIsoPt_->Fill(iTau->pt() );
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 2)
-      {
-        OneProngTwoPizMedIsoEta_->Fill(iTau->eta() );
-        OneProngTwoPizMedIsoPt_->Fill(iTau->pt() );
-      }//else if tauDecayMode == 1
-      else if (tauDecayMode == 10)
-      {
-        ThreeProngMedIsoEta_->Fill(iTau->eta() );
-        ThreeProngMedIsoPt_->Fill(iTau->pt() );
-      }//else if tauDecayMode == 1
-    }//if MedIso == 1 && DM == 1
-
-    if (LooseIso == 1 && DM == 1)
-    {
-      TauLooseIsoPt_->Fill(iTau->pt() );
-      TauLooseIsoEta_->Fill(iTau->eta() );
-      EtavsPtTauLooseIso_->Fill(iTau->pt(), iTau->eta() );
-    }//if Loose DM == 1
-  }//iTau
-
-  size_t numJets = pAkJets->size();
-  for ( size_t iJet = 0; iJet < numJets; ++iJet )
-  {
-    reco::PFJetRef jetRef(pAkJets, iJet);
-    if (jetRef->pt() > 20.0 && fabs(jetRef->eta() ) < 2.4 )
-    {
-      JetEta_->Fill(jetRef->eta() ); 
-      JetPt_->Fill(jetRef->pt() ); 
-      EtavsPtJet_->Fill(jetRef->pt(), jetRef->eta() );
-      std::vector<reco::PFCandidatePtr> JetPFCands = jetRef->getPFConstituents();
-      for(std::vector<edm::Ptr<reco::PFCandidate> >::iterator iCand = JetPFCands.begin(); iCand != JetPFCands.end(); ++iCand)
-      { // loop over PF candidates
-        reco::PFCandidate pfCand = *iCand;
-        if (pfCand.particleId() != 3) 
-          continue;
-        reco::MuonRef theRecoMuon = pfCand.muonRef();
-        std::vector<unsigned int>::const_iterator iSoftMuon = std::find(muonRefKeys.begin(), muonRefKeys.end(), theRecoMuon.key());
-        if (iSoftMuon != muonRefKeys.end())
-        {
-          JetEtaWithSoftMuon_->Fill(jetRef->eta() );
-          JetPtWithSoftMuon_->Fill(jetRef->pt() );
-          EtavsPtJetSoftMuon_->Fill(jetRef->pt(), jetRef->eta() );          
-          reco::LeafCandidate::LorentzVector jetP4 = jetRef->p4() - theRecoMuon->p4();
-          JetEtaWithSoftMuon_noMu_->Fill(jetP4.Eta() );
-          JetPtWithSoftMuon_noMu_->Fill(jetP4.Pt() );
-          EtavsPtJetSoftMuon_noMu_->Fill(jetP4.Pt(), jetP4.Eta() );
-        }//if iSoftMuon
-      }//for i
-    }//if 
-  }//iJEt
-}//End FakeRateNoGenAnalyzer::analyze
+  InvMassMu1Mu2Zoom_->Fill(diMuP4.M() );
+}//End InvMass::analyze
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void FakeRateNoGenAnalyzer::beginJob()
+void InvMass::beginJob()
 {
   std::cout << "Begin Job" << std::endl;
 
@@ -505,16 +265,17 @@ void FakeRateNoGenAnalyzer::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
-  InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 0, 150);
+  InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 50, 150);
+  InvMassMu1Mu2Zoom_     = new TH1F("InvMassMu1Mu2Zoom"    , "", 75, 5, 15);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
 
-  EtavsPtTauLooseIso_  = new TH2F("EtavsPtTauLooseIso" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauTightIso_  = new TH2F("EtavsPtTauTightIso" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJet_  = new TH2F("EtavsPtJet"                 , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJetSoftMuon_  = new TH2F("EtavsPtJetSoftMuon" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJetSoftMuon_noMu_  = new TH2F("EtavsPtJetSoftMuon_noMu" , "", 8, 0, 400, 5, -2.5, 2.5);
+  EtavsPtTauLooseIso_  = new TH2F("EtavsPtTauLooseIso" , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtTauTightIso_  = new TH2F("EtavsPtTauTightIso" , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtJet_  = new TH2F("EtavsPtJet"                 , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtJetSoftMuon_  = new TH2F("EtavsPtJetSoftMuon" , "", 10, 0, 250, 10, -2.4, 2.4);
+  EtavsPtJetSoftMuon_noMu_  = new TH2F("EtavsPtJetSoftMuon_noMu" , "", 10, 0, 250, 10, -2.4, 2.4);
 
   TauLooseIsoEta_  = new TH1F("TauLooseIsoEta"    , "", 11, -2.4, 2.4);
   TauMedIsoEta_    = new TH1F("TauMedIsoEta", "", 11, -2.4, 2.4);
@@ -580,12 +341,13 @@ void FakeRateNoGenAnalyzer::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void FakeRateNoGenAnalyzer::endJob()
+void InvMass::endJob()
 {
   //Make the Canvases
   TCanvas NEventsCanvas("NEvents","",600,600);
   TCanvas InvMassTauMuMu1Canvas("InvMassTauMuMu1","",600,600);
   TCanvas InvMassMu1Mu2Canvas("InvMassMu1Mu2","",600,600);
+  TCanvas InvMassMu1Mu2ZoomCanvas("InvMassMu1Mu2Zoom","",600,600);
   TCanvas InvMassTauMuMu2Canvas("InvMassTauMuMu2","",600,600);
 
   TCanvas EtavsPtTauLooseIsoCanvas("EtavsPtTauLooseIso","",600,600);
@@ -662,6 +424,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu1Canvas, InvMassTauMuMu1_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassMu1Mu2Canvas, InvMassMu1Mu2_,
+	 1, 0, 0, kBlack, 7, 20, "Mass(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassMu1Mu2ZoomCanvas, InvMassMu1Mu2Zoom_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu2Canvas, InvMassTauMuMu2_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
@@ -810,6 +574,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   NEventsCanvas.Write();
   InvMassTauMuMu1Canvas.Write();
   InvMassMu1Mu2Canvas.Write();
+  InvMassMu1Mu2ZoomCanvas.Write();
   InvMassTauMuMu2Canvas.Write();
  
   EtavsPtTauLooseIsoCanvas.Write();
@@ -884,19 +649,19 @@ std::cout << "DONE" << std::endl;
 }//EndJob
 
 // ------------ method called when starting to processes a run  ------------
-void FakeRateNoGenAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&) {}
+void InvMass::beginRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a run  ------------
-void FakeRateNoGenAnalyzer::endRun(edm::Run const&, edm::EventSetup const&) {}
+void InvMass::endRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void FakeRateNoGenAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void InvMass::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-void FakeRateNoGenAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void InvMass::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 //Delete Memory
-void FakeRateNoGenAnalyzer::reset(const bool doDelete)
+void InvMass::reset(const bool doDelete)
 {
   if ((doDelete) && (NEvents_ != NULL)) delete NEvents_;
   NEvents_ = NULL;
@@ -904,6 +669,8 @@ void FakeRateNoGenAnalyzer::reset(const bool doDelete)
   InvMassTauMuMu1_ = NULL;
   if ((doDelete) && (InvMassMu1Mu2_ != NULL)) delete InvMassMu1Mu2_;
   InvMassMu1Mu2_ = NULL;
+  if ((doDelete) && (InvMassMu1Mu2Zoom_ != NULL)) delete InvMassMu1Mu2Zoom_;
+  InvMassMu1Mu2Zoom_ = NULL;
   if ((doDelete) && (InvMassTauMuMu2_ != NULL)) delete InvMassTauMuMu2_;
   InvMassTauMuMu2_ = NULL;
 
@@ -1036,7 +803,7 @@ void FakeRateNoGenAnalyzer::reset(const bool doDelete)
 
 }
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void FakeRateNoGenAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void InvMass::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -1045,4 +812,4 @@ void FakeRateNoGenAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& des
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(FakeRateNoGenAnalyzer);
+DEFINE_FWK_MODULE(InvMass);
