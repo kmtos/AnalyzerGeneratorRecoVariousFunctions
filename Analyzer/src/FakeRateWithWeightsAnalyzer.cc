@@ -137,6 +137,8 @@ class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
       bool requireRemovedMuon_;
       edm::EDGetTokenT<MuonRefVector> muonSrc_;
       std::string TH2FileName_;
+      bool checkInvMass_;
+      double checkInvMassValue_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -147,7 +149,7 @@ class FakeRateWithWeightsAnalyzer : public edm::EDAnalyzer {
       TH1F* PtMu2FakeWeight_;
       TH1F* EtaFakeWeight_;
       TH1F* DRFakeWeight_;
-      TH1F* DRFakeWeightZoom_;
+      TH1F* DRNoWeighting_;
       TH1F* InvMassFakeWeightZoom_;
       TH1F* TauVisMass_;
       TH1F* TauVisMassZoom_;
@@ -181,7 +183,9 @@ FakeRateWithWeightsAnalyzer::FakeRateWithWeightsAnalyzer(const edm::ParameterSet
   muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
   muonSrc_(consumes<MuonRefVector>(iConfig.getParameter<edm::InputTag>("muonSrc"))),
-  TH2FileName_(iConfig.getParameter<std::string>("TH2FileName"))
+  TH2FileName_(iConfig.getParameter<std::string>("TH2FileName")),
+  checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
+  checkInvMassValue_(iConfig.getParameter<double>("checkInvMassValue"))
 {
   reset(false);    
 }//FakeRateWithWeightsAnalyzer
@@ -225,8 +229,8 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
   iEvent.getByToken(tightIsoTag_, pTightIsoDisc);
 
   //Get Decay Mode Finding Collection
-  Handle<PFTauDiscriminator> ping; 
-  iEvent.getByToken(decayModeFindingTag_, ping);
+  Handle<PFTauDiscriminator> pDMFinding; 
+  iEvent.getByToken(decayModeFindingTag_, pDMFinding);
 
   //Get IsoRaw  Collection
   Handle<PFTauDiscriminator> pIsoRaw;
@@ -246,6 +250,9 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
   reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
   reco::LeafCandidate::LorentzVector diMuP4 = mu1Ref->p4() + mu2Ref->p4();
+
+  if (checkInvMass_ && checkInvMassValue_ > diMuP4.M() )
+    return;
 
   //Get RECO Muons particle collection
   edm::Handle<std::vector<reco::Muon> > pMuons;
@@ -320,8 +327,6 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
     }//if removed Mu
 
     TH2File = new TFile(TH2FileName_.c_str());
-    //TCanvas* FinalFakeRateMedIsoEtavsPtCanvas = (TCanvas*)TH2File->Get("FinalFakeRateMedIsoEtavsPtCanvas");
-    //TH2F* FinalFakeRateMedIsoEtavsPt_ = (TH2F*)FinalFakeRateMedIsoEtavsPtCanvas->GetPrimitive("FakeRateMedIsoEtavsPt");
     TCanvas* FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas = (TCanvas*)TH2File->Get("FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas");
     TH2F* FinalFakeRateDMtoMedIsoOnlyEtavsPt_ = (TH2F*)FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas->GetPrimitive("FakeRateDMFindEtavsPt");
     TAxis *xaxis = FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetXaxis();
@@ -331,9 +336,10 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
     double rate= FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetBinContent(binx, biny);
     while (rate == 0 && binx > 0)
     {
-      std::cout << "\tBin(" << binx << "," << biny << ")=0. New bin is (" << binx-1 << "," << biny << ")" << std::endl;
+      std::cout << "\tBin(" << binx << "," << biny << ")=0. New bin is (" << binx-1 << "," << biny << ")";
       binx--;
-      rate= FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetBinContent(binx, biny);
+      rate = FinalFakeRateDMtoMedIsoOnlyEtavsPt_->GetBinContent(binx, biny);
+      std::cout << " with new rate=" << rate << std::endl;
     }
     double weight = rate / (1 - rate);
 
@@ -348,7 +354,7 @@ void FakeRateWithWeightsAnalyzer::analyze(const edm::Event& iEvent, const edm::E
     double dPhi = reco::deltaPhi(mu1Ref->phi(), mu2Ref->phi() );
     double dR_tauMu = sqrt( (mu1Ref->eta() - mu2Ref->eta() ) * (mu1Ref->eta() - mu2Ref->eta() ) +  dPhi * dPhi);
     DRFakeWeight_->Fill(dR_tauMu, weight);
-    DRFakeWeightZoom_->Fill(dR_tauMu, weight);
+    DRNoWeighting_->Fill(dR_tauMu);
   }//iTau
 }//End FakeRateWithWeightsAnalyzer::analyze
 
@@ -408,7 +414,7 @@ void FakeRateWithWeightsAnalyzer::beginJob()
   PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 75, 0, 300);
   EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 75, -2.5, 2.5);
   DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 75, 0, 5);
-  DRFakeWeightZoom_     = new TH1F("DRFakeWeightZoom"    , "", 75, 0, .5);
+  DRNoWeighting_     = new TH1F("DRNoWeighting"    , "", 75, 0, 5);
   InvMassFakeWeightZoom_     = new TH1F("InvMassFakeWeightZoom"    , "", 75, 0, 20);
   TauVisMass_     = new TH1F("TauVisMass"    , "", 75, 0, 150);
   TauVisMassZoom_     = new TH1F("TauVisMassZoom"    , "", 75, 0, 30);
@@ -426,7 +432,7 @@ void FakeRateWithWeightsAnalyzer::endJob()
   TCanvas PtMu2FakeWeightCanvas("PtMu2FakeWeight","",600,600);
   TCanvas EtaFakeWeightCanvas("EtaFakeWeight","",600,600);
   TCanvas DRFakeWeightCanvas("DRFakeWeight","",600,600);
-  TCanvas DRFakeWeightZoomCanvas("DRFakeWeightZoom","",600,600);
+  TCanvas DRNoWeightingCanvas("DRNoWeighting","",600,600);
   TCanvas InvMassFakeWeightZoomCanvas("InvMassFakeWeightZoom","",600,600);
   TCanvas TauVisMassCanvas("TauVisMass","",600,600);
   TCanvas TauVisMassZoomCanvas("TauVisMassZoom","",600,600);
@@ -436,29 +442,29 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 
   //Format the 1D plots and Draw (canvas, hist, grid, log y, log z, color, size, style, xAxisTitle, xTitleSize, xLabelSize, xTitleOffSet, yAxisTitle, yTitleSize, yLabelSize, yTitleOffset)
   VariousFunctions::formatAndDrawCanvasAndHist1D(NEventsCanvas, NEvents_,
-	 1, 0, 0, kBlack, 7, 20, "", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+	 1, 0, 0, kBlack, 7, 20, " Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu1Canvas, InvMassTauMuMu1_,
-	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu2Canvas, InvMassTauMuMu2_,
-	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassFakeWeightCanvas, InvMassFakeWeight_,
-         1, 0, 0, kBlack, 1, 20, "Mass(#mu_{2} #mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "Mass(#mu_{2} #mu_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu1FakeWeightCanvas, PtMu1FakeWeight_,
-         1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu2FakeWeightCanvas, PtMu2FakeWeight_,
-         1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{2}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(EtaFakeWeightCanvas, EtaFakeWeight_,
-         1, 0, 0, kBlack, 1, 20, "#eta(#mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "#eta(#mu_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(DRFakeWeightCanvas, DRFakeWeight_,
-         1, 0, 0, kBlack, 1, 20, "#DeltaR(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(DRFakeWeightZoomCanvas, DRFakeWeightZoom_,
+         1, 0, 0, kBlack, 1, 20, "#DeltaR(#mu_{1} #mu_{2}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(DRNoWeightingCanvas, DRNoWeighting_,
          1, 0, 0, kBlack, 1, 20, "#DeltaR(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassFakeWeightZoomCanvas, InvMassFakeWeightZoom_,
-         1, 0, 0, kBlack, 1, 20, "Mass(#mu_{2} #mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "Mass(#mu_{2} #mu_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(TauVisMassCanvas, TauVisMass_,
-         1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(TauVisMassZoomCanvas, TauVisMassZoom_,
-         1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+         1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1}) Weighted", .04, .04, 1.1,  "", .04, .04, 1.0, false);
 
 std::cout << "after formatting" << std::endl;
   
@@ -478,7 +484,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   PtMu2FakeWeightCanvas.Write();
   EtaFakeWeightCanvas.Write();
   DRFakeWeightCanvas.Write();
-  DRFakeWeightZoomCanvas.Write();
+  DRNoWeightingCanvas.Write();
   InvMassFakeWeightZoomCanvas.Write();
   TauVisMassCanvas.Write();
   TauVisMassZoomCanvas.Write();
@@ -520,8 +526,8 @@ void FakeRateWithWeightsAnalyzer::reset(const bool doDelete)
   EtaFakeWeight_ = NULL;
   if ((doDelete) && (DRFakeWeight_ != NULL)) delete DRFakeWeight_;
   DRFakeWeight_ = NULL;
-  if ((doDelete) && (DRFakeWeightZoom_ != NULL)) delete DRFakeWeightZoom_;
-  DRFakeWeightZoom_ = NULL;
+  if ((doDelete) && (DRNoWeighting_ != NULL)) delete DRNoWeighting_;
+  DRNoWeighting_ = NULL;
   if ((doDelete) && (InvMassFakeWeightZoom_ != NULL)) delete InvMassFakeWeightZoom_;
   InvMassFakeWeightZoom_ = NULL;
   if ((doDelete) && (TauVisMass_ != NULL)) delete TauVisMass_;

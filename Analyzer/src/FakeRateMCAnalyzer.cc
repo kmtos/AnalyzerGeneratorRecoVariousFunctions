@@ -134,7 +134,8 @@ class FakeRateMCAnalyzer : public edm::EDAnalyzer {
       edm::EDGetTokenT<vector<reco::Muon> > muonsTag_;
       edm::EDGetTokenT<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > > muonMapTag_;
       bool requireRemovedMuon_;
-      edm::EDGetTokenT<MuonRefVector> muonSrc_;
+      bool checkInvMass_;
+      double checkInvMassValue_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -178,7 +179,8 @@ FakeRateMCAnalyzer::FakeRateMCAnalyzer(const edm::ParameterSet& iConfig):
   muonsTag_(consumes<vector<reco::Muon> >(iConfig.getParameter<edm::InputTag>("muonsTag"))),
   muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
-  muonSrc_(consumes<MuonRefVector>(iConfig.getParameter<edm::InputTag>("muonSrc")))
+  checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
+  checkInvMassValue_(iConfig.getParameter<double>("checkInvMassValue"))
 {
   reset(false);    
 }//FakeRateMCAnalyzer
@@ -244,16 +246,13 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
   reco::LeafCandidate::LorentzVector diMuP4 = mu1Ref->p4() + mu2Ref->p4();
 
+  if (checkInvMass_ && checkInvMassValue_ > diMuP4.M() )
+    return;
+
   //Get RECO Muons particle collection
   edm::Handle<std::vector<reco::Muon> > pMuons;
   iEvent.getByToken(muonsTag_, pMuons);
-   
-  //Get the Muon Refs
-  Handle<MuonRefVector> muons;
-  iEvent.getByToken(muonSrc_, muons);
-  std::vector<unsigned int> muonRefKeys;
-  for (MuonRefVector::const_iterator iMuon = muons->begin(); iMuon != muons->end(); ++iMuon)
-    muonRefKeys.push_back(iMuon->key());
+
 
   //get jet-muon map
   edm::Handle<edm::ValueMap<reco::MuonRefVector> > pMuonMap;
@@ -296,12 +295,14 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
       {
         removedMu = true; 
         removedMuonRef = removedMuonRefs[iter];
+        std::cout << "removedMu=" << removedMu << "\titer=" << iter << "\tremovedMuonRefs.size()=" << removedMuonRefs.size() << "\tremovedMuonRefs[iter]->pt()=" << removedMuonRefs[iter]->pt() << std::endl;
         break;
       }//if
     }//for iter
-        
+       
     if ( (!removedMu && requireRemovedMuon_) || iTau->pt() < 20.0 || fabs(iTau->eta() ) > 2.4)
       continue;
+std::cout << "PassIf" << "(!removedMu && requireRemovedMuon_)=" << (!removedMu && requireRemovedMuon_) << std::endl;
 
     if (removedMu)
     {
@@ -314,13 +315,14 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
 
       InvMassTauMuMu1_->Fill(diMuP4_1.M() );
       InvMassTauMuMu2_->Fill(diMuP4_2.M() );
+
+      reco::LeafCandidate::LorentzVector diTauP4 =  iTau->p4() + removedMuonRef->p4();
+      TauVisMass_->Fill(diTauP4.M() );
+      TauVisMassZoom_->Fill(diTauP4.M() );
     }//if removed Mu
 
     InvMassFakeWeight_->Fill(diMuP4.M() );
     InvMassFakeWeightZoom_->Fill(diMuP4.M() );
-    reco::LeafCandidate::LorentzVector diTauP4 =  iTau->p4() + removedMuonRef->p4();
-    TauVisMass_->Fill(diTauP4.M() );
-    TauVisMassZoom_->Fill(diTauP4.M() );
     PtMu1FakeWeight_->Fill(mu1Ref->pt() );
     PtMu2FakeWeight_->Fill(mu2Ref->pt() );
     EtaFakeWeight_->Fill(mu1Ref->eta() );
@@ -352,8 +354,8 @@ void FakeRateMCAnalyzer::beginJob()
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
   InvMassFakeWeight_     = new TH1F("InvMassFakeWeight"    , "", 75, 0, 150);
-  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 75, 0, 300);
-  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 75, 0, 300);
+  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 30, 0, 750);
+  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 30, 0, 750);
   EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 75, -2.5, 2.5);
   DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 75, 0, 5);
   DRFakeWeightZoom_     = new TH1F("DRFakeWeightZoom"    , "", 75, 0, .5);

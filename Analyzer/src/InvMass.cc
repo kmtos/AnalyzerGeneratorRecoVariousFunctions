@@ -127,77 +127,9 @@ class InvMass : public edm::EDAnalyzer {
       TH1F* NEvents_;   
       TH1F* InvMassTauMuMu1_;
       TH1F* InvMassMu1Mu2_;
-      TH1F* InvMassMu1Mu2Zoom_;
-      TH1F* InvMassTauMuMu2_;
-
-      TH2F* EtavsPtTauLooseIso_;
-      TH2F* EtavsPtTauMedIso_;
-      TH2F* EtavsPtTauTightIso_;
-      TH2F* EtavsPtTauDMFind_;
-      TH2F* EtavsPtJet_;
-      TH2F* EtavsPtJetSoftMuon_;
-      TH2F* EtavsPtJetSoftMuon_noMu_;
-
-      TH1F* TauLooseIsoEta_;
-      TH1F* TauMedIsoEta_;
-      TH1F* TauTightIsoEta_;
-      TH1F* TauDMFindEta_;
-      TH1F* JetEta_;
-      TH1F* JetEtaWithSoftMuon_;
-      TH1F* JetEtaWithSoftMuon_noMu_;
-      TGraphAsymmErrors* FinalEffLooseIsoEta_;
-      TGraphAsymmErrors* FinalEffMedIsoEta_;
-      TGraphAsymmErrors* FinalEffTightIsoEta_;
-      TGraphAsymmErrors* FinalEffDMFindEta_;
-
-      TH1F* TauLooseIsoPt_;
-      TH1F* TauMedIsoPt_;
-      TH1F* TauTightIsoPt_;
-      TH1F* TauDMFindPt_;
-      TH1F* JetPt_;
-      TH1F* JetPtWithSoftMuon_;
-      TH1F* JetPtWithSoftMuon_noMu_;
-      TGraphAsymmErrors* FinalEffLooseIsoPt_;
-      TGraphAsymmErrors* FinalEffMedIsoPt_;
-      TGraphAsymmErrors* FinalEffTightIsoPt_;
-      TGraphAsymmErrors* FinalEffDMFindPt_;
-
-
-     TH1F* OneProngDMEta_;
-     TH1F* OneProngOnePizDMEta_;
-     TH1F* OneProngTwoPizDMEta_;
-     TH1F* ThreeProngDMEta_;
-     TH1F* OneProngDMPt_;
-     TH1F* OneProngOnePizDMPt_;
-     TH1F* OneProngTwoPizDMPt_;
-     TH1F* ThreeProngDMPt_;
-     TGraphAsymmErrors* FinalOneProngDMEta_;
-     TGraphAsymmErrors* FinalOneProngOnePizDMEta_;
-     TGraphAsymmErrors* FinalOneProngTwoPizDMEta_;
-     TGraphAsymmErrors* FinalThreeProngDMEta_;
-     TGraphAsymmErrors* FinalOneProngDMPt_;
-     TGraphAsymmErrors* FinalOneProngOnePizDMPt_;
-     TGraphAsymmErrors* FinalOneProngTwoPizDMPt_;
-     TGraphAsymmErrors* FinalThreeProngDMPt_;
-
-     TH1F* OneProngMedIsoEta_;
-     TH1F* OneProngOnePizMedIsoEta_;
-     TH1F* OneProngTwoPizMedIsoEta_;
-     TH1F* ThreeProngMedIsoEta_;
-     TH1F* OneProngMedIsoPt_;
-     TH1F* OneProngOnePizMedIsoPt_;
-     TH1F* OneProngTwoPizMedIsoPt_;
-     TH1F* ThreeProngMedIsoPt_;
-     TGraphAsymmErrors* FinalOneProngMedIsoEta_;
-     TGraphAsymmErrors* FinalOneProngOnePizMedIsoEta_;
-     TGraphAsymmErrors* FinalOneProngTwoPizMedIsoEta_;
-     TGraphAsymmErrors* FinalThreeProngMedIsoEta_;
-     TGraphAsymmErrors* FinalOneProngMedIsoPt_;
-     TGraphAsymmErrors* FinalOneProngOnePizMedIsoPt_;
-     TGraphAsymmErrors* FinalOneProngTwoPizMedIsoPt_;
-     TGraphAsymmErrors* FinalThreeProngMedIsoPt_;
-
-
+      TH1F* InvMassUpsilonRange_;
+      TH1F* InvMassZPeakRange_;
+      TH1F* InvMassFullRange_;
 };
 
 //
@@ -241,8 +173,9 @@ void InvMass::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
   reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
   reco::LeafCandidate::LorentzVector diMuP4 = mu1Ref->p4() + mu2Ref->p4();
-  InvMassMu1Mu2_->Fill(diMuP4.M() );
-  InvMassMu1Mu2Zoom_->Fill(diMuP4.M() );
+  InvMassZPeakRange_->Fill(diMuP4.M() );
+  InvMassUpsilonRange_->Fill(diMuP4.M() );
+  InvMassFullRange_->Fill(diMuP4.M() );
 }//End InvMass::analyze
 
 
@@ -266,77 +199,9 @@ void InvMass::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
   InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 50, 150);
-  InvMassMu1Mu2Zoom_     = new TH1F("InvMassMu1Mu2Zoom"    , "", 75, 5, 15);
-  InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
-
-  EtavsPtTauLooseIso_  = new TH2F("EtavsPtTauLooseIso" , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtTauTightIso_  = new TH2F("EtavsPtTauTightIso" , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtJet_  = new TH2F("EtavsPtJet"                 , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtJetSoftMuon_  = new TH2F("EtavsPtJetSoftMuon" , "", 10, 0, 250, 10, -2.4, 2.4);
-  EtavsPtJetSoftMuon_noMu_  = new TH2F("EtavsPtJetSoftMuon_noMu" , "", 10, 0, 250, 10, -2.4, 2.4);
-
-  TauLooseIsoEta_  = new TH1F("TauLooseIsoEta"    , "", 11, -2.4, 2.4);
-  TauMedIsoEta_    = new TH1F("TauMedIsoEta", "", 11, -2.4, 2.4);
-  TauTightIsoEta_    = new TH1F("TauTightIsoEta", "", 11, -2.4, 2.4);
-  TauDMFindEta_    = new TH1F("TauDMFindEta"    , "", 11, -2.4, 2.4);
-  JetEta_          = new TH1F("JetEta"    , "", 11, -2.4, 2.4);
-  JetEtaWithSoftMuon_          = new TH1F("JetEtaWithSoftMuon"    , "", 11, -2.4, 2.4);
-  JetEtaWithSoftMuon_noMu_          = new TH1F("JetEtaWithSoftMuon_noMu"    , "", 11, -2.4, 2.4);
-
-  TauLooseIsoPt_  = new TH1F("TauLooseIsoPt"    , "", 11, 20, 220.0);
-  TauMedIsoPt_    = new TH1F("TauMedIsoPt", "", 11, 20, 220.0);
-  TauTightIsoPt_    = new TH1F("TauTightIsoPt", "", 11, 20, 220.0);
-  TauDMFindPt_    = new TH1F("TauDMFindPt"    , "", 11, 20, 220.0);
-  JetPt_          = new TH1F("JetPt"    , "", 11, 20, 220.0);
-  JetPtWithSoftMuon_          = new TH1F("JetPtWithSoftMuon"    , "", 11, 20, 220.0);
-  JetPtWithSoftMuon_noMu_          = new TH1F("JetPtWithSoftMuon_noMu"    , "", 11, 20, 220.0);
-
-  FinalEffLooseIsoEta_ = new TGraphAsymmErrors(11);
-  FinalEffMedIsoEta_ = new TGraphAsymmErrors(11);
-  FinalEffTightIsoEta_ = new TGraphAsymmErrors(11);
-  FinalEffDMFindEta_ = new TGraphAsymmErrors(11);
-
-  FinalEffLooseIsoPt_ = new TGraphAsymmErrors(11);
-  FinalEffMedIsoPt_ = new TGraphAsymmErrors(11);
-  FinalEffTightIsoPt_ = new TGraphAsymmErrors(11);
-  FinalEffDMFindPt_ = new TGraphAsymmErrors(11);
-
-  OneProngDMEta_ = new TH1F("OneProngDMEta"    , "", 11, -2.4, 2.4);
-  OneProngOnePizDMEta_ = new TH1F("OneProngOnePizDMEta"    , "", 11, -2.4, 2.4);
-  OneProngTwoPizDMEta_ = new TH1F("OneProngTwoPizDMEta"    , "", 11, -2.4, 2.4);
-  ThreeProngDMEta_ = new TH1F("ThreeProngDMEta"    , "", 11, -2.4, 2.4);
-  OneProngDMPt_ = new TH1F("OneProngDMPt"    , "", 11, 20, 220.0);
-  OneProngOnePizDMPt_ = new TH1F("OneProngOnePizDMPt"    , "", 11, 20, 220.0);
-  OneProngTwoPizDMPt_ = new TH1F("OneProngTwoPizDMPt"    , "", 11, 20, 220.0);
-  ThreeProngDMPt_ = new TH1F("ThreeProngDMPt"    , "", 11, 20, 220.0);
-  FinalOneProngDMEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngOnePizDMEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngTwoPizDMEta_ = new TGraphAsymmErrors(11);
-  FinalThreeProngDMEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngDMPt_ = new TGraphAsymmErrors(11);
-  FinalOneProngOnePizDMPt_ = new TGraphAsymmErrors(11);
-  FinalOneProngTwoPizDMPt_ = new TGraphAsymmErrors(11);
-  FinalThreeProngDMPt_ = new TGraphAsymmErrors(11);
-
-  OneProngMedIsoEta_ = new TH1F("OneProngMedIsoEta"    , "", 11, -2.4, 2.4);
-  OneProngOnePizMedIsoEta_ = new TH1F("OneProngOnePizMedIsoEta"    , "", 11, -2.4, 2.4);
-  OneProngTwoPizMedIsoEta_ = new TH1F("OneProngTwoPizMedIsoEta"    , "", 11, -2.4, 2.4);
-  ThreeProngMedIsoEta_ = new TH1F("ThreeProngMedIsoEta"    , "", 11, -2.4, 2.4);
-  OneProngMedIsoPt_ = new TH1F("OneProngMedIsoPt"    , "", 11, 20, 220.0);
-  OneProngOnePizMedIsoPt_ = new TH1F("OneProngOnePizMedIsoPt"    , "", 11, 20, 220.0);
-  OneProngTwoPizMedIsoPt_ = new TH1F("OneProngTwoPizMedIsoPt"    , "", 11, 20, 220.0);
-  ThreeProngMedIsoPt_ = new TH1F("ThreeProngMedIsoPt"    , "", 11, 20, 220.0);
-  FinalOneProngMedIsoEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngOnePizMedIsoEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngTwoPizMedIsoEta_ = new TGraphAsymmErrors(11);
-  FinalThreeProngMedIsoEta_ = new TGraphAsymmErrors(11);
-  FinalOneProngMedIsoPt_ = new TGraphAsymmErrors(11);
-  FinalOneProngOnePizMedIsoPt_ = new TGraphAsymmErrors(11);
-  FinalOneProngTwoPizMedIsoPt_ = new TGraphAsymmErrors(11);
-  FinalThreeProngMedIsoPt_ = new TGraphAsymmErrors(11);
-
+  InvMassUpsilonRange_     = new TH1F("InvMassUpsilonRange"    , "", 75, 5, 15);
+  InvMassZPeakRange_     = new TH1F("InvMassZPeakRange"    , "", 75, 50, 150);
+  InvMassFullRange_     = new TH1F("InvMassFullRange"    , "", 75, 0, 150);
 
 }
 
@@ -347,74 +212,9 @@ void InvMass::endJob()
   TCanvas NEventsCanvas("NEvents","",600,600);
   TCanvas InvMassTauMuMu1Canvas("InvMassTauMuMu1","",600,600);
   TCanvas InvMassMu1Mu2Canvas("InvMassMu1Mu2","",600,600);
-  TCanvas InvMassMu1Mu2ZoomCanvas("InvMassMu1Mu2Zoom","",600,600);
-  TCanvas InvMassTauMuMu2Canvas("InvMassTauMuMu2","",600,600);
-
-  TCanvas EtavsPtTauLooseIsoCanvas("EtavsPtTauLooseIso","",600,600);
-  TCanvas EtavsPtTauMedIsoCanvas("EtavsPtTauMedIso","",600,600);
-  TCanvas EtavsPtTauTightIsoCanvas("EtavsPtTauTightIso","",600,600);
-  TCanvas EtavsPtTauDMFindCanvas("EtavsPtTauDMFind","",600,600);
-  TCanvas EtavsPtJetCanvas("EtavsPtJet","",600,600);
-  TCanvas EtavsPtJetSoftMuonCanvas("EtavsPtJetSoftMuon","",600,600);
-  TCanvas EtavsPtJetSoftMuon_noMuCanvas("EtavsPtJetSoftMuon_noMu","",600,600);
-
-  TCanvas TauLooseIsoEtaCanvas("TauLooseIsoEta","",600,600);
-  TCanvas TauMedIsoEtaCanvas("TauMedIsoEta","",600,600);
-  TCanvas TauTightIsoEtaCanvas("TauTightIsoEta","",600,600);
-  TCanvas TauDMFindEtaCanvas("TauDMFindEta","",600,600);
-  TCanvas JetEtaCanvas("JetEta","",600,600);
-  TCanvas JetEtaWithSoftMuonCanvas("JetEtaWithSoftMuon","",600,600);
-  TCanvas JetEtaWithSoftMuon_noMuCanvas("JetEtaWithSoftMuon_noMu","",600,600);
-  TCanvas FinalEffLooseIsoEtaCanvas("FinalEffLooseIsoEta","",600,600);
-  TCanvas FinalEffMedIsoEtaCanvas("FinalEffMedIsoEta","",600,600);
-  TCanvas FinalEffTightIsoEtaCanvas("FinalEffTightIsoEta","",600,600);
-  TCanvas FinalEffDMFindEtaCanvas("FinalEffDMFindEta","",600,600);
-
-  TCanvas TauLooseIsoPtCanvas("TauLooseIsoPt","",600,600);
-  TCanvas TauMedIsoPtCanvas("TauMedIsoPt","",600,600);
-  TCanvas TauTightIsoPtCanvas("TauTightIsoPt","",600,600);
-  TCanvas TauDMFindPtCanvas("TauDMFindPt","",600,600);
-  TCanvas JetPtCanvas("JetPt","",600,600);
-  TCanvas JetPtWithSoftMuonCanvas("JetPtWithSoftMuon","",600,600);
-  TCanvas JetPtWithSoftMuon_noMuCanvas("JetPtWithSoftMuon_noMu","",600,600);
-  TCanvas FinalEffLooseIsoPtCanvas("FinalEffLooseIsoPt","",600,600);
-  TCanvas FinalEffMedIsoPtCanvas("FinalEffMedIsoPt","",600,600);
-  TCanvas FinalEffTightIsoPtCanvas("FinalEffTightIsoPt","",600,600);
-  TCanvas FinalEffDMFindPtCanvas("FinalEffDMFindPt","",600,600);
-
-  TCanvas OneProngDMEtaCanvas("OneProngDMEta","",600,600);
-  TCanvas OneProngOnePizDMEtaCanvas("OneProngOnePizDMEta","",600,600);
-  TCanvas OneProngTwoPizDMEtaCanvas("OneProngTwoPizDMEta","",600,600);
-  TCanvas ThreeProngDMEtaCanvas("ThreeProngDMEta","",600,600);
-  TCanvas OneProngDMPtCanvas("OneProngDMPt","",600,600);
-  TCanvas OneProngOnePizDMPtCanvas("OneProngOnePizDMPt","",600,600);
-  TCanvas OneProngTwoPizDMPtCanvas("OneProngTwoPizDMPt","",600,600);
-  TCanvas ThreeProngDMPtCanvas("ThreeProngDMPt","",600,600);
-  TCanvas FinalOneProngDMEtaCanvas("FinalOneProngDMEta","",600,600);
-  TCanvas FinalOneProngOnePizDMEtaCanvas("FinalOneProngOnePizDMEta","",600,600);
-  TCanvas FinalOneProngTwoPizDMEtaCanvas("FinalOneProngTwoPizDMEta","",600,600);
-  TCanvas FinalThreeProngDMEtaCanvas("FinalThreeProngDMEta","",600,600);
-  TCanvas FinalOneProngDMPtCanvas("FinalOneProngDMPt","",600,600);
-  TCanvas FinalOneProngOnePizDMPtCanvas("FinalOneProngOnePizDMPt","",600,600);
-  TCanvas FinalOneProngTwoPizDMPtCanvas("FinalOneProngTwoPizDMPt","",600,600);
-  TCanvas FinalThreeProngDMPtCanvas("FinalThreeProngDMPt","",600,600);
-
-  TCanvas OneProngMedIsoEtaCanvas("OneProngMedIsoEta","",600,600);
-  TCanvas OneProngOnePizMedIsoEtaCanvas("OneProngOnePizMedIsoEta","",600,600);
-  TCanvas OneProngTwoPizMedIsoEtaCanvas("OneProngTwoPizMedIsoEta","",600,600);
-  TCanvas ThreeProngMedIsoEtaCanvas("ThreeProngMedIsoEta","",600,600);
-  TCanvas OneProngMedIsoPtCanvas("OneProngMedIsoPt","",600,600);
-  TCanvas OneProngOnePizMedIsoPtCanvas("OneProngOnePizMedIsoPt","",600,600);
-  TCanvas OneProngTwoPizMedIsoPtCanvas("OneProngTwoPizMedIsoPt","",600,600);
-  TCanvas ThreeProngMedIsoPtCanvas("ThreeProngMedIsoPt","",600,600);
-  TCanvas FinalOneProngMedIsoEtaCanvas("FinalOneProngMedIsoEta","",600,600);
-  TCanvas FinalOneProngOnePizMedIsoEtaCanvas("FinalOneProngOnePizMedIsoEta","",600,600);
-  TCanvas FinalOneProngTwoPizMedIsoEtaCanvas("FinalOneProngTwoPizMedIsoEta","",600,600);
-  TCanvas FinalThreeProngMedIsoEtaCanvas("FinalThreeProngMedIsoEta","",600,600);
-  TCanvas FinalOneProngMedIsoPtCanvas("FinalOneProngMedIsoPt","",600,600);
-  TCanvas FinalOneProngOnePizMedIsoPtCanvas("FinalOneProngOnePizMedIsoPt","",600,600);
-  TCanvas FinalOneProngTwoPizMedIsoPtCanvas("FinalOneProngTwoPizMedIsoPt","",600,600);
-  TCanvas FinalThreeProngMedIsoPtCanvas("FinalThreeProngMedIsoPt","",600,600);
+  TCanvas InvMassUpsilonRangeCanvas("InvMassUpsilonRange","",600,600);
+  TCanvas InvMassZPeakRangeCanvas("InvMassZPeakRange","",600,600);
+  TCanvas InvMassFullRangeCanvas("InvMassFullRange","",600,600);
 
 std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 
@@ -425,141 +225,13 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassMu1Mu2Canvas, InvMassMu1Mu2_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassMu1Mu2ZoomCanvas, InvMassMu1Mu2Zoom_,
+  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassUpsilonRangeCanvas, InvMassUpsilonRange_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu2Canvas, InvMassTauMuMu2_,
+  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassZPeakRangeCanvas, InvMassZPeakRange_,
+	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassFullRangeCanvas, InvMassFullRange_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
 
-
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtTauLooseIsoCanvas, EtavsPtTauLooseIso_,
-         1, 0, 0, kBlack, 7, 20, "p_{T} #tau Loose Iso", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtTauMedIsoCanvas, EtavsPtTauMedIso_,
-         1, 0, 0, kBlack, 7, 20, "p_{T} #tau Med Iso", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtTauTightIsoCanvas, EtavsPtTauTightIso_,
-         1, 0, 0, kBlack, 7, 20, "p_{T} #tau Tight Iso", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtTauDMFindCanvas, EtavsPtTauDMFind_,
-         1, 0, 0, kBlack, 7, 20, "p_{T} #tau DMFind", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtJetCanvas, EtavsPtJet_,
-         1, 0, 0, kBlack, 7, 20, "p_{T} Jet", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtJetSoftMuonCanvas, EtavsPtJetSoftMuon_,
-         1, 0, 0, kBlack, 7, 20, "p_{T}(Jet with Soft Mu)", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-  VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtJetSoftMuon_noMuCanvas, EtavsPtJetSoftMuon_noMu_,
-         1, 0, 0, kBlack, 7, 20, "p_{T}(Jet with Soft Mu Removed)", .04, .04, 1.1, "nCleanJets #tau's", .04, .04, 1.6, "", .04, .04, 1.0);
-
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauLooseIsoEtaCanvas, TauLooseIsoEta_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(PFTau + Loose Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauMedIsoEtaCanvas, TauMedIsoEta_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(PFTau + Med Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauTightIsoEtaCanvas, TauTightIsoEta_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(PFTau + Tight Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauDMFindEtaCanvas, TauDMFindEta_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(PFTau + DecayModeFinding)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetEtaCanvas, JetEta_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(ak4Jets)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetEtaWithSoftMuonCanvas, JetEtaWithSoftMuon_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(ak4Jets) with Soft Muon", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetEtaWithSoftMuon_noMuCanvas, JetEtaWithSoftMuon_noMu_,
-	 1, 0, 0, kBlack, 7, 20, "Eta(ak4Jets noMu) with Soft Muon", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffLooseIsoEtaCanvas, FinalEffLooseIsoEta_,
-	 1, 1, 1, kBlack, 1, 20, "Eta(PFTau + Loose Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffMedIsoEtaCanvas, FinalEffMedIsoEta_,
-	 1, 1, 1, kBlack, 1, 20, "Eta(PFTau + Med Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffTightIsoEtaCanvas, FinalEffTightIsoEta_,
-	 1, 1, 1, kBlack, 1, 20, "Eta(PFTau + Tight Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffDMFindEtaCanvas, FinalEffDMFindEta_,
-	 1, 1, 1, kBlack, 1, 20, "Eta(PFTau + DecayModeFinding / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-
-
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauLooseIsoPtCanvas, TauLooseIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "Pt(PFTau + Loose Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauMedIsoPtCanvas, TauMedIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "Pt(PFTau + Med Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauTightIsoPtCanvas, TauTightIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "Pt(PFTau + Tight Iso + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(TauDMFindPtCanvas, TauDMFindPt_,
-         1, 0, 0, kBlack, 7, 20, "Pt(PFTau + DecayModeFinding)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetPtCanvas, JetPt_,
-         1, 0, 0, kBlack, 7, 20, "Pt(ak4Jets)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetPtWithSoftMuonCanvas, JetPtWithSoftMuon_,
-         1, 0, 0, kBlack, 7, 20, "Pt(ak4Jets) with Soft Muon", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(JetPtWithSoftMuon_noMuCanvas, JetPtWithSoftMuon_noMu_,
-         1, 0, 0, kBlack, 7, 20, "Pt(ak4Jets noMu) with Soft Muon", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffLooseIsoPtCanvas, FinalEffLooseIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "Pt(PFTau + Loose Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffMedIsoPtCanvas, FinalEffMedIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "Pt(PFTau + Med Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffTightIsoPtCanvas, FinalEffTightIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "Pt(PFTau + Tight Iso + DM / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalEffDMFindPtCanvas, FinalEffDMFindPt_,
-         1, 1, 1, kBlack, 1, 20, "Pt(PFTau + DecayModeFinding / nJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngDMEtaCanvas, OneProngDMEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong #eta(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngOnePizDMEtaCanvas, OneProngOnePizDMEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 1 #pi^{0} #eta(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngTwoPizDMEtaCanvas, OneProngTwoPizDMEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 2 #pi^{0} #eta(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(ThreeProngDMEtaCanvas, ThreeProngDMEta_,
-         1, 0, 0, kBlack, 7, 20, "3 Prong #eta(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngDMPtCanvas, OneProngDMPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong p_{T}(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngOnePizDMPtCanvas, OneProngOnePizDMPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 1 #pi^{0} p_{T}(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngTwoPizDMPtCanvas, OneProngTwoPizDMPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 2 #pi^{0} p_{T}(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(ThreeProngDMPtCanvas, ThreeProngDMPt_,
-         1, 0, 0, kBlack, 7, 20, "3 Prong #eta(PFTau + DM)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngDMEtaCanvas, FinalOneProngDMEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong #eta(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngOnePizDMEtaCanvas, FinalOneProngOnePizDMEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 1 #pi^{0} #eta(PFTau + DM / ak4PfJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngTwoPizDMEtaCanvas, FinalOneProngTwoPizDMEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 2 #pi^{0} #eta(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalThreeProngDMEtaCanvas, FinalThreeProngDMEta_,
-         1, 1, 1, kBlack, 1, 20, "3 Prong #eta(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngDMPtCanvas, FinalOneProngDMPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong p_{T}(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngOnePizDMPtCanvas, FinalOneProngOnePizDMPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 1 #pi^{0} p_{T}(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngTwoPizDMPtCanvas, FinalOneProngTwoPizDMPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 2 #pi^{0} p_{T}(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalThreeProngDMPtCanvas, FinalThreeProngDMPt_,
-         1, 1, 1, kBlack, 1, 20, "3 Prong p_{T}(PFTau + DM / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngMedIsoEtaCanvas, OneProngMedIsoEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong #eta(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngOnePizMedIsoEtaCanvas, OneProngOnePizMedIsoEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 1 #pi^{0} #eta(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngTwoPizMedIsoEtaCanvas, OneProngTwoPizMedIsoEta_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 2 #pi^{0} #eta(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(ThreeProngMedIsoEtaCanvas, ThreeProngMedIsoEta_,
-         1, 0, 0, kBlack, 7, 20, "3 Prong #eta(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngMedIsoPtCanvas, OneProngMedIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong p_{T}(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngOnePizMedIsoPtCanvas, OneProngOnePizMedIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 1 #pi^{0} p_{T}(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(OneProngTwoPizMedIsoPtCanvas, OneProngTwoPizMedIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "1 Prong + 2 #pi^{0} p_{T}(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndHist1D(ThreeProngMedIsoPtCanvas, ThreeProngMedIsoPt_,
-         1, 0, 0, kBlack, 7, 20, "3 Prong #eta(PFTau + DM + MedIso)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngMedIsoEtaCanvas, FinalOneProngMedIsoEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong #eta(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngOnePizMedIsoEtaCanvas, FinalOneProngOnePizMedIsoEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 1 #pi^{0} #eta(PFTau + DM + MedIso / ak4PfJets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngTwoPizMedIsoEtaCanvas, FinalOneProngTwoPizMedIsoEta_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 2 #pi^{0} #eta(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalThreeProngMedIsoEtaCanvas, FinalThreeProngMedIsoEta_,
-         1, 1, 1, kBlack, 1, 20, "3 Prong #eta(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngMedIsoPtCanvas, FinalOneProngMedIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong p_{T}(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngOnePizMedIsoPtCanvas, FinalOneProngOnePizMedIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 1 #pi^{0} p_{T}(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalOneProngTwoPizMedIsoPtCanvas, FinalOneProngTwoPizMedIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "1 Prong + 2 #pi^{0} p_{T}(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
-  VariousFunctions::formatAndDrawCanvasAndTGraphAsym(FinalThreeProngMedIsoPtCanvas, FinalThreeProngMedIsoPt_,
-         1, 1, 1, kBlack, 1, 20, "3 Prong p_{T}(PFTau + DM + MedIso / ak4Jets)", .04, .04, 1.1,  "#epsilon", .04, .04, 1.0, false);
 
 std::cout << "after formatting" << std::endl;
   
@@ -574,74 +246,9 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   NEventsCanvas.Write();
   InvMassTauMuMu1Canvas.Write();
   InvMassMu1Mu2Canvas.Write();
-  InvMassMu1Mu2ZoomCanvas.Write();
-  InvMassTauMuMu2Canvas.Write();
- 
-  EtavsPtTauLooseIsoCanvas.Write();
-  EtavsPtTauMedIsoCanvas.Write();
-  EtavsPtTauTightIsoCanvas.Write();
-  EtavsPtTauDMFindCanvas.Write();
-  EtavsPtJetCanvas.Write();
-  EtavsPtJetSoftMuonCanvas.Write();
-  EtavsPtJetSoftMuon_noMuCanvas.Write();
-
-  TauLooseIsoEtaCanvas.Write();
-  TauMedIsoEtaCanvas.Write();
-  TauTightIsoEtaCanvas.Write();
-  TauDMFindEtaCanvas.Write();
-  JetEtaCanvas.Write();
-  JetEtaWithSoftMuonCanvas.Write();
-  JetEtaWithSoftMuon_noMuCanvas.Write();
-  FinalEffLooseIsoEtaCanvas.Write();
-  FinalEffMedIsoEtaCanvas.Write();
-  FinalEffTightIsoEtaCanvas.Write();
-  FinalEffDMFindEtaCanvas.Write();
-
-  TauLooseIsoPtCanvas.Write();
-  TauMedIsoPtCanvas.Write();
-  TauTightIsoPtCanvas.Write();
-  TauDMFindPtCanvas.Write();
-  JetPtCanvas.Write();
-  JetPtWithSoftMuonCanvas.Write();
-  JetPtWithSoftMuon_noMuCanvas.Write();
-  FinalEffLooseIsoPtCanvas.Write();
-  FinalEffMedIsoPtCanvas.Write();
-  FinalEffTightIsoPtCanvas.Write();
-  FinalEffDMFindPtCanvas.Write();
-
-  OneProngDMEtaCanvas.Write();
-  OneProngOnePizDMEtaCanvas.Write();
-  OneProngTwoPizDMEtaCanvas.Write();
-  ThreeProngDMEtaCanvas.Write();
-  OneProngDMPtCanvas.Write();
-  OneProngOnePizDMPtCanvas.Write();
-  OneProngTwoPizDMPtCanvas.Write();
-  ThreeProngDMPtCanvas.Write();
-  FinalOneProngDMEtaCanvas.Write();
-  FinalOneProngOnePizDMEtaCanvas.Write();
-  FinalOneProngTwoPizDMEtaCanvas.Write();
-  FinalThreeProngDMEtaCanvas.Write();
-  FinalOneProngDMPtCanvas.Write();
-  FinalOneProngOnePizDMPtCanvas.Write();
-  FinalOneProngTwoPizDMPtCanvas.Write();
-  FinalThreeProngDMPtCanvas.Write();
-
-  OneProngMedIsoEtaCanvas.Write();
-  OneProngOnePizMedIsoEtaCanvas.Write();
-  OneProngTwoPizMedIsoEtaCanvas.Write();
-  ThreeProngMedIsoEtaCanvas.Write();
-  OneProngMedIsoPtCanvas.Write();
-  OneProngOnePizMedIsoPtCanvas.Write();
-  OneProngTwoPizMedIsoPtCanvas.Write();
-  ThreeProngMedIsoPtCanvas.Write();
-  FinalOneProngMedIsoEtaCanvas.Write();
-  FinalOneProngOnePizMedIsoEtaCanvas.Write();
-  FinalOneProngTwoPizMedIsoEtaCanvas.Write();
-  FinalThreeProngMedIsoEtaCanvas.Write();
-  FinalOneProngMedIsoPtCanvas.Write();
-  FinalOneProngOnePizMedIsoPtCanvas.Write();
-  FinalOneProngTwoPizMedIsoPtCanvas.Write();
-  FinalThreeProngMedIsoPtCanvas.Write();
+  InvMassUpsilonRangeCanvas.Write();
+  InvMassZPeakRangeCanvas.Write();
+  InvMassFullRangeCanvas.Write();
 
   out_->Write();
   out_->Close();
@@ -669,137 +276,12 @@ void InvMass::reset(const bool doDelete)
   InvMassTauMuMu1_ = NULL;
   if ((doDelete) && (InvMassMu1Mu2_ != NULL)) delete InvMassMu1Mu2_;
   InvMassMu1Mu2_ = NULL;
-  if ((doDelete) && (InvMassMu1Mu2Zoom_ != NULL)) delete InvMassMu1Mu2Zoom_;
-  InvMassMu1Mu2Zoom_ = NULL;
-  if ((doDelete) && (InvMassTauMuMu2_ != NULL)) delete InvMassTauMuMu2_;
-  InvMassTauMuMu2_ = NULL;
-
-  if ((doDelete) && (EtavsPtTauLooseIso_ != NULL)) delete EtavsPtTauLooseIso_;
-  EtavsPtTauLooseIso_ = NULL;
-  if ((doDelete) && (EtavsPtTauMedIso_ != NULL)) delete EtavsPtTauMedIso_;
-  EtavsPtTauMedIso_ = NULL;
-  if ((doDelete) && (EtavsPtTauTightIso_ != NULL)) delete EtavsPtTauTightIso_;
-  EtavsPtTauTightIso_ = NULL;
-  if ((doDelete) && (EtavsPtTauDMFind_ != NULL)) delete EtavsPtTauDMFind_;
-  EtavsPtTauDMFind_ = NULL;
-  if ((doDelete) && (EtavsPtJet_ != NULL)) delete EtavsPtJet_;
-  EtavsPtJet_ = NULL;
-  if ((doDelete) && (EtavsPtJetSoftMuon_ != NULL)) delete EtavsPtJetSoftMuon_;
-  EtavsPtJetSoftMuon_ = NULL;
-  if ((doDelete) && (EtavsPtJetSoftMuon_noMu_ != NULL)) delete EtavsPtJetSoftMuon_noMu_;
-  EtavsPtJetSoftMuon_noMu_ = NULL;
-
-  if ((doDelete) && (TauLooseIsoEta_ != NULL)) delete TauLooseIsoEta_;
-  TauLooseIsoEta_ = NULL;
-  if ((doDelete) && (TauMedIsoEta_ != NULL)) delete TauMedIsoEta_;
-  TauMedIsoEta_ = NULL;
-  if ((doDelete) && (TauTightIsoEta_ != NULL)) delete TauTightIsoEta_;
-  TauTightIsoEta_ = NULL;
-  if ((doDelete) && (TauDMFindEta_ != NULL)) delete TauDMFindEta_;
-  TauDMFindEta_ = NULL;
-  if ((doDelete) && (JetEta_ != NULL)) delete JetEta_;
-  JetEta_ = NULL;
-  if ((doDelete) && (JetEtaWithSoftMuon_ != NULL)) delete JetEtaWithSoftMuon_;
-  JetEtaWithSoftMuon_ = NULL;
-  if ((doDelete) && (JetEtaWithSoftMuon_noMu_ != NULL)) delete JetEtaWithSoftMuon_noMu_;
-  JetEtaWithSoftMuon_noMu_ = NULL;
-  if ((doDelete) && (FinalEffLooseIsoEta_ != NULL)) delete FinalEffLooseIsoEta_;
-  FinalEffLooseIsoEta_ = NULL;
-  if ((doDelete) && (FinalEffMedIsoEta_ != NULL)) delete FinalEffMedIsoEta_;
-  FinalEffMedIsoEta_ = NULL;
-  if ((doDelete) && (FinalEffTightIsoEta_ != NULL)) delete FinalEffTightIsoEta_;
-  FinalEffTightIsoEta_ = NULL;
-  if ((doDelete) && (FinalEffDMFindEta_ != NULL)) delete FinalEffDMFindEta_;
-  FinalEffDMFindEta_ = NULL;
-
-  if ((doDelete) && (TauLooseIsoPt_ != NULL)) delete TauLooseIsoPt_;
-  TauLooseIsoPt_ = NULL;
-  if ((doDelete) && (TauMedIsoPt_ != NULL)) delete TauMedIsoPt_;
-  TauMedIsoPt_ = NULL;
-  if ((doDelete) && (TauTightIsoPt_ != NULL)) delete TauTightIsoPt_;
-  TauTightIsoPt_ = NULL;
-  if ((doDelete) && (TauDMFindPt_ != NULL)) delete TauDMFindPt_;
-  TauDMFindPt_ = NULL;
-  if ((doDelete) && (JetPt_ != NULL)) delete JetPt_;
-  JetPt_ = NULL;
-  if ((doDelete) && (JetPtWithSoftMuon_ != NULL)) delete JetPtWithSoftMuon_;
-  JetPtWithSoftMuon_ = NULL;
-  if ((doDelete) && (JetPtWithSoftMuon_noMu_ != NULL)) delete JetPtWithSoftMuon_noMu_;
-  JetPtWithSoftMuon_noMu_ = NULL;
-  if ((doDelete) && (FinalEffLooseIsoPt_ != NULL)) delete FinalEffLooseIsoPt_;
-  FinalEffLooseIsoPt_ = NULL;
-  if ((doDelete) && (FinalEffMedIsoPt_ != NULL)) delete FinalEffMedIsoPt_;
-  FinalEffMedIsoPt_ = NULL;
-  if ((doDelete) && (FinalEffTightIsoPt_ != NULL)) delete FinalEffTightIsoPt_;
-  FinalEffTightIsoPt_ = NULL;
-  if ((doDelete) && (FinalEffDMFindPt_ != NULL)) delete FinalEffDMFindPt_;
-  FinalEffDMFindPt_ = NULL;
-
-  if ((doDelete) && (OneProngDMEta_ != NULL)) delete OneProngDMEta_;
-  OneProngDMEta_ = NULL;
-  if ((doDelete) && (OneProngOnePizDMEta_ != NULL)) delete OneProngOnePizDMEta_;
-  OneProngOnePizDMEta_ = NULL;
-  if ((doDelete) && (OneProngTwoPizDMEta_ != NULL)) delete OneProngTwoPizDMEta_;
-  OneProngOnePizDMEta_ = NULL;
-  if ((doDelete) && (ThreeProngDMEta_ != NULL)) delete ThreeProngDMEta_;
-  ThreeProngDMEta_ = NULL;
-  if ((doDelete) && (OneProngDMPt_ != NULL)) delete OneProngDMPt_;
-  OneProngDMPt_ = NULL;
-  if ((doDelete) && (OneProngOnePizDMPt_ != NULL)) delete OneProngOnePizDMPt_;
-  OneProngOnePizDMPt_ = NULL;
-  if ((doDelete) && (OneProngTwoPizDMPt_ != NULL)) delete OneProngTwoPizDMPt_;
-  OneProngTwoPizDMPt_ = NULL;
-  if ((doDelete) && (ThreeProngDMPt_ != NULL)) delete ThreeProngDMPt_;
-  ThreeProngDMPt_ = NULL;
-  if ((doDelete) && (FinalOneProngDMEta_ != NULL)) delete FinalOneProngDMEta_;
-  FinalOneProngDMEta_ = NULL;
-  if ((doDelete) && (FinalOneProngOnePizDMEta_ != NULL)) delete FinalOneProngOnePizDMEta_;
-  FinalOneProngOnePizDMEta_ = NULL;
-  if ((doDelete) && (FinalOneProngTwoPizDMEta_ != NULL)) delete FinalOneProngTwoPizDMEta_;
-  FinalOneProngTwoPizDMEta_ = NULL;
-  if ((doDelete) && (FinalThreeProngDMEta_ != NULL)) delete FinalThreeProngDMEta_;
-  FinalThreeProngDMEta_ = NULL;
-  if ((doDelete) && (FinalOneProngDMPt_ != NULL)) delete FinalOneProngDMPt_;
-  FinalOneProngDMPt_ = NULL;
-  if ((doDelete) && (FinalOneProngOnePizDMPt_ != NULL)) delete FinalOneProngOnePizDMPt_;
-  FinalOneProngOnePizDMPt_ = NULL;
-  if ((doDelete) && (FinalOneProngTwoPizDMPt_ != NULL)) delete FinalOneProngTwoPizDMPt_;
-  FinalOneProngTwoPizDMPt_ = NULL;
-  if ((doDelete) && (FinalThreeProngDMPt_ != NULL)) delete FinalThreeProngDMPt_;
-  FinalThreeProngDMPt_ = NULL;
-
-  if ((doDelete) && (OneProngMedIsoEta_ != NULL)) delete OneProngMedIsoEta_;
-  OneProngMedIsoEta_ = NULL;
-  if ((doDelete) && (OneProngOnePizMedIsoEta_ != NULL)) delete OneProngOnePizMedIsoEta_;
-  OneProngOnePizMedIsoEta_ = NULL;
-  if ((doDelete) && (OneProngTwoPizMedIsoEta_ != NULL)) delete OneProngTwoPizMedIsoEta_;
-  OneProngOnePizMedIsoEta_ = NULL;
-  if ((doDelete) && (ThreeProngMedIsoEta_ != NULL)) delete ThreeProngMedIsoEta_;
-  ThreeProngMedIsoEta_ = NULL;
-  if ((doDelete) && (OneProngMedIsoPt_ != NULL)) delete OneProngMedIsoPt_;
-  OneProngMedIsoPt_ = NULL;
-  if ((doDelete) && (OneProngOnePizMedIsoPt_ != NULL)) delete OneProngOnePizMedIsoPt_;
-  OneProngOnePizMedIsoPt_ = NULL;
-  if ((doDelete) && (OneProngTwoPizMedIsoPt_ != NULL)) delete OneProngTwoPizMedIsoPt_;
-  OneProngTwoPizMedIsoPt_ = NULL;
-  if ((doDelete) && (ThreeProngMedIsoPt_ != NULL)) delete ThreeProngMedIsoPt_;
-  ThreeProngMedIsoPt_ = NULL;
-  if ((doDelete) && (FinalOneProngMedIsoEta_ != NULL)) delete FinalOneProngMedIsoEta_;
-  FinalOneProngMedIsoEta_ = NULL;
-  if ((doDelete) && (FinalOneProngOnePizMedIsoEta_ != NULL)) delete FinalOneProngOnePizMedIsoEta_;
-  FinalOneProngOnePizMedIsoEta_ = NULL;
-  if ((doDelete) && (FinalOneProngTwoPizMedIsoEta_ != NULL)) delete FinalOneProngTwoPizMedIsoEta_;
-  FinalOneProngTwoPizMedIsoEta_ = NULL;
-  if ((doDelete) && (FinalThreeProngMedIsoEta_ != NULL)) delete FinalThreeProngMedIsoEta_;
-  FinalThreeProngMedIsoEta_ = NULL;
-  if ((doDelete) && (FinalOneProngMedIsoPt_ != NULL)) delete FinalOneProngMedIsoPt_;
-  FinalOneProngMedIsoPt_ = NULL;
-  if ((doDelete) && (FinalOneProngOnePizMedIsoPt_ != NULL)) delete FinalOneProngOnePizMedIsoPt_;
-  FinalOneProngOnePizMedIsoPt_ = NULL;
-  if ((doDelete) && (FinalOneProngTwoPizMedIsoPt_ != NULL)) delete FinalOneProngTwoPizMedIsoPt_;
-  FinalOneProngTwoPizMedIsoPt_ = NULL;
-  if ((doDelete) && (FinalThreeProngMedIsoPt_ != NULL)) delete FinalThreeProngMedIsoPt_;
-  FinalThreeProngMedIsoPt_ = NULL;
+  if ((doDelete) && (InvMassUpsilonRange_ != NULL)) delete InvMassUpsilonRange_;
+  InvMassUpsilonRange_ = NULL;
+  if ((doDelete) && (InvMassZPeakRange_ != NULL)) delete InvMassZPeakRange_;
+  InvMassZPeakRange_ = NULL;
+  if ((doDelete) && (InvMassFullRange_ != NULL)) delete InvMassFullRange_;
+  InvMassFullRange_ = NULL;
 
 }
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

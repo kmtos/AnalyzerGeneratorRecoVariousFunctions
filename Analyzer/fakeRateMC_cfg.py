@@ -82,7 +82,8 @@ process.ggh = cms.EDAnalyzer("FakeRateMCAnalyzer",
    muonsTag = cms.InputTag("muons"),
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
    requireRemovedMuon = cms.bool(True),
-   muonSrc = cms.InputTag("muonsRef")
+   checkInvMass = cms.bool(True),
+   checkInvMassValue = cms.double(4.0)
 )
 
 #########################################################

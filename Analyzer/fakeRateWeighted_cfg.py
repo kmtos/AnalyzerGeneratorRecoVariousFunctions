@@ -83,7 +83,10 @@ process.ggh = cms.EDAnalyzer("FakeRateWithWeightsAnalyzer",
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
    requireRemovedMuon = cms.bool(True),
    muonSrc = cms.InputTag("muonsRef"),
-   TH2FileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/COMBINED_DY_FakeRate_Inv81to101_Mu51_MedMuID_MultiTrig_JUL3_FineBin.root') 
+   TH2FileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/COMBINED_DY_FakeRate_Inv81to101_Mu51_MedMuID_MultiTrig_JUL3_FineBin.root') ,
+   checkInvMass = cms.bool(True),
+   checkInvMassValue = cms.double(4.0)
+
 )
 
 #########################################################
