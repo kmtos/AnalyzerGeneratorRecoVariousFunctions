@@ -1,0 +1,8 @@
+106  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_B_v3  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_B_v3/170713_200303/0000/
+34  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_C  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_C/170713_200314/0000/
+59  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_D  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_D/170713_200326/0000/
+50  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_E  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_E/170713_200337/0000/
+37  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_F  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_F/170713_200352/0000/
+80  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_G  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_G/170713_200403/0000/
+92  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_H_v2  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_H_v2/170713_200427/0000/
+62  Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_H_v3  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/Upsilon_Mu51_CJ_NoIsoDiTau_MedMuID_JUN22_H_v3/170713_200440/0000/

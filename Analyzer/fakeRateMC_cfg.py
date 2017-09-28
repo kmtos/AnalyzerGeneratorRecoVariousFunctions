@@ -83,7 +83,14 @@ process.ggh = cms.EDAnalyzer("FakeRateMCAnalyzer",
    muonMapTag = cms.InputTag("CleanJets", "muonValMap"),
    requireRemovedMuon = cms.bool(True),
    checkInvMass = cms.bool(True),
-   checkInvMassValue = cms.double(4.0)
+   checkInvMassValue = cms.double(4.0),
+   pileupSummaryInfo = cms.InputTag("addPileupInfo", "", "HLT"),
+   PileupFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights.root'),
+   xsec = cms.double(XSEC),
+   lumiData = cms.double(LUMI_DATA),
+   summedWeights = cms.double(SUMMED_WEIGHTS),
+   genEventInfoToken = cms.InputTag("generator", "", "SIM")
+
 )
 
 #########################################################

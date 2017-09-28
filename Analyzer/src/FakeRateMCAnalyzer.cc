@@ -23,6 +23,7 @@
 #include <string>
 #include <sstream>
 #include <typeinfo>
+#include <typeinfo>
 
 // user include files
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -66,6 +67,7 @@
 #include "SimDataFormats/JetMatching/interface/JetFlavour.h"
 #include "SimDataFormats/JetMatching/interface/JetFlavourMatching.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
@@ -118,7 +120,8 @@ class FakeRateMCAnalyzer : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       //pointer to output file object
       TFile* out_;
-
+      TFile* PileupFile;
+ 
       //name of output root file
       std::string outFileName_;
       edm::EDGetTokenT<vector<reco::PFJet> > akJetTag_;
@@ -136,6 +139,12 @@ class FakeRateMCAnalyzer : public edm::EDAnalyzer {
       bool requireRemovedMuon_;
       bool checkInvMass_;
       double checkInvMassValue_;
+      edm::EDGetTokenT<std::vector<PileupSummaryInfo> > pileupSummaryInfo_;
+      std::string PileupFileName_;
+      double xsec_;
+      double lumiData_;
+      double summedWeights_;
+      edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -150,6 +159,8 @@ class FakeRateMCAnalyzer : public edm::EDAnalyzer {
       TH1F* InvMassFakeWeightZoom_;
       TH1F* TauVisMass_;
       TH1F* TauVisMassZoom_;
+      TH1F* PileupWeights_;
+      TH1F* GenWeights_;
 
 };
 
@@ -180,7 +191,14 @@ FakeRateMCAnalyzer::FakeRateMCAnalyzer(const edm::ParameterSet& iConfig):
   muonMapTag_(consumes<edm::ValueMap<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > >(iConfig.getParameter<edm::InputTag>("muonMapTag"))),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
   checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
-  checkInvMassValue_(iConfig.getParameter<double>("checkInvMassValue"))
+  checkInvMassValue_(iConfig.getParameter<double>("checkInvMassValue")),
+  pileupSummaryInfo_(consumes<std::vector<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileupSummaryInfo"))),
+  PileupFileName_(iConfig.getParameter<std::string>("PileupFileName")),
+  xsec_(iConfig.getParameter<double>("xsec")),
+  lumiData_(iConfig.getParameter<double>("lumiData")),
+  summedWeights_(iConfig.getParameter<double>("summedWeights")),
+  genEventInfoToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoToken"))) 
+
 {
   reset(false);    
 }//FakeRateMCAnalyzer
@@ -239,6 +257,7 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   edm::Handle<reco::JetTagCollection> pCSV;
   iEvent.getByToken(csvBTag_, pCSV);
 
+std::cout << "DECLARED MOST OBJECTS" << std::endl;
   //Old Jet collection for bTagging
   edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu12;
   iEvent.getByToken(mu12Tag_, pMu12);
@@ -249,6 +268,7 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   if (checkInvMass_ && checkInvMassValue_ > diMuP4.M() )
     return;
 
+std::cout << "Mu1Mu2 DECL & INVMASSCHECK" << std::endl;
   //Get RECO Muons particle collection
   edm::Handle<std::vector<reco::Muon> > pMuons;
   iEvent.getByToken(muonsTag_, pMuons);
@@ -258,6 +278,25 @@ void FakeRateMCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   edm::Handle<edm::ValueMap<reco::MuonRefVector> > pMuonMap;
   iEvent.getByToken(muonMapTag_, pMuonMap);
 
+  edm::Handle<std::vector<PileupSummaryInfo> > pPileupSummaryInfo;
+  iEvent.getByToken(pileupSummaryInfo_, pPileupSummaryInfo);
+
+  edm::Handle<GenEventInfoProduct> genEventInfo;
+  iEvent.getByToken(genEventInfoToken_, genEventInfo);
+  
+  int nTrueVertices = 0;
+  if (pPileupSummaryInfo.isValid() && pPileupSummaryInfo->size()>0) 
+    nTrueVertices = pPileupSummaryInfo->at(1).getTrueNumInteractions();
+
+  PileupFile = new TFile(PileupFileName_.c_str());
+  TH1F* Pileup_ = (TH1F*)PileupFile->Get("PileupWeights");
+  double pileupWeight = Pileup_->GetBinContent(nTrueVertices);
+  PileupWeights_->Fill(pileupWeight); 
+
+  double eventGenWeight = genEventInfo->weight();
+  double genWeight = eventGenWeight * lumiData_ * xsec_ / summedWeights_;
+  GenWeights_->Fill(genWeight); 
+  std::cout << "genWeight=" << genWeight << "\teventGenWeight=" << eventGenWeight << "\tlumiData_=" << lumiData_  << "\tsummedWeights_=" << summedWeights_ << "\txsec_=" << xsec_ << std::endl;
 
 //////////////////////////////
 // Begin Analyzer
@@ -313,23 +352,23 @@ std::cout << "PassIf" << "(!removedMu && requireRemovedMuon_)=" << (!removedMu &
       diMuP4_2 = mu2Ref->p4();
       diMuP4_2 += removedMuonRef->p4();
 
-      InvMassTauMuMu1_->Fill(diMuP4_1.M() );
-      InvMassTauMuMu2_->Fill(diMuP4_2.M() );
+      InvMassTauMuMu1_->Fill(diMuP4_1.M(), pileupWeight*genWeight);
+      InvMassTauMuMu2_->Fill(diMuP4_2.M(), pileupWeight*genWeight);
 
       reco::LeafCandidate::LorentzVector diTauP4 =  iTau->p4() + removedMuonRef->p4();
-      TauVisMass_->Fill(diTauP4.M() );
-      TauVisMassZoom_->Fill(diTauP4.M() );
+      TauVisMass_->Fill(diTauP4.M(), pileupWeight*genWeight);
+      TauVisMassZoom_->Fill(diTauP4.M(), pileupWeight*genWeight);
     }//if removed Mu
 
-    InvMassFakeWeight_->Fill(diMuP4.M() );
-    InvMassFakeWeightZoom_->Fill(diMuP4.M() );
-    PtMu1FakeWeight_->Fill(mu1Ref->pt() );
-    PtMu2FakeWeight_->Fill(mu2Ref->pt() );
-    EtaFakeWeight_->Fill(mu1Ref->eta() );
+    InvMassFakeWeight_->Fill(diMuP4.M(), pileupWeight*genWeight);
+    InvMassFakeWeightZoom_->Fill(diMuP4.M(), pileupWeight*genWeight);
+    PtMu1FakeWeight_->Fill(mu1Ref->pt(), pileupWeight*genWeight);
+    PtMu2FakeWeight_->Fill(mu2Ref->pt(), pileupWeight*genWeight);
+    EtaFakeWeight_->Fill(mu1Ref->eta(), pileupWeight*genWeight);
     double dPhi = reco::deltaPhi(mu1Ref->phi(), mu2Ref->phi() );
     double dR_tauMu = sqrt( (mu1Ref->eta() - mu2Ref->eta() ) * (mu1Ref->eta() - mu2Ref->eta() ) +  dPhi * dPhi);
-    DRFakeWeight_->Fill(dR_tauMu );
-    DRFakeWeightZoom_->Fill(dR_tauMu );
+    DRFakeWeight_->Fill(dR_tauMu, pileupWeight*genWeight);
+    DRFakeWeightZoom_->Fill(dR_tauMu, pileupWeight*genWeight);
   }//iTau
 }//End FakeRateMCAnalyzer::analyze
 
@@ -351,17 +390,19 @@ void FakeRateMCAnalyzer::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(5, "Gen Match #tau_{had}");
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
-  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
-  InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
-  InvMassFakeWeight_     = new TH1F("InvMassFakeWeight"    , "", 75, 0, 150);
-  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 30, 0, 750);
-  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 30, 0, 750);
-  EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 75, -2.5, 2.5);
-  DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 75, 0, 5);
-  DRFakeWeightZoom_     = new TH1F("DRFakeWeightZoom"    , "", 75, 0, .5);
-  InvMassFakeWeightZoom_     = new TH1F("InvMassFakeWeightZoom"    , "", 75, 0, 20);
-  TauVisMass_     = new TH1F("TauVisMass"    , "", 75, 0, 150);
-  TauVisMassZoom_     = new TH1F("TauVisMassZoom"    , "", 75, 0, 30);
+  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 10, 0, 150);
+  InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 10, 0, 150);
+  InvMassFakeWeight_     = new TH1F("InvMassFakeWeight"    , "", 10, 0, 150);
+  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 10, 0, 750);
+  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 10, 0, 750);
+  EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 10, -2.5, 2.5);
+  DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 10, 0, 5);
+  DRFakeWeightZoom_     = new TH1F("DRFakeWeightZoom"    , "", 10, 0, .5);
+  InvMassFakeWeightZoom_     = new TH1F("InvMassFakeWeightZoom"    , "", 10, 0, 20);
+  TauVisMass_     = new TH1F("TauVisMass"    , "", 10, 0, 150);
+  TauVisMassZoom_     = new TH1F("TauVisMassZoom"    , "", 10, 0, 30);
+  PileupWeights_     = new TH1F("PileupWeights"    , "", 200, 0, 2);
+  GenWeights_     = new TH1F("GenWeights"    , "", 20000, -10000, 10000);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
@@ -380,6 +421,8 @@ void FakeRateMCAnalyzer::endJob()
   TCanvas InvMassFakeWeightZoomCanvas("InvMassFakeWeightZoom","",600,600);
   TCanvas TauVisMassCanvas("TauVisMass","",600,600);
   TCanvas TauVisMassZoomCanvas("TauVisMassZoom","",600,600);
+  TCanvas PileupWeightsCanvas("PileupWeights","",600,600);
+  TCanvas GenWeightsCanvas("GenWeights","",600,600);
 
 
 std::cout << "<----------------Declared Canvases-------------->" << std::endl;
@@ -409,6 +452,10 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(TauVisMassZoomCanvas, TauVisMassZoom_,
          1, 0, 0, kBlack, 1, 20, "Visible Mass(#tau_{2} #tau_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PileupWeightsCanvas, PileupWeights_,
+         1, 0, 0, kBlack, 1, 20, "Pileup Weight (data/MC)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(GenWeightsCanvas, GenWeights_,
+         1, 0, 0, kBlack, 1, 20, "Gen Weight (EventWeight * LumiData / LumiMC)", .04, .04, 1.1,  "", .04, .04, 1.0, false);
 
 std::cout << "after formatting" << std::endl;
   
@@ -432,6 +479,8 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   InvMassFakeWeightZoomCanvas.Write();
   TauVisMassCanvas.Write();
   TauVisMassZoomCanvas.Write();
+  PileupWeightsCanvas.Write();
+  GenWeightsCanvas.Write();
  
 
   out_->Write();
@@ -478,6 +527,10 @@ void FakeRateMCAnalyzer::reset(const bool doDelete)
   TauVisMass_ = NULL;
   if ((doDelete) && (TauVisMassZoom_ != NULL)) delete TauVisMassZoom_;
   TauVisMassZoom_ = NULL;
+  if ((doDelete) && (PileupWeights_ != NULL)) delete PileupWeights_;
+  PileupWeights_ = NULL;
+  if ((doDelete) && (GenWeights_ != NULL)) delete GenWeights_;
+  GenWeights_ = NULL;
 
 
 }

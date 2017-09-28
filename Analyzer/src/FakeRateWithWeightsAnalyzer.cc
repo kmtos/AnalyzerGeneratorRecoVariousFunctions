@@ -407,17 +407,17 @@ void FakeRateWithWeightsAnalyzer::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(5, "Gen Match #tau_{had}");
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
-  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
-  InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
-  InvMassFakeWeight_     = new TH1F("InvMassFakeWeight"    , "", 75, 0, 150);
-  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 75, 0, 300);
-  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 75, 0, 300);
-  EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 75, -2.5, 2.5);
-  DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 75, 0, 5);
-  DRNoWeighting_     = new TH1F("DRNoWeighting"    , "", 75, 0, 5);
-  InvMassFakeWeightZoom_     = new TH1F("InvMassFakeWeightZoom"    , "", 75, 0, 20);
-  TauVisMass_     = new TH1F("TauVisMass"    , "", 75, 0, 150);
-  TauVisMassZoom_     = new TH1F("TauVisMassZoom"    , "", 75, 0, 30);
+  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 10, 0, 150);
+  InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 10, 0, 150);
+  InvMassFakeWeight_     = new TH1F("InvMassFakeWeight"    , "", 10, 0, 150);
+  PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 10, 0, 300);
+  PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 10, 0, 300);
+  EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 10, -2.5, 2.5);
+  DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 10, 0, 5);
+  DRNoWeighting_     = new TH1F("DRNoWeighting"    , "", 10, 0, 5);
+  InvMassFakeWeightZoom_     = new TH1F("InvMassFakeWeightZoom"    , "", 10, 0, 20);
+  TauVisMass_     = new TH1F("TauVisMass"    , "", 10, 0, 150);
+  TauVisMassZoom_     = new TH1F("TauVisMassZoom"    , "", 10, 0, 30);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
