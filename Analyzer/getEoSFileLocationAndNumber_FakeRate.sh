@@ -4,7 +4,7 @@ mv FILE_TESTS/InputForFakeRate.txt ~/Copies_Temp_etc/
 
 for i in /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/*
 do
-  dirLs="$(echo $i | grep NoIsoDiTau)"
+  dirLs="$(echo $i | grep Anti)"
   if [ -z "$dirLs" ]; then
     echo "Skipped $i"
     continue
@@ -16,7 +16,7 @@ do
     count="$(eos ls $fileName | grep selec | wc -l)"
     echo $fileName
     dir="$(echo ${line##*/})"
-    echo "$count  $dir  $fileName" | grep NoIsoDiTau >> FILE_TESTS/InputForFakeRate.txt
+    echo "$count  $dir  $fileName" | grep Anti >> FILE_TESTS/InputForFakeRate.txt
     done
 done
 

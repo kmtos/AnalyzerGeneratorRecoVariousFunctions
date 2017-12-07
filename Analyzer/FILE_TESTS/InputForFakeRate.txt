@@ -1,8 +1,2 @@
-174  NoIsoDiTau_SEP4_B_v3  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_B_v3/170906_190449/0000/
-97  NoIsoDiTau_SEP4_C  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_C/170906_190507/0000/
-98  NoIsoDiTau_SEP4_D  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_D/170906_190526/0000/
-100  NoIsoDiTau_SEP4_E  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_E/170906_190544/0000/
-61  NoIsoDiTau_SEP4_F_NoTotalUnitsh  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_F_NoTotalUnitsh/170914_210550/0000/
-87  NoIsoDiTau_SEP4_G  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_G/170906_190620/0000/
-92  NoIsoDiTau_SEP4_H_v2  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_H_v2/170906_190641/0000/
-3  NoIsoDiTau_SEP4_H_v3  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/NoIsoDiTau_SEP4_H_v3/170906_190659/0000/
+145  MiniAOD_SingleMu1_DiMu_TauDMAntiMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu1_DiMu_TauDMAntiMedIso_NOV27/171130_141102/0000/
+101  MiniAOD_SingleMu2_DiMu_TauDMAntiMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu2_DiMu_TauDMAntiMedIso_NOV27/171130_141145/0000/

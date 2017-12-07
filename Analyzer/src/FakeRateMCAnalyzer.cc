@@ -23,7 +23,6 @@
 #include <string>
 #include <sstream>
 #include <typeinfo>
-#include <typeinfo>
 
 // user include files
 #include "CommonTools/UtilAlgos/interface/TFileService.h"

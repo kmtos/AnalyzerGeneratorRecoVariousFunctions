@@ -47,6 +47,9 @@
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+
 
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -85,7 +88,6 @@
 
 using namespace std;
 using namespace edm;
-using namespace reco;
 using namespace trigger;
 
 
@@ -95,7 +97,6 @@ using namespace trigger;
 
 class InvMass : public edm::EDAnalyzer {
    public:
-      typedef reco::JetFloatAssociation::Container JetBCEnergyRatioCollection;
       explicit InvMass(const edm::ParameterSet&);
       ~InvMass();
 
@@ -121,7 +122,7 @@ class InvMass : public edm::EDAnalyzer {
 
       //name of output root file
       std::string outFileName_;
-      edm::EDGetTokenT<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > mu12Tag_;
+      edm::EDGetTokenT<std::vector<pat::Muon> > mu12Tag_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -145,7 +146,7 @@ class InvMass : public edm::EDAnalyzer {
 //
 InvMass::InvMass(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
-  mu12Tag_(consumes<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > >(iConfig.getParameter<edm::InputTag>("mu12Tag")))
+  mu12Tag_(consumes<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag")))
 {
   reset(false);    
 }//InvMass
@@ -168,11 +169,11 @@ void InvMass::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   std::cout << "\n<------------THIS IS A NEW EVENT------------>" << std::endl;
 
   //Old Jet collection for bTagging
-  edm::Handle<edm::RefVector<vector<reco::Muon>,reco::Muon,edm::refhelper::FindUsingAdvance<vector<reco::Muon>,reco::Muon> > > pMu12;
+  edm::Handle<std::vector<pat::Muon> > pMu12;
   iEvent.getByToken(mu12Tag_, pMu12);
-  reco::MuonRef mu1Ref = reco::MuonRef((*pMu12)[0] );
-  reco::MuonRef mu2Ref = reco::MuonRef((*pMu12)[1] );
-  reco::LeafCandidate::LorentzVector diMuP4 = mu1Ref->p4() + mu2Ref->p4();
+  pat::Muon mu1 = pat::Muon((*pMu12)[0] );
+  pat::Muon mu2 = pat::Muon((*pMu12)[1] );
+  reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
   InvMassZPeakRange_->Fill(diMuP4.M() );
   InvMassUpsilonRange_->Fill(diMuP4.M() );
   InvMassFullRange_->Fill(diMuP4.M() );
@@ -197,11 +198,11 @@ void InvMass::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(5, "Gen Match #tau_{had}");
       NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
-  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
-  InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 50, 150);
-  InvMassUpsilonRange_     = new TH1F("InvMassUpsilonRange"    , "", 75, 5, 15);
-  InvMassZPeakRange_     = new TH1F("InvMassZPeakRange"    , "", 75, 50, 150);
-  InvMassFullRange_     = new TH1F("InvMassFullRange"    , "", 75, 0, 150);
+  InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 450, 0, 150);
+  InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 450, 50, 150);
+  InvMassUpsilonRange_     = new TH1F("InvMassUpsilonRange"    , "", 50, 5, 15);
+  InvMassZPeakRange_     = new TH1F("InvMassZPeakRange"    , "", 450, 50, 150);
+  InvMassFullRange_     = new TH1F("InvMassFullRange"    , "", 450, 0, 150);
 
 }
 

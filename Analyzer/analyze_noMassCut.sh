@@ -30,9 +30,9 @@ do
   cd BSUB/$dir_name
   path=$(pwd)
   echo "path= $path"
-  cp ../../src/GGHAnalyzer_IndivCJ.cc ../../src/GGHAnalyzer_IndivRECO.cc ../../src/GGHAnalyzer_OLD.cc ../../src/ZTTAnalyzer.cc ../../src/FakeRateAnalyzer.cc ../../src/SkimCheck.cc .
+  cp  ../../src/FakeRate* .
 
-  divisions=$((divisions + 20))
+  divisions=$((divisions + 5))
   COUNT=1
   while [ $COUNT -le  $divisions ]; do
     echo "DIRNAME    = ${dir_name}"

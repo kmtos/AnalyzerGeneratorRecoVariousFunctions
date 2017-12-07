@@ -1,0 +1,4 @@
+72  MiniAOD_DYLowMass_DiMu_TauDMAntiMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_DYLowMass_DiMu_TauDMAntiMedIso_NOV27/171130_141402/0000/
+73  MiniAOD_DYLowMass_DiMu_TauDMMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_DYLowMass_DiMu_TauDMMedIso_NOV27/171130_142653/0000/
+122  MiniAOD_DYHighMass_DiMu_TauDMAntiMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_DYHighMass_DiMu_TauDMAntiMedIso_NOV27/171130_141322/0000/
+122  MiniAOD_DYHighMass_DiMu_TauDMMedIso_NOV27  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_DYHighMass_DiMu_TauDMMedIso_NOV27/171130_142612/0000/
