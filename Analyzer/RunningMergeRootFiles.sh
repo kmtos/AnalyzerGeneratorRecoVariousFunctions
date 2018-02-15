@@ -1,11 +1,11 @@
 # .bashrc
 
 cd BSUB/
-for i in ./*;
+for i in M*;
 do
-  sed -i "s|TEMPLATE_DIRNAME|${i##*./}|g" ../MergeRootFiles_1000.C
-  root -l .x ../MergeRootFiles_1000.C
-  sed -i "s|${i##*./}|TEMPLATE_DIRNAME|g" ../MergeRootFiles_1000.C
+  cd $i
+  hadd ../FINAL_${i}.root *.root
+  cd ..
 done
 
 

@@ -133,11 +133,15 @@ class FakeRateMiniAODGetRates : public edm::EDAnalyzer {
       std::string vTightIsoTag_;
       std::string decayModeFindingTag_;
       std::string isoRawTag_;
-      double mu3dRCut_;
+      double mu3dRMin_;
+      double mu3dRMax_;
       double tauPtCut_;
-      edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
+//      edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
       bool requireRemovedMuon_;
+      bool checkInvMass_;
+      double checkInvMassMin_;
+      double checkInvMassMax_;
 
 
       //Histograms
@@ -239,13 +243,15 @@ FakeRateMiniAODGetRates::FakeRateMiniAODGetRates(const edm::ParameterSet& iConfi
   vTightIsoTag_(iConfig.getParameter<std::string>("vTightIsoTag")),
   decayModeFindingTag_(iConfig.getParameter<std::string>("decayModeFindingTag")),
   isoRawTag_(iConfig.getParameter<std::string>("isoRawTag")),
-  mu3dRCut_(iConfig.getParameter<double>("mu3dRCut")),
+  mu3dRMin_(iConfig.getParameter<double>("mu3dRMin")),
+  mu3dRMax_(iConfig.getParameter<double>("mu3dRMax")),
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
-  mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
+//  mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
-  requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon"))
-
-
+  requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
+  checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
+  checkInvMassMin_(iConfig.getParameter<double>("checkInvMassMin")),
+  checkInvMassMax_(iConfig.getParameter<double>("checkInvMassMax"))
 {
   reset(false);    
 }//FakeRateMiniAODGetRates
@@ -280,9 +286,9 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
   edm::Handle<edm::View<pat::Tau> > pTaus;
   iEvent.getByToken(tauTag_, pTaus);
 
-  //Old Jet collection for bTagging
-  edm::Handle<edm::View<pat::Muon> > pMu3;
-  iEvent.getByToken(mu3Tag_, pMu3);
+//  //Old Jet collection for bTagging
+//  edm::Handle<edm::View<pat::Muon> > pMu3;
+//  iEvent.getByToken(mu3Tag_, pMu3);
 
   //Old Jet collection for bTagging
   edm::Handle<edm::View<pat::Muon> > pMu12;
@@ -312,9 +318,12 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
       mu2 = *iMuon;
   }
 
-//  pat::Muon mu1 = pat::Muon( (pMu12)[0] );
-//  pat::Muon mu2 = pat::Muon( (pMu12)[1] );
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
+std::cout << "mu1: pt=" << mu1.pt() << "  eta=" << mu1.eta() << "  pdgID=" << mu1.pdgId() << "\nmu2: pt=" << mu2.pt() << "  eta=" << mu2.eta() << "  pdgID=" << mu2.pdgId() << std::endl;
+std::cout << "DiMu: pt= " << diMuP4.Pt() << "  eta=" << diMuP4.Eta() << " Mass=" << diMuP4.M() << std::endl;
+
+  if (checkInvMass_ && (diMuP4.M() < checkInvMassMin_ || diMuP4.M() > checkInvMassMax_) )
+    return;
   InvMassMu1Mu2_->Fill(diMuP4.M() );
 
 
@@ -329,18 +338,20 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
   //double VLooseIso = -1, VTightIso = -1;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
+    NEvents_->Fill(1);
     double bestMu3dR = 10000000;
     bool checkSubMu = false;
     pat::Muon mu3;
-    for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
+    for (edm::View<pat::Muon>::const_iterator iMu = pMuons->begin(); iMu != pMuons->end(); ++iMu)
     {
-      double currdR = deltaR(*iTau, *iMu);
-      if (currdR < mu3dRCut_ && currdR < bestMu3dR)
+      double currdR = deltaR(*iTau, *iMu), mu1dR = deltaR(mu1, *iMu), mu2dR = deltaR(mu2, *iMu);
+      if (mu1dR < .5 || mu2dR < .5)
+       continue;
+      if (currdR < mu3dRMax_ && currdR > mu3dRMin_ && currdR < bestMu3dR)
       {
         diTauP4 = iTau->p4() + iMu->p4();
         checkSubMu = true;
         mu3 = *iMu;
-
         tauDecayMode = iTau->decayMode();
         DMFind = iTau->tauID(decayModeFindingTag_);
 //        VLooseIso = iTau->tauID(vLooseIsoTag_);
@@ -351,7 +362,20 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
       }//if
     }//for iMu
 
-        
+
+    if (checkSubMu)
+      NEvents_->Fill(2);
+    else if (iTau->pt() > tauPtCut_ )
+      NEvents_->Fill(3);
+    else if (DMFind >= .5)
+      NEvents_->Fill(4);
+    else if (LooseIso >= .5)
+      NEvents_->Fill(5);
+    else if (MedIso >= .5)
+      NEvents_->Fill(6);
+    else if (TightIso >= .5)
+      NEvents_->Fill(7);
+ 
     if ( (!checkSubMu && requireRemovedMuon_) || iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4)
       continue;
 
@@ -444,10 +468,12 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
       JetEta_->Fill(iJet->eta() ); 
       JetPt_->Fill(iJet->pt() ); 
       EtavsPtJet_->Fill(iJet->pt(), iJet->eta() );
-      for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
-      {
-        double currdR = deltaR(*iJet, *iMu);
-        if (currdR < mu3dRCut_)
+      for (edm::View<pat::Muon>::const_iterator iMu = pMuons->begin(); iMu != pMuons->end(); ++iMu)
+       {  
+       double currdR = deltaR(*iJet, *iMu), mu1dR = deltaR(mu1, *iMu), mu2dR = deltaR(mu2, *iMu);
+       if (mu1dR < .5 || mu2dR < .5)
+         continue;
+       if (currdR < mu3dRMax_ && currdR > mu3dRMin_)
         {
           JetEtaWithSoftMuon_->Fill(iJet->eta() );
           JetPtWithSoftMuon_->Fill(iJet->pt() );
@@ -475,23 +501,26 @@ void FakeRateMiniAODGetRates::beginJob()
   //Book histograms
   NEvents_     = new TH1F("NEvents"    , "", 9, -.5, 8.5);
       NEvents_->GetXaxis()->SetBinLabel(1, "TotalEvents"); 
-      NEvents_->GetXaxis()->SetBinLabel(2, "#tau_{#mu} + #tau_{had} Match");
-      NEvents_->GetXaxis()->SetBinLabel(3, "Gen #tau_{#mu} + #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(4, "Gen Match #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(5, "Gen Match #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
-      NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
+      NEvents_->GetXaxis()->SetBinLabel(2, "Total #tau's");
+      NEvents_->GetXaxis()->SetBinLabel(3, "#tau's With #mu");
+      NEvents_->GetXaxis()->SetBinLabel(4, "#tau's p_{T} > 20");
+      NEvents_->GetXaxis()->SetBinLabel(5, "Pass DMFind");
+      NEvents_->GetXaxis()->SetBinLabel(6, "Pass Loose Iso");
+      NEvents_->GetXaxis()->SetBinLabel(7, "Pass Med Iso");
+      NEvents_->GetXaxis()->SetBinLabel(8, "Pass Tight Iso");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
   InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
 
-  EtavsPtTauLooseIso_  = new TH2F("EtavsPtTauLooseIso" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauTightIso_  = new TH2F("EtavsPtTauTightIso" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJet_  = new TH2F("EtavsPtJet"                 , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJetSoftMuon_  = new TH2F("EtavsPtJetSoftMuon" , "", 8, 0, 400, 5, -2.5, 2.5);
-  EtavsPtJetSoftMuon_noMu_  = new TH2F("EtavsPtJetSoftMuon_noMu" , "", 8, 0, 400, 5, -2.5, 2.5);
+  Float_t binsx[] = {0, 20, 25, 35, 60, 300};
+  Float_t binsy[] = {0, .9, 1.5, 2.4};
+  EtavsPtTauLooseIso_  = new TH2F("EtavsPtTauLooseIso" , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtTauTightIso_  = new TH2F("EtavsPtTauTightIso" , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtJet_  = new TH2F("EtavsPtJet"                 , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtJetSoftMuon_  = new TH2F("EtavsPtJetSoftMuon" , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
+  EtavsPtJetSoftMuon_noMu_  = new TH2F("EtavsPtJetSoftMuon_noMu" , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
 
   TauLooseIsoEta_  = new TH1F("TauLooseIsoEta"    , "", 11, -2.4, 2.4);
   TauMedIsoEta_    = new TH1F("TauMedIsoEta", "", 11, -2.4, 2.4);
@@ -501,13 +530,13 @@ void FakeRateMiniAODGetRates::beginJob()
   JetEtaWithSoftMuon_          = new TH1F("JetEtaWithSoftMuon"    , "", 11, -2.4, 2.4);
   JetEtaWithSoftMuon_noMu_          = new TH1F("JetEtaWithSoftMuon_noMu"    , "", 11, -2.4, 2.4);
 
-  TauLooseIsoPt_  = new TH1F("TauLooseIsoPt"    , "", 11, 20, 220.0);
-  TauMedIsoPt_    = new TH1F("TauMedIsoPt", "", 11, 20, 220.0);
-  TauTightIsoPt_    = new TH1F("TauTightIsoPt", "", 11, 20, 220.0);
-  TauDMFindPt_    = new TH1F("TauDMFindPt"    , "", 11, 20, 220.0);
-  JetPt_          = new TH1F("JetPt"    , "", 11, 20, 220.0);
-  JetPtWithSoftMuon_          = new TH1F("JetPtWithSoftMuon"    , "", 11, 20, 220.0);
-  JetPtWithSoftMuon_noMu_          = new TH1F("JetPtWithSoftMuon_noMu"    , "", 11, 20, 220.0);
+  TauLooseIsoPt_  = new TH1F("TauLooseIsoPt"    , "", 50, 20, 220.0);
+  TauMedIsoPt_    = new TH1F("TauMedIsoPt", "", 50, 20, 220.0);
+  TauTightIsoPt_    = new TH1F("TauTightIsoPt", "", 50, 20, 220.0);
+  TauDMFindPt_    = new TH1F("TauDMFindPt"    , "", 50, 20, 220.0);
+  JetPt_          = new TH1F("JetPt"    , "", 50, 20, 220.0);
+  JetPtWithSoftMuon_          = new TH1F("JetPtWithSoftMuon"    , "", 50, 20, 220.0);
+  JetPtWithSoftMuon_noMu_          = new TH1F("JetPtWithSoftMuon_noMu"    , "", 50, 20, 220.0);
 
   FinalEffLooseIsoEta_ = new TGraphAsymmErrors(11);
   FinalEffMedIsoEta_ = new TGraphAsymmErrors(11);
@@ -553,7 +582,51 @@ void FakeRateMiniAODGetRates::beginJob()
   FinalOneProngTwoPizMedIsoPt_ = new TGraphAsymmErrors(11);
   FinalThreeProngMedIsoPt_ = new TGraphAsymmErrors(11);
 
+  InvMassTauMuMu1_->Sumw2();
+  InvMassMu1Mu2_->Sumw2();
+  InvMassTauMuMu2_->Sumw2();
 
+  EtavsPtTauLooseIso_->Sumw2();
+  EtavsPtTauMedIso_->Sumw2();
+  EtavsPtTauTightIso_->Sumw2();
+  EtavsPtTauDMFind_->Sumw2();
+  EtavsPtJet_->Sumw2();
+  EtavsPtJetSoftMuon_->Sumw2();
+  EtavsPtJetSoftMuon_noMu_->Sumw2();
+
+  TauLooseIsoEta_->Sumw2();
+  TauMedIsoEta_->Sumw2();
+  TauTightIsoEta_->Sumw2();
+  TauDMFindEta_->Sumw2();
+  JetEta_->Sumw2();
+  JetEtaWithSoftMuon_->Sumw2();
+  JetEtaWithSoftMuon_noMu_->Sumw2();
+
+  TauLooseIsoPt_->Sumw2();
+  TauMedIsoPt_->Sumw2();
+  TauTightIsoPt_->Sumw2();
+  TauDMFindPt_->Sumw2();
+  JetPt_->Sumw2();
+  JetPtWithSoftMuon_->Sumw2();
+  JetPtWithSoftMuon_noMu_->Sumw2();
+
+  OneProngDMEta_->Sumw2();
+  OneProngOnePizDMEta_->Sumw2();
+  OneProngTwoPizDMEta_->Sumw2();
+  ThreeProngDMEta_->Sumw2();
+  OneProngDMPt_->Sumw2();
+  OneProngOnePizDMPt_->Sumw2();
+  OneProngTwoPizDMPt_->Sumw2();
+  ThreeProngDMPt_->Sumw2();
+
+  OneProngMedIsoEta_->Sumw2();
+  OneProngOnePizMedIsoEta_->Sumw2();
+  OneProngTwoPizMedIsoEta_->Sumw2();
+  ThreeProngMedIsoEta_->Sumw2();
+  OneProngMedIsoPt_->Sumw2();
+  OneProngOnePizMedIsoPt_->Sumw2();
+  OneProngTwoPizMedIsoPt_->Sumw2();
+  ThreeProngMedIsoPt_->Sumw2();
 }
 
 // ------------ method called once each job just after ending the event loop  ------------

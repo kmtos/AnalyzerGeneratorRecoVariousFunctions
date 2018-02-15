@@ -61,31 +61,28 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 ####################
 process.source = cms.Source("PoolSource",
          fileNames = cms.untracked.vstring(
-'root://eoscms/FILE_PATHRegionB_selection_NUM.root')
+'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_DYHighMass_MedIsoMu2_TauDMAntiMedIso_JAN9/180111_230446/0000/RegionB_selection_101.root')
 )
 
-process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
-   jetTag = cms.InputTag("slimmedJets"),
-   muonsTag = cms.InputTag("MuonsIDdxydz"),
-   tauTag = cms.InputTag("slimmedTausMuonCleaned"),
-   vLooseIsoTag = cms.string("byVLooseIsolationMVArun2v1DBoldDMwLT"),
-   looseIsoTag = cms.string("byLooseIsolationMVArun2v1DBoldDMwLT"),
-   medIsoTag = cms.string("byMediumIsolationMVArun2v1DBoldDMwLT"),
-   tightIsoTag = cms.string("byTightIsolationMVArun2v1DBoldDMwLT"),
-   vTightIsoTag = cms.string("byVTightIsolationMVArun2v1DBoldDMwLT"),
-   decayModeFindingTag = cms.string("decayModeFinding"),
-   isoRawTag = cms.string("byCombinedIsolationDeltaBetaCorrRaw3Hits"),
-   mu3dRMin = cms.double(0.0),
-   mu3dRMax = cms.double(0.8),
-   tauPtCut = cms.double(20.0),
+process.ggh = cms.EDAnalyzer("DiMu_ExtraPlots",
+   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/IRNAME_Plots_NUM.root'),
    mu12Tag = cms.InputTag('Mu1Mu2'),
-   requireRemovedMuon = cms.bool(True),
-   checkInvMass = cms.bool(True),
-   checkInvMassMin = cms.double(81),
-   checkInvMassMax = cms.double(101)
+   tauTag = cms.InputTag('muHadTauDMIsoSelector'),
+   mu3Tag = cms.InputTag('Mu3ID'),
+   metTag = cms.InputTag('slimmedMETs'),
+   jetTag = cms.InputTag("slimmedJets"),
+   pileupSummaryInfo = cms.InputTag("slimmedAddPileupInfo", "", "PAT"),
+   genEventInfoToken = cms.InputTag("generator", "", "SIM"),
+   tauPtCut = cms.double(20.0),
+   xsec = cms.double(1),
+   lumi = cms.double(1),
+   summedWeights = cms.double(1),
+   PileupFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights.root')    
 )
 
+#########################################################
+# this will produce a ref to the original muon collection
+#########################################################
 process.p2 = cms.Path(
 	process.ggh
 )

@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    DiMu_ExtraPlots
-// Class:      DiMu_ExtraPlots
+// Package:    DiMu_ExtraPlots_Data
+// Class:      DiMu_ExtraPlots_Data
 // 
-/**\class DiMu_ExtraPlots DiMu_ExtraPlots.cc Analyzer/src/DiMu_ExtraPlots.cc
+/**\class DiMu_ExtraPlots_Data DiMu_ExtraPlots_Data.cc Analyzer/src/DiMu_ExtraPlots_Data.cc
 
  Description: [one line class summary]
 
@@ -97,11 +97,11 @@ using namespace trigger;
 // class declaration
 //
 
-class DiMu_ExtraPlots : public edm::EDAnalyzer {
+class DiMu_ExtraPlots_Data : public edm::EDAnalyzer {
    public:
       typedef reco::JetFloatAssociation::Container JetBCEnergyRatioCollection;
-      explicit DiMu_ExtraPlots(const edm::ParameterSet&);
-      ~DiMu_ExtraPlots();
+      explicit DiMu_ExtraPlots_Data(const edm::ParameterSet&);
+      ~DiMu_ExtraPlots_Data();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -131,19 +131,13 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::MET> > metTag_;
       edm::EDGetTokenT<edm::View<pat::Jet> > jetTag_;
-      edm::EDGetTokenT<std::vector<PileupSummaryInfo> > pileupSummaryInfo_;
-      edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
       double tauPtCut_;
-      double xsec_; 
-      double lumi_; 
-      double summedWeights_;
-      std::string PileupFileName_;
 
       //Histograms
       TH1F* NEvents_;
-      TH1F* NMedIsoTausWithMu3_;   
-      TH1F* InvMassMu1TauMu_;   
-      TH1F* InvMassMu2TauMu_;   
+      TH1F* NMedIsoTausWithMu3_;
+      TH1F* InvMassMu1TauMu_;
+      TH1F* InvMassMu2TauMu_;
       TH1F* InvMassTauHadMu3_;
       TH1F* PtTauHadMu3_;
       TH1F* InvMassUpsilonRange_;
@@ -192,27 +186,21 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-DiMu_ExtraPlots::DiMu_ExtraPlots(const edm::ParameterSet& iConfig):
+DiMu_ExtraPlots_Data::DiMu_ExtraPlots_Data(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
   tauTag_(consumes<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
   mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   metTag_(consumes<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("metTag"))),
   jetTag_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetTag"))),
-  pileupSummaryInfo_(consumes<std::vector<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileupSummaryInfo"))),
-  genEventInfoToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoToken"))),
-  tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
-  xsec_(iConfig.getParameter<double>("xsec")),
-  lumi_(iConfig.getParameter<double>("lumi")),
-  summedWeights_(iConfig.getParameter<double>("summedWeights")),
-  PileupFileName_(iConfig.getParameter<std::string>("PileupFileName"))
+  tauPtCut_(iConfig.getParameter<double>("tauPtCut"))
 {
   reset(false);    
-}//DiMu_ExtraPlots
+}//DiMu_ExtraPlots_Data
 
 
 
-DiMu_ExtraPlots::~DiMu_ExtraPlots()
+DiMu_ExtraPlots_Data::~DiMu_ExtraPlots_Data()
 {
   reset(true);
 }
@@ -223,9 +211,8 @@ DiMu_ExtraPlots::~DiMu_ExtraPlots()
 //
 
 // ------------ method called for each event  ------------
-void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void DiMu_ExtraPlots_Data::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  NEvents_->Fill(0);
   std::cout << "\n<------------THIS IS A NEW EVENT------------>" << std::endl;
 
   //Old Jet collection for bTagging
@@ -249,31 +236,14 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     if (iJet->pt() > tauPtCut_ && fabs(iJet->eta() ) < 2.4  && iJet->bDiscriminator("pfCombinedMVABJetTags") > highestCMVA) 
       highestCMVA = iJet->bDiscriminator("pfCombinedMVABJetTags");
   }//for iJet
+  HighestCSVInclJet_->Fill(highestCSVInc );
+  HighestCombMVAJet_->Fill(highestCMVA );
   edm::Handle<edm::View<pat::MET> > pMET;
   iEvent.getByToken(metTag_, pMET);
   pat::MET MET = pMET->at(0);
 
-  edm::Handle<std::vector<PileupSummaryInfo> > pPileupSummaryInfo;
-  iEvent.getByToken(pileupSummaryInfo_, pPileupSummaryInfo);
 
-  int nTrueVertices = 0;
-  if (pPileupSummaryInfo.isValid() && pPileupSummaryInfo->size()>0)
-    nTrueVertices = pPileupSummaryInfo->at(1).getTrueNumInteractions();
-
-  PileupFile = new TFile(PileupFileName_.c_str());
-  TH1F* Pileup_ = (TH1F*)PileupFile->Get("PileupWeights");
-  double pileupWeight = Pileup_->GetBinContent(nTrueVertices);
-  PileupFile->Close(); 
-
-  edm::Handle<GenEventInfoProduct> genEventInfo;
-  iEvent.getByToken(genEventInfoToken_, genEventInfo);
-  double eventGenWeight = genEventInfo->weight();
-  double genWeight = eventGenWeight * lumi_ * xsec_ / summedWeights_;
-  std::cout << "genWeight=" << genWeight << "\teventGenWeight=" << eventGenWeight << "\tlumi_=" << lumi_  << "\tsummedWeights_=" << summedWeights_ << "\txsec_=" << xsec_ << "\tpileupWeight=" <<pileupWeight <<  "\tnTrueVertices=" << nTrueVertices << std::endl;
-
-  if (pPileupSummaryInfo.isValid()) std::cout << "VALID" << std::endl;
-  if (pPileupSummaryInfo->size()>0) std::cout << "SIZE>0" << std::endl;
-
+	
   pat::Muon mu1, mu2;
   double highestMuPt = -1;
 
@@ -302,16 +272,14 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::cout << "mu2.pt()=" << mu2.pt() << "\tmu2.eta()=" << mu2.eta() << "\tmu2.phi()=" << mu2.phi() << std::endl;
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
 
-  if (diMuP4.M() > 30.0 )
-  {
-    NEvents_->Fill(1);
+  if (diMuP4.M() > 30 )
     return;
-  }//
+
   reco::LeafCandidate::LorentzVector diTauP4, fourBody, mu1mu3, mu2mu3;
   double bestdR = 100000000000000000;
   bool checkEventDiTau = false;
   unsigned int TauRemovedMuCount = 0;
-  pat::Muon mu3; 
+  pat::Muon mu3;
   std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()= " << pMu3->size() << std::endl;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
@@ -323,13 +291,13 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     {
       double currdR = deltaR(*iTau, *iMu);
       std::cout  << "\tdR=" << currdR << std::endl;
-      if (currdR < .8 && currdR < bestdR)   
+      if (currdR < .8 && currdR < bestdR)
       {
         bestdR = currdR;
         diTauP4 = iTau->p4() + iMu->p4();
-        mu3 = *iMu; 
-	mu1mu3 = iMu->p4() + mu1.p4();   
-	mu2mu3 = iMu->p4() + mu2.p4();
+        mu3 = *iMu;
+        mu1mu3 = iMu->p4() + mu1.p4();
+        mu2mu3 = iMu->p4() + mu2.p4();
         fourBody = iTau->p4() + iMu->p4() + mu1.p4() + mu2.p4();
         checkMu3Removed = true;
         checkEventDiTau = true;
@@ -341,17 +309,16 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::cout << "FoundDiTau=" << checkEventDiTau << std::endl;
   if (checkEventDiTau)
   {
-    NEvents_->Fill(3);
     HighestCSVInclJet_->Fill(highestCSVInc );
     HighestCombMVAJet_->Fill(highestCMVA );
-    DiTauDiMuMass_->Fill(fourBody.M(), pileupWeight*genWeight );
+    DiTauDiMuMass_->Fill(fourBody.M() );
     if (bestdR < .4)
     {
-      DiMuPtSmallerdR_->Fill(diMuP4.Pt(), pileupWeight*genWeight );
-      DiTauMassSmallerdR_->Fill(diTauP4.M(), pileupWeight*genWeight );
+      DiMuPtSmallerdR_->Fill(diMuP4.Pt() );
+      DiTauMassSmallerdR_->Fill(diTauP4.M() );
     }//if
-    DiMuDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - diMuP4.Phi() ), pileupWeight*genWeight );
-    InvMassTauHadMu3_->Fill(diTauP4.M(), pileupWeight*genWeight );
+    DiMuDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - diMuP4.Phi() ) );
+    InvMassTauHadMu3_->Fill(diTauP4.M() );
     InvMassMu1TauMu_->Fill(mu1mu3.M() );
     if (mu1mu3.M() > 60.0 && mu1mu3.M() < 120 )
     {
@@ -364,50 +331,48 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       ZMassdR_->Fill(dRZ );
     }//if 
     InvMassMu2TauMu_->Fill(mu2mu3.M() );
-    PtTauHadMu3_->Fill(diTauP4.Pt(), pileupWeight*genWeight );
-    DiTauEta_->Fill(diTauP4.Eta(), pileupWeight*genWeight );
-    DiTauPhi_->Fill(diTauP4.Phi(), pileupWeight*genWeight );
-    METDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - MET.phi() ), pileupWeight*genWeight );
-    InvMassZPeakRange_->Fill(diMuP4.M(), pileupWeight*genWeight );
-    InvMassUpsilonRange_->Fill(diMuP4.M(), pileupWeight*genWeight );
-    InvMassFullRange_->Fill(diMuP4.M(), pileupWeight*genWeight );
-    GenWeights_->Fill(genWeight);
-    PileupWeights_->Fill(pileupWeight);
+    PtTauHadMu3_->Fill(diTauP4.Pt() );
+    DiTauEta_->Fill(diTauP4.Eta() );
+    DiTauPhi_->Fill(diTauP4.Phi() );
+    METDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - MET.phi() ) );
+    InvMassZPeakRange_->Fill(diMuP4.M() );
+    InvMassUpsilonRange_->Fill(diMuP4.M() );
+    InvMassFullRange_->Fill(diMuP4.M() );
     if (mu1.eta() < .9 && mu2.eta() < .9)
-      InvMassDiMuBarrBarr_->Fill(diMuP4.M(), pileupWeight*genWeight );
+      InvMassDiMuBarrBarr_->Fill(diMuP4.M() );
     else if ( (mu1.eta() < .9 && mu2.eta() < 1.2 && mu2.eta() > .9) || (mu1.eta() < 1.2 && mu1.eta() > .9 && mu2.eta() < .9) )
-      InvMassDiMuBarrOver_->Fill(diMuP4.M(), pileupWeight*genWeight );
+      InvMassDiMuBarrOver_->Fill(diMuP4.M() );
     else if ( (mu1.eta() < .9 && mu2.eta() > 1.2) || (mu1.eta() > 1.2 && mu2.eta() < .9) )
-      InvMassDiMuBarrEndc_->Fill(diMuP4.M(), pileupWeight*genWeight );
+      InvMassDiMuBarrEndc_->Fill(diMuP4.M() );
     else if ( (mu1.eta() > 1.2 && mu2.eta() < 1.2 && mu2.eta() > .9) || (mu1.eta() < 1.2 && mu1.eta() > .9 && mu2.eta() > 1.2) )
-      InvMassDiMuEndcOver_->Fill(diMuP4.M(), pileupWeight*genWeight );
+      InvMassDiMuEndcOver_->Fill(diMuP4.M() );
     else if ( mu2.eta() < 1.2 && mu2.eta() > .9 && mu1.eta() < 1.2 && mu1.eta() > .9)
-      InvMassDiMuOverOver_->Fill(diMuP4.M(), pileupWeight*genWeight );
+      InvMassDiMuOverOver_->Fill(diMuP4.M() );
     else if (mu1.eta() > 1.2 && mu2.eta() > 1.2)
-      InvMassDiMuEndcEndc_->Fill(diMuP4.M(), pileupWeight*genWeight );
-    Mu1Pt_->Fill(mu1.pt(), pileupWeight*genWeight );
-    Mu2Pt_->Fill(mu2.pt(), pileupWeight*genWeight );
-    PtMu1vsPtMu2_->Fill(mu1.pt(), mu2.pt() , pileupWeight*genWeight );
-    DiMuPt_->Fill(diMuP4.Pt(), pileupWeight*genWeight );
-    Mu1Eta_->Fill(mu1.eta(), pileupWeight*genWeight );
-    Mu2Eta_->Fill(mu2.eta(), pileupWeight*genWeight );
-    DiMuEta_->Fill(diMuP4.Eta(), pileupWeight*genWeight );
-    DiMuPhi_->Fill(diMuP4.Phi(), pileupWeight*genWeight );
-    DiMudR_->Fill(reco::deltaR(mu1, mu2), pileupWeight*genWeight );
-    DiTaudR_->Fill(bestdR, pileupWeight*genWeight);
-    EtMET_->Fill(MET.pt(), pileupWeight*genWeight );
-    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*genWeight );
-    EtMET_->Fill(MET.pt(), pileupWeight*genWeight );
-    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*genWeight );
+      InvMassDiMuEndcEndc_->Fill(diMuP4.M() );
+    Mu1Pt_->Fill(mu1.pt() );
+    Mu2Pt_->Fill(mu2.pt() );
+    PtMu1vsPtMu2_->Fill(mu1.pt(), mu2.pt()  );
+    DiMuPt_->Fill(diMuP4.Pt() );
+    Mu1Eta_->Fill(mu1.eta() );
+    Mu2Eta_->Fill(mu2.eta() );
+    DiMuEta_->Fill(diMuP4.Eta() );
+    DiMuPhi_->Fill(diMuP4.Phi() );
+    DiMudR_->Fill(reco::deltaR(mu1, mu2) );
+    DiTaudR_->Fill(bestdR);
+    EtMET_->Fill(MET.pt() );
+    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ) );
+    EtMET_->Fill(MET.pt() );
+    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ) );
   }//for checkMu3Removed 
-  else
-    NEvents_->Fill(2);
-  NMedIsoTausWithMu3_->Fill(TauRemovedMuCount ); 
+  NMedIsoTausWithMu3_->Fill(TauRemovedMuCount );
+
+
 }//End InvMass::analyze
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void DiMu_ExtraPlots::beginJob()
+void DiMu_ExtraPlots_Data::beginJob()
 {
   std::cout << "Begin Job" << std::endl;
 
@@ -465,7 +430,7 @@ void DiMu_ExtraPlots::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void DiMu_ExtraPlots::endJob()
+void DiMu_ExtraPlots_Data::endJob()
 {
   //Make the Canvases
   TCanvas NMedIsoTausWithMu3Canvas_("NMedIsoTausWithMu3Canvas","",600,600);
@@ -875,19 +840,19 @@ std::cout << "DONE" << std::endl;
 }//EndJob
 
 // ------------ method called when starting to processes a run  ------------
-void DiMu_ExtraPlots::beginRun(edm::Run const&, edm::EventSetup const&) {}
+void DiMu_ExtraPlots_Data::beginRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a run  ------------
-void DiMu_ExtraPlots::endRun(edm::Run const&, edm::EventSetup const&) {}
+void DiMu_ExtraPlots_Data::endRun(edm::Run const&, edm::EventSetup const&) {}
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void DiMu_ExtraPlots::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void DiMu_ExtraPlots_Data::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-void DiMu_ExtraPlots::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
+void DiMu_ExtraPlots_Data::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {}
 
 //Delete Memory
-void DiMu_ExtraPlots::reset(const bool doDelete)
+void DiMu_ExtraPlots_Data::reset(const bool doDelete)
 {
   if ((doDelete) && (NMedIsoTausWithMu3_ != NULL)) delete NMedIsoTausWithMu3_;
   NMedIsoTausWithMu3_ = NULL;
@@ -968,7 +933,7 @@ void DiMu_ExtraPlots::reset(const bool doDelete)
 
 }
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void DiMu_ExtraPlots::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void DiMu_ExtraPlots_Data::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -977,4 +942,5 @@ void DiMu_ExtraPlots::fillDescriptions(edm::ConfigurationDescriptions& descripti
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(DiMu_ExtraPlots);
+DEFINE_FWK_MODULE(DiMu_ExtraPlots_Data);
+

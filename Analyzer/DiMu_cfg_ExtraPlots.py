@@ -66,7 +66,7 @@ process.source = cms.Source("PoolSource",
 
 process.ggh = cms.EDAnalyzer("DiMu_ExtraPlots",
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
-   mu12Tag = cms.InputTag('HighestPtAndMuonSignDRSelector'),
+   mu12Tag = cms.InputTag('Mu1Mu2'),
    tauTag = cms.InputTag('muHadTauDMIsoSelector'),
    mu3Tag = cms.InputTag('Mu3ID'),
    metTag = cms.InputTag('slimmedMETs'),

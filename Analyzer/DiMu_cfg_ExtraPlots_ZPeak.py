@@ -64,28 +64,31 @@ process.source = cms.Source("PoolSource",
 'root://eoscms/FILE_PATHRegionB_selection_NUM.root')
 )
 
-process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
+process.ggh = cms.EDAnalyzer("DiMu_ExtraPlots_ZPeak",
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
+   mu12Tag = cms.InputTag('Mu1Mu2'),
+   tauTag = cms.InputTag('muHadTauDMSelector'),
+   mu3Tag = cms.InputTag('Mu3ID'),
+   metTag = cms.InputTag('slimmedMETs'),
    jetTag = cms.InputTag("slimmedJets"),
-   muonsTag = cms.InputTag("MuonsIDdxydz"),
-   tauTag = cms.InputTag("slimmedTausMuonCleaned"),
-   vLooseIsoTag = cms.string("byVLooseIsolationMVArun2v1DBoldDMwLT"),
-   looseIsoTag = cms.string("byLooseIsolationMVArun2v1DBoldDMwLT"),
-   medIsoTag = cms.string("byMediumIsolationMVArun2v1DBoldDMwLT"),
-   tightIsoTag = cms.string("byTightIsolationMVArun2v1DBoldDMwLT"),
-   vTightIsoTag = cms.string("byVTightIsolationMVArun2v1DBoldDMwLT"),
+   tauIsoTag = cms.string("byMediumIsolationMVArun2v1DBoldDMwLT"),
    decayModeFindingTag = cms.string("decayModeFinding"),
-   isoRawTag = cms.string("byCombinedIsolationDeltaBetaCorrRaw3Hits"),
+   passTauIso = cms.bool(True),
+   pileupSummaryInfo = cms.InputTag("slimmedAddPileupInfo", "", "PAT"),
+   genEventInfoToken = cms.InputTag("generator", "", "SIM"),
+   prunedGenToken = cms.InputTag("prunedGenParticles"),
+   tauPtCut = cms.double(20.0),
+   xsec = cms.double(XSEC),
+   lumi = cms.double(LUMI_DATA),
+   summedWeights = cms.double(SUMMED_WEIGHTS),
    mu3dRMin = cms.double(0.0),
    mu3dRMax = cms.double(0.8),
-   tauPtCut = cms.double(20.0),
-   mu12Tag = cms.InputTag('Mu1Mu2'),
-   requireRemovedMuon = cms.bool(True),
-   checkInvMass = cms.bool(True),
-   checkInvMassMin = cms.double(81),
-   checkInvMassMax = cms.double(101)
+   PileupFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights.root')    
 )
 
+#########################################################
+# this will produce a ref to the original muon collection
+#########################################################
 process.p2 = cms.Path(
 	process.ggh
 )

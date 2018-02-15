@@ -21,32 +21,33 @@ do
   divisions=${linAr[0]}
   dir_name=${linAr[1]}
   file_path=${linAr[2]}
+  full_dir_name="${linAr[1]}${name_addon}"
   echo ""
   echo ""
-  echo "Dir= $dir_name    count=$divisions"
-  echo "File_path= $file_path"
-  mkdir -p BSUB/$dir_name
-  cd BSUB/$dir_name
+  mkdir -p BSUB/$full_dir_name
+  cd BSUB/$full_dir_name
   xsec=`grep "$dir_name" ../../FILE_TESTS/CrossSections.py`
   xsec=${xsec##* }
   echo "xsec=$xsec"  
   summedWeights=`grep "$dir_name" /afs/cern.ch/user/k/ktos/NewSkimDir/CMSSW_8_0_30/src/GGHAA2Mu2TauAnalysis/SkimMuMuTauTau/test/SkimSequence/SummedWeightsFiles/SummedWeightsValues.out`
   summedWeights=${summedWeights##* }
   echo "summedWeights=$summedWeights"
+  echo "Dir= $full_dir_name    count=$divisions"
+  echo "Sub_dir_name = $dir_name"
+  echo "File_path= $file_path"
 
-  cp ../../src/FakeRate* .
+  cp ../../src/FakeRate*  ../../src/DiMu* .
   divisions=$((divisions + 5))
   COUNT=1
   while [ $COUNT -le  $divisions ]; do
-    echo "DIRNAME    = ${dir_name}"
-    echo "python file= ${cfg_name}_${dir_name}_${COUNT}.py"
-    echo "Script name= ${script_name}_${dir_name}_${COUNT}.sh"
+    echo "python file= ${cfg_name}_${full_dir_name}_${COUNT}.py"
+    echo "Script name= ${script_name}_${full_dir_name}_${COUNT}.sh"
 
 
-    sed -e "s|XSEC|$xsec|g" -e "s|LUMI_DATA|$lumi_data|g" -e "s|SUMMED_WEIGHTS|${summedWeights}|g" -e "s|FILE_PATH|${file_path}|g" -e "s|DIRNAME|${dir_name}|g" -e "s|NUM|${COUNT}|g" ../../${cfg_name}.py > ${cfg_name}_${dir_name}_${COUNT}.py
-    sed -e "s|ANALYZER|${cfg_name}_${dir_name}_${COUNT}|g" -e "s|DIRNAME|${dir_name}|g"  ../../${script_name}.sh > ${script_name}_${dir_name}_${COUNT}.sh
-    chmod u+x ${script_name}_${dir_name}_${COUNT}.sh
-    bsub -q $queue -J ${cfg_name}_${dir_name}_${COUNT} < ${script_name}_${dir_name}_${COUNT}.sh
+    sed -e "s|XSEC|$xsec|g" -e "s|LUMI_DATA|$lumi_data|g" -e "s|SUMMED_WEIGHTS|${summedWeights}|g" -e "s|FILE_PATH|${file_path}|g" -e "s|DIRNAME|${full_dir_name}|g" -e "s|NUM|${COUNT}|g" ../../${cfg_name}.py > ${cfg_name}_${full_dir_name}_${COUNT}.py
+    sed -e "s|ANALYZER|${cfg_name}_${full_dir_name}_${COUNT}|g" -e "s|DIRNAME|${full_dir_name}|g"  ../../${script_name}.sh > ${script_name}_${full_dir_name}_${COUNT}.sh
+    chmod u+x ${script_name}_${full_dir_name}_${COUNT}.sh
+    bsub -q $queue -J ${cfg_name}_${full_dir_name}_${COUNT} < ${script_name}_${full_dir_name}_${COUNT}.sh
     echo "COUNT= $COUNT"
     let COUNT=COUNT+1
   done

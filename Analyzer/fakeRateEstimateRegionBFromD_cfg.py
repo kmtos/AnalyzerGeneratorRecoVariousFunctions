@@ -64,26 +64,21 @@ process.source = cms.Source("PoolSource",
 'root://eoscms/FILE_PATHRegionB_selection_NUM.root')
 )
 
-process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
+process.ggh = cms.EDAnalyzer("FakeRateMiniAODEstimateRegionA",
    outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
-   jetTag = cms.InputTag("slimmedJets"),
-   muonsTag = cms.InputTag("MuonsIDdxydz"),
-   tauTag = cms.InputTag("slimmedTausMuonCleaned"),
-   vLooseIsoTag = cms.string("byVLooseIsolationMVArun2v1DBoldDMwLT"),
-   looseIsoTag = cms.string("byLooseIsolationMVArun2v1DBoldDMwLT"),
-   medIsoTag = cms.string("byMediumIsolationMVArun2v1DBoldDMwLT"),
-   tightIsoTag = cms.string("byTightIsolationMVArun2v1DBoldDMwLT"),
-   vTightIsoTag = cms.string("byVTightIsolationMVArun2v1DBoldDMwLT"),
-   decayModeFindingTag = cms.string("decayModeFinding"),
-   isoRawTag = cms.string("byCombinedIsolationDeltaBetaCorrRaw3Hits"),
+   tauTag = cms.InputTag("muHadTauDMIsoSelector"),
    mu3dRMin = cms.double(0.0),
    mu3dRMax = cms.double(0.8),
    tauPtCut = cms.double(20.0),
+   mu3Tag = cms.InputTag('Mu3ID'),
    mu12Tag = cms.InputTag('Mu1Mu2'),
    requireRemovedMuon = cms.bool(True),
-   checkInvMass = cms.bool(True),
-   checkInvMassMin = cms.double(81),
-   checkInvMassMax = cms.double(101)
+#   CanvasName = cms.string("FinalFakeRateMuonEtavsPtCanvas"),
+   HistName = cms.string("FinalFakeRateMuonEtavsPt"),
+   TH2FileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/MUONFAKERATES_FINAL.root')
+
+
+
 )
 
 process.p2 = cms.Path(
