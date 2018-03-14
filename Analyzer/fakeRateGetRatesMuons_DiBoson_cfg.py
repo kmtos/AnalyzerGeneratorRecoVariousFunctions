@@ -64,21 +64,38 @@ process.source = cms.Source("PoolSource",
 'root://eoscms/FILE_PATHRegionB_selection_NUM.root')
 )
 
-process.ggh = cms.EDAnalyzer("FakeRateMiniAODEstimateRegionA",
+process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRatesMuons",
    outFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
-   tauTag = cms.InputTag("muHadTauDMIsoSelector"),
+   mu1Tag = cms.InputTag("GetMuOne"),
+   muonsTag = cms.InputTag("MuonsIDdxydz"),
+   tauTag = cms.InputTag("slimmedTausMuonCleaned"),
+   tauIsoTag = cms.string("byMediumIsolationMVArun2v1DBoldDMwLT"),
+   decayModeFindingTag = cms.string("decayModeFinding"),
+   checkTau = cms.bool(False),
+   checkTauIso = cms.bool(False),
+   passTauIso = cms.bool(False),
    mu3dRMin = cms.double(0.0),
    mu3dRMax = cms.double(0.8),
    tauPtCut = cms.double(20.0),
-   mu3Tag = cms.InputTag('Mu3ID'),
-   mu12Tag = cms.InputTag('Mu1Mu2'),
    requireRemovedMuon = cms.bool(True),
-#   CanvasName = cms.string("FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas"),
-   HistName = cms.string("FinalFakeRateDMtoMedIsoOnlyEtavsPt"),
-   TH2FileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TAUFAKERATES_FINAL.root')
-
-
-
+   checkInvMass = cms.bool(True),
+   checkInvMassMin = cms.double(81),
+   checkInvMassMax = cms.double(101),
+   relIsoCutVal = cms.double(0.25),
+   passRelIso = cms.bool(True),
+   mu12dRCut = cms.double(600),
+   oppositeSign = cms.bool(True),
+   passdR = cms.bool(True),
+   mu2PtCut = cms.double(20),
+   passMu2PtCutForMu3Rate = cms.bool(True),
+   isMC = cms.bool(True),
+   xsec = cms.double(XSEC),
+   lumi = cms.double(LUMI_DATA),
+   pileupSummaryInfo = cms.InputTag("slimmedAddPileupInfo", "", "PAT"),
+   genEventInfoToken = cms.InputTag("generator", "", "SIM"),
+   summedWeights = cms.double(SUMMED_WEIGHTS),
+   PileupFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights.root')
+  
 )
 
 process.p2 = cms.Path(

@@ -44,6 +44,8 @@
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/Common/interface/ValueMap.h"
@@ -120,6 +122,7 @@ class FakeRateMiniAODGetRatesMuons : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       //pointer to output file object
       TFile* out_;
+      TFile* PileupFile;
 
       //name of output root file
       std::string outFileName_;
@@ -144,6 +147,13 @@ class FakeRateMiniAODGetRatesMuons : public edm::EDAnalyzer {
       bool oppositeSign_;
       bool passdR_;
       double mu2PtCut_;
+      bool isMC_;
+      double xsec_;
+      double lumi_;
+      edm::EDGetTokenT<std::vector<PileupSummaryInfo> > pileupSummaryInfo_;
+      edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
+      double summedWeights_;
+      std::string PileupFileName_;
 
       //Histograms
       TH1F* NEvents_;   
@@ -198,7 +208,14 @@ FakeRateMiniAODGetRatesMuons::FakeRateMiniAODGetRatesMuons(const edm::ParameterS
   mu12dRCut_(iConfig.getParameter<double>("mu12dRCut")),
   oppositeSign_(iConfig.getParameter<bool>("oppositeSign")),
   passdR_(iConfig.existsAs<bool>("passdR")? iConfig.getParameter<bool>("passdR"):true),
-  mu2PtCut_(iConfig.getParameter<double>("mu2PtCut"))
+  mu2PtCut_(iConfig.getParameter<double>("mu2PtCut")),
+  isMC_(iConfig.getParameter<bool>("isMC")),
+  xsec_(iConfig.getParameter<double>("xsec")),
+  lumi_(iConfig.getParameter<double>("lumi")),
+  pileupSummaryInfo_(consumes<std::vector<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileupSummaryInfo"))),
+  genEventInfoToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoToken"))),
+  summedWeights_(iConfig.getParameter<double>("summedWeights")),
+  PileupFileName_(iConfig.getParameter<std::string>("PileupFileName"))
 
 {
   reset(false);    
@@ -344,6 +361,29 @@ void FakeRateMiniAODGetRatesMuons::analyze(const edm::Event& iEvent, const edm::
     InvMassTauMuMu2_->Fill(diMuP4_Mu2TauMu.M() );
   
   }//if tau check 
+
+  double pileupWeight = 1, genWeight = 1;  
+  if (isMC_)
+  {
+    edm::Handle<std::vector<PileupSummaryInfo> > pPileupSummaryInfo;
+    iEvent.getByToken(pileupSummaryInfo_, pPileupSummaryInfo);
+  
+    int nTrueVertices = 0;
+    if (pPileupSummaryInfo.isValid() && pPileupSummaryInfo->size()>0)
+      nTrueVertices = pPileupSummaryInfo->at(1).getTrueNumInteractions();
+  
+    PileupFile = new TFile(PileupFileName_.c_str());
+    TH1F* Pileup_ = (TH1F*)PileupFile->Get("PileupWeights");
+    pileupWeight = Pileup_->GetBinContent(nTrueVertices);
+    PileupFile->Close();
+  
+    edm::Handle<GenEventInfoProduct> genEventInfo;
+    iEvent.getByToken(genEventInfoToken_, genEventInfo);
+    double eventGenWeight = genEventInfo->weight();
+    genWeight = eventGenWeight * lumi_ * xsec_ / summedWeights_;
+    std::cout << "genWeight=" << genWeight << "\teventGenWeight=" << eventGenWeight << "\tlumi_=" << lumi_  << "\tsummedWeights_=" << summedWeights_ << "\txsec_=" << xsec_ << "\tpileupWeight=" <<pileupWeight <<  "\tnTrueVertices=" << nTrueVertices << std::endl;
+
+  }//if isMC
 ///////////////////////////////////////////////////////////////////////
 // After checking the tau side of event, fill the mu fake rate histos
 ///////////////////////////////////////////////////////////////////////
@@ -354,14 +394,14 @@ void FakeRateMiniAODGetRatesMuons::analyze(const edm::Event& iEvent, const edm::
 std::cout << "dR(iMu,mu1)= " << deltaR(*iMuon, mu1) << "\tdR(iMu,mu2)=" << deltaR(*iMuon, mu2) << std::endl;
     if ( deltaR(*iMuon, mu1) < .5 || deltaR(*iMuon, mu2) < .5)
       continue;
-    MuonNoIsoPt_->Fill(iMuon->pt() );
-    MuonNoIsoEta_->Fill(fabs( iMuon->eta()) );
-    EtavsPtMuonNoIso_->Fill(iMuon->pt(), fabs( iMuon->eta()));
+    MuonNoIsoPt_->Fill(iMuon->pt() , pileupWeight*genWeight );
+    MuonNoIsoEta_->Fill(fabs( iMuon->eta()) , pileupWeight*genWeight );
+    EtavsPtMuonNoIso_->Fill(iMuon->pt(), fabs( iMuon->eta()), pileupWeight*genWeight );
     if ((reliso < relIsoCutVal_ && passRelIso_) || (reliso > relIsoCutVal_ && !passRelIso_) )
     {
-      MuonIsoPt_->Fill(iMuon->pt() );
-      MuonIsoEta_->Fill(fabs( iMuon->eta()) );
-      EtavsPtMuonIso_->Fill(iMuon->pt(), fabs( iMuon->eta()));
+      MuonIsoPt_->Fill(iMuon->pt() , pileupWeight*genWeight );
+      MuonIsoEta_->Fill(fabs( iMuon->eta()) , pileupWeight*genWeight );
+      EtavsPtMuonIso_->Fill(iMuon->pt(), fabs( iMuon->eta()), pileupWeight*genWeight );
     }//if Iso check
   }//for
 
@@ -390,7 +430,7 @@ void FakeRateMiniAODGetRatesMuons::beginJob()
   InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
 
-  Float_t binsx[] = {0, 10, 30, 50, 75, 500};
+  Float_t binsx[] = {5, 10, 25, 50, 100};
   Float_t binsy[] = {0, .8, 1.2, 2.4};
   EtavsPtMuonIso_  = new TH2F("EtavsPtMuonIso" , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
   EtavsPtMuonNoIso_  = new TH2F("EtavsPtMuonNoIso"     , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
@@ -398,8 +438,8 @@ void FakeRateMiniAODGetRatesMuons::beginJob()
   MuonIsoEta_  = new TH1F("MuonIsoEta"    , "", 11, -2.4, 2.4);
   MuonNoIsoEta_    = new TH1F("MuonNoIsoEta", "", 11, -2.4, 2.4);
 
-  MuonIsoPt_  = new TH1F("MuonIsoPt"    , "", 11, 0, 220.0);
-  MuonNoIsoPt_    = new TH1F("MuonNoIsoPt", "", 11, 0, 220.0);
+  MuonIsoPt_  = new TH1F("MuonIsoPt"    , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx);
+  MuonNoIsoPt_    = new TH1F("MuonNoIsoPt", "", sizeof(binsx)/sizeof(Float_t) - 1, binsx);
 
   FinalEffMuonEta_ = new TGraphAsymmErrors(11);
   FinalEffMuonPt_ = new TGraphAsymmErrors(11);
@@ -483,21 +523,21 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   //Write output file
   out_->cd();
 
-  NEventsCanvas.Write();
-  InvMassTauMuMu1Canvas.Write();
-  InvMassMu1Mu2Canvas.Write();
-  InvMassTauMuMu2Canvas.Write();
+  NEvents_->Write();
+  InvMassTauMuMu1_->Write();
+  InvMassMu1Mu2_->Write();
+  InvMassTauMuMu2_->Write();
  
-  EtavsPtMuonIsoCanvas.Write();
-  EtavsPtMuonNoIsoCanvas.Write();
+  EtavsPtMuonIso_->Write();
+  EtavsPtMuonNoIso_->Write();
 
-  MuonIsoEtaCanvas.Write();
-  MuonNoIsoEtaCanvas.Write();
-  FinalEffMuonEtaCanvas.Write();
+  MuonIsoEta_->Write();
+  MuonNoIsoEta_->Write();
+  FinalEffMuonEta_->Write();
 
-  MuonIsoPtCanvas.Write();
-  MuonNoIsoPtCanvas.Write();
-  FinalEffMuonPtCanvas.Write();
+  MuonIsoPt_->Write();
+  MuonNoIsoPt_->Write();
+  FinalEffMuonPt_->Write();
 
 
   out_->Write();

@@ -65,7 +65,7 @@ process.source = cms.Source("PoolSource",
 )
 
 process.ggh = cms.EDAnalyzer("FakeRateMiniAODEstimateRegionA",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
+   outFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    tauTag = cms.InputTag("muHadTauDMIsoSelector"),
    mu3dRMin = cms.double(0.0),
    mu3dRMax = cms.double(0.8),
@@ -75,7 +75,7 @@ process.ggh = cms.EDAnalyzer("FakeRateMiniAODEstimateRegionA",
    requireRemovedMuon = cms.bool(True),
 #   CanvasName = cms.string("FinalFakeRateMuonEtavsPtCanvas"),
    HistName = cms.string("FinalFakeRateMuonEtavsPt"),
-   TH2FileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/MUONFAKERATES_FINAL.root')
+   TH2FileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/MUONFAKERATES_FINAL.root')
 
 
 

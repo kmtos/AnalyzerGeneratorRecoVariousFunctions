@@ -1,0 +1,4 @@
+145  MiniAOD_SingleMu1_Mu1Only_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu1_Mu1Only_ZSKIM_FEB8/180208_021958/0000/
+102  MiniAOD_SingleMu2_Mu1Only_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu2_Mu1Only_ZSKIM_FEB8/180208_022033/0000/
+14  MiniAOD_WZ3L1Nu_Mu1Only_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/WZTo3LNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_WZ3L1Nu_Mu1Only_ZSKIM_FEB8/180214_222213/0000/
+3  MiniAOD_ZZTo4LAmac_Mu1Only_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/ZZTo4L_13TeV-amcatnloFXFX-pythia8/MiniAOD_ZZTo4LAmac_Mu1Only_ZSKIM_FEB8/180214_222213/0000/

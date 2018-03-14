@@ -1,0 +1,2 @@
+145  MiniAOD_SingleMu1_AntiMedIsoMu2_TauDMMedIso_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu1_AntiMedIsoMu2_TauDMMedIso_FEB8/180208_021815/0000/
+101  MiniAOD_SingleMu2_AntiMedIsoMu2_TauDMMedIso_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu2_AntiMedIsoMu2_TauDMMedIso_FEB8/180208_021845/0000/

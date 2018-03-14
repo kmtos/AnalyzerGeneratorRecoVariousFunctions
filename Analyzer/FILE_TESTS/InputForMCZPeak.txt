@@ -1,2 +1,3 @@
 145  MiniAOD_SingleMu1_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu1_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8/180208_005102/0000/
 101  MiniAOD_SingleMu2_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu2_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8/180208_005152/0000/
+14  MiniAOD_WZ3L1Nu_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8  /eos/cms/store/group/phys_higgs/HiggsExo/ktos/WZTo3LNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MiniAOD_WZ3L1Nu_MedIsoMu2_TauDM_Mass60to120_ZSKIM_FEB8/180208_005430/0000/

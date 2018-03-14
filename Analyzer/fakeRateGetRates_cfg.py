@@ -65,7 +65,7 @@ process.source = cms.Source("PoolSource",
 )
 
 process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
-   outFileName = cms.string('/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
+   outFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    jetTag = cms.InputTag("slimmedJets"),
    muonsTag = cms.InputTag("MuonsIDdxydz"),
    tauTag = cms.InputTag("slimmedTausMuonCleaned"),

@@ -232,6 +232,7 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
   std::cout << "mu1.pt()=" << mu1.pt() << "\tmu2.pt()=" << mu2.pt() << "\tdiMuP4..M()=" << diMuP4.M() << std::endl;
   if (diMuP4.M() > 30.0)
     return;
+
 //////////////////////////////
 // Begin Analyzer
 //////////////////////////////
@@ -339,9 +340,9 @@ void FakeRateMiniAODDataNoFR::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 10, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 10, 0, 150);
-  DiMuInvMassFakeWeight_     = new TH1F("DiMuInvMassFakeWeight"    , "", 10, 0, 150);
+  DiMuInvMassFakeWeight_     = new TH1F("DiMuInvMassFakeWeight"    , "", 300, 0, 30);
   DiMuDiTauInvMassFakeWeight_     = new TH1F("DiMuDiTauInvMassFakeWeight"    , "", 333, 0, 1000);
-  DiTauInvMassFakeWeight_     = new TH1F("DiTauInvMassFakeWeight"    , "", 150, 0, 150);
+  DiTauInvMassFakeWeight_     = new TH1F("DiTauInvMassFakeWeight"    , "", 300, 0, 30);
   PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 10, 0, 300);
   PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 10, 0, 300);
   EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 10, -2.5, 2.5);

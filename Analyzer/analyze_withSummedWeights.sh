@@ -12,7 +12,7 @@ script_name=$2
 tag=$3
 queue=$4
 name_addon=$5
-input="/afs/cern.ch/user/k/ktos/GroupDir/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/InputFor${tag}.txt"
+input="/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS//InputFor${tag}.txt"
 lumi_data=$6
 
 while IFS= read -r line
