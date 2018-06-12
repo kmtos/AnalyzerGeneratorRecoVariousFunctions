@@ -61,25 +61,32 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 ####################
 process.source = cms.Source("PoolSource",
          fileNames = cms.untracked.vstring(
-'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-750_M-7_TuneCUETP8M1_13TeV_madgraph_pythia8/MiniAOD_SIG_h750a7_AntiMedIsoMu2_TauDMMedIso_FEB8/180208_021923/0000/RegionB_selection_1.root')
+"root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SUSYGluGluToHToAA_AToMuMu_AToTauTau_M-5_TuneCUETP8M1_13TeV_madgraph_pythia8/MiniAOD_SIG_h125a5_AntiMedIsoMu2_TauDMAntiMedIso_MAY1/180503_041228/0000/RegionB_selection_4.root")
 )
 
 process.ggh = cms.EDAnalyzer("DiMu_ExtraPlots",
    outFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DRNAME_Plots_NUM.root'),
    mu12Tag = cms.InputTag('Mu1Mu2'),
    tauTag = cms.InputTag('muHadTauDMIsoSelector'),
-   mu3Tag = cms.InputTag('Mu3ID'),
+   checkBTag = cms.bool(True),
+   csvBTag = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
+   bTagSFShift = cms.string("central"),
+   mu3Tag = cms.InputTag('Mu3'),
    metTag = cms.InputTag('slimmedMETs'),
    jetTag = cms.InputTag("slimmedJets"),
    pileupSummaryInfo = cms.InputTag("slimmedAddPileupInfo", "", "PAT"),
    genEventInfoToken = cms.InputTag("generator", "", "SIM"),
-   tauPtCut = cms.double(20.0),
+   tauPtCut = cms.double(10.0),
+   diMudRCut = cms.double(1.0),
+   tauHadOverlapdRCut = cms.double(.8),
+   mu3dROverlapCut = cms.double(.4),
    xsec = cms.double(1),
    lumi = cms.double(1),
    summedWeights = cms.double(1),
    MC = cms.bool(True),
    ApplyFR = cms.bool(False),
-   PileupFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights.root'),
+   rooDataset = cms.bool(True),
+   PileupFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/PileupWeights_69200.root'),
    fpIDs_BToF = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/Zmumu_RunBCDEF_ID.root"),
    fpIDs_GH = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/Zmumu_RunGH_ID.root"),
    fpISOs_BToF = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/Zmumu_RunBCDEF_ISO.root"),
@@ -87,10 +94,7 @@ process.ggh = cms.EDAnalyzer("DiMu_ExtraPlots",
    fpTrack = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/Tracking_EfficienciesAndSF_BCDEFGH.root"),
    fpTrigger_BToF = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/EfficienciesAndSF_RunBtoF.root"),
    fpTrigger_GH = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/EfficienciesAndSF_Period4.root"),
-   fpIDs_JPsi = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TNP_JPsi_ID_EFFICIENCIES.root"),
-   fpISOs_JPsi = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TNP_JPsi_ISO_EFFICIENCIES.root")
-
-
+   fp_LowPt = cms.string("/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TNP_LowMuPt_EFFICIENCIES.root"),
 )
 
 #########################################################

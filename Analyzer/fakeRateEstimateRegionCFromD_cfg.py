@@ -67,18 +67,22 @@ process.source = cms.Source("PoolSource",
 process.ggh = cms.EDAnalyzer("FakeRateMiniAODEstimateRegionA",
    outFileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/BSUB/DIRNAME/DIRNAME_Plots_NUM.root'),
    tauTag = cms.InputTag("muHadTauDMIsoSelector"),
+   checkBTag = cms.bool(True),
+   jetTag = cms.InputTag("slimmedJets"),
+   csvBTag = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
    mu3dRMin = cms.double(0.0),
    mu3dRMax = cms.double(0.8),
-   tauPtCut = cms.double(20.0),
-   mu3Tag = cms.InputTag('Mu3ID'),
+   tauPtCut = cms.double(10.0),
+   diMudRCut = cms.double(1.0),
+   tauHadOverlapdRCut = cms.double(.8),
+   mu3dROverlapCut = cms.double(.4),
+   mu3Tag = cms.InputTag('Mu3'),
    mu12Tag = cms.InputTag('Mu1Mu2'),
    requireRemovedMuon = cms.bool(True),
+   rooDataset = cms.bool(True),
 #   CanvasName = cms.string("FinalFakeRateDMtoMedIsoOnlyEtavsPtCanvas"),
    HistName = cms.string("FinalFakeRateDMtoMedIsoOnlyEtavsPt"),
-   TH2FileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TAUFAKERATES_FINAL.root')
-
-
-
+   TH2FileName = cms.string('/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/TAUFAKERATES.root')
 )
 
 process.p2 = cms.Path(

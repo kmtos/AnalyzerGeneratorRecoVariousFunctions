@@ -76,6 +76,22 @@
 #include "AnalyzerGeneratorRecoVariousFunctions/VariousFunctions/interface/VariousFunctions.h"
 #include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
 
+#include "RooArgSet.h"
+#include "RooArgusBG.h"
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+
+#include "RooGaussian.h"
+#include "RooCBShape.h"
+#include "RooExponential.h"
+#include "RooBreitWigner.h"
+
+#include "RooConstVar.h"
+#include "RooDataHist.h"
+#include "RooFitResult.h"
+#include "RooMinuit.h"
+#include "RooPlot.h"
+
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH2F.h"
@@ -124,12 +140,28 @@ class FakeRateMiniAODDataNoFR : public edm::EDAnalyzer {
       //name of output root file
       std::string outFileName_;
       edm::EDGetTokenT<edm::View<pat::Tau> > tauTag_;
+      bool checkBTag_;
+      edm::EDGetTokenT<edm::View<pat::Jet> > jetTag_;
+      string csvBTag_;
       double mu3dRMin_;
       double mu3dRMax_;
       double tauPtCut_;
+      double diMudRCut_;
+      double mu3dROverlapCut_;
+      double tauHadOverlapdRCut_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
       bool requireRemovedMuon_;
+      bool rooDataset_;
+      RooRealVar *x = new RooRealVar("x","x", 0, 30);
+      RooRealVar *w = new RooRealVar("w","w",-9999999, 99999999);
+      RooDataSet *mumumass_dataset = new RooDataSet("mumumass_dataset", "mumumass_dataset", RooArgSet(*x,*w));
+
+      RooRealVar *y = new RooRealVar("y","y", 0, 30);
+      RooDataSet *mumutautaumass_dataset = new RooDataSet("mumutautaumass_dataset", "mumutautaumass_dataset", RooArgSet(*x,*y,*w));
+
+      RooRealVar *y1 = new RooRealVar("y1","y1", 0, 1000);
+      RooDataSet *mumufourBodymass_dataset = new RooDataSet("mumufourBodymass_dataset", "mumufourBodymass_dataset", RooArgSet(*x,*y1,*w));
 
 
       //Histograms
@@ -165,12 +197,19 @@ FakeRateMiniAODDataNoFR::FakeRateMiniAODDataNoFR(const edm::ParameterSet& iConfi
 
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
   tauTag_(consumes<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
+  checkBTag_(iConfig.getParameter<bool>("checkBTag")),
+  jetTag_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetTag"))),
+  csvBTag_(iConfig.getParameter<std::string>("csvBTag")),
   mu3dRMin_(iConfig.getParameter<double>("mu3dRMin")),
   mu3dRMax_(iConfig.getParameter<double>("mu3dRMax")),
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
+  diMudRCut_(iConfig.getParameter<double>("diMudRCut")),
+  mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
+  tauHadOverlapdRCut_(iConfig.getParameter<double>("tauHadOverlapdRCut")),
   mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
-  requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon"))
+  requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
+  rooDataset_(iConfig.getParameter<bool>("rooDataset"))
 {
   reset(false);    
 }//FakeRateMiniAODDataNoFR
@@ -197,17 +236,18 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
   edm::Handle<edm::View<pat::Tau> > pTaus;
   iEvent.getByToken(tauTag_, pTaus);
 
-  //Old Jet collection for bTagging
   edm::Handle<edm::View<pat::Muon> > pMu3;
   iEvent.getByToken(mu3Tag_, pMu3);
 
-  //Old Jet collection for bTagging
   edm::Handle<edm::View<pat::Muon> > pMu12;
   iEvent.getByToken(mu12Tag_, pMu12);
 
+  edm::Handle<edm::View<pat::Jet> > pJets;
+  iEvent.getByToken(jetTag_, pJets);
+
   double highestMuPt = -1;
   pat::Muon mu1, mu2;
-  if (pMu12->size() > 2)
+  if (pMu12->size() != 2)
   {
     std::cout << "DAMMIT SOMETHIGN MESSED UP" << std::endl;
     return;
@@ -230,8 +270,11 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
 
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
   std::cout << "mu1.pt()=" << mu1.pt() << "\tmu2.pt()=" << mu2.pt() << "\tdiMuP4..M()=" << diMuP4.M() << std::endl;
-  if (diMuP4.M() > 30.0)
+  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_)
+  {
+    NEvents_->Fill(1);
     return;
+  }//
 
 //////////////////////////////
 // Begin Analyzer
@@ -240,33 +283,55 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
   // iterating over the taus
   /////////////////////////// 
   reco::LeafCandidate::LorentzVector  diTauP4, diMuDiTauP4;
-  double bestMu3dR = 10000000;
+  double bestMu3dR = 10000000, bTagValue = -1;
   bool checkEventDiTau = false;
   pat::Muon mu3;
-std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()=" << pMu3->size() << std::endl;
+  std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()=" << pMu3->size() << std::endl;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
     std::cout << "iTau->pt()=" << iTau->pt() << std::endl;
-    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4)
+    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
+        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") <= -0.5)
       continue;
     for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
     {
       double currdR = deltaR(*iTau, *iMu);
-      if (currdR < mu3dRMax_  && currdR > mu3dRMin_ && currdR < bestMu3dR)
+      std::cout << "iMu->pt()=" << iMu->pt() << "\n\tdR(iMu, iTau)=" << currdR << std::endl;
+      if (currdR <= mu3dRMax_  && currdR >= mu3dRMin_ && currdR < bestMu3dR && deltaR(*iMu, mu1) > mu3dROverlapCut_ && deltaR(*iMu, mu2) > mu3dROverlapCut_)
       {
         diTauP4 = iTau->p4() + iMu->p4();
         diMuDiTauP4 = mu1.p4() + mu2.p4() + iTau->p4() + iMu->p4();
         bestMu3dR = currdR;
         checkEventDiTau = true;
         mu3 = *iMu;
+        double smallestdRJet = 100000000000;
+        for (edm::View<pat::Jet>::const_iterator iJet = pJets->begin(); iJet != pJets->end(); ++iJet)
+        {
+          double dRJet = deltaR(*iTau, *iJet);
+          if (dRJet < smallestdRJet)
+          {
+            bTagValue = iJet->bDiscriminator(csvBTag_);
+            smallestdRJet = dRJet;
+          }//if dRJet < smallestdRJet
+        }//for iJet
       }//if
     }//for iMu
   }//for iTau
 
   //Checking that there was a tau with a removed muon
   if (!checkEventDiTau && requireRemovedMuon_)
+  {
+    NEvents_->Fill(2);
     return;
+  }//
 
+  if (checkBTag_ && bTagValue >= 0.8484)
+  {
+    NEvents_->Fill(3);
+    return;
+  }//if
+
+  NEvents_->Fill(4);
   reco::LeafCandidate::LorentzVector Mu1Mu3P4, Mu2Mu3P4;    
   Mu1Mu3P4 = mu1.p4() + mu3.p4();
   Mu2Mu3P4 = mu2.p4() + mu3.p4();
@@ -287,6 +352,18 @@ std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()=" << pMu3->si
   double dR_Mu1Mu2 = deltaR(mu1, mu2 );
   DRFakeWeight_->Fill(dR_Mu1Mu2 );
   DRNoWeighting_->Fill(dR_Mu1Mu2);
+
+  if (rooDataset_)
+  {
+    x->setVal(diMuP4.M() );
+    y->setVal(diTauP4.M() );
+    y1->setVal(diMuDiTauP4.M() );
+    w->setVal(1);
+    mumumass_dataset->add(RooArgSet(*x,*w));
+    mumutautaumass_dataset->add(RooArgSet(*x,*y,*w));
+    mumufourBodymass_dataset->add(RooArgSet(*x,*y1,*w));
+  }//if
+
 }//End FakeRateMiniAODDataNoFR::analyze
 
 
@@ -332,15 +409,19 @@ void FakeRateMiniAODDataNoFR::beginJob()
   //Book histograms
   NEvents_     = new TH1F("NEvents"    , "", 9, -.5, 8.5);
       NEvents_->GetXaxis()->SetBinLabel(1, "TotalEvents"); 
-      NEvents_->GetXaxis()->SetBinLabel(2, "#tau_{#mu} + #tau_{had} Match");
-      NEvents_->GetXaxis()->SetBinLabel(3, "Gen #tau_{#mu} + #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(4, "Gen Match #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(5, "Gen Match #tau_{had}");
-      NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
-      NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
+      NEvents_->GetXaxis()->SetBinLabel(2, "MassCut");
+      NEvents_->GetXaxis()->SetBinLabel(3, "NoDiTauObject");
+      NEvents_->GetXaxis()->SetBinLabel(4, "BTag");
+      NEvents_->GetXaxis()->SetBinLabel(5, "Pass");
+//      NEvents_->GetXaxis()->SetBinLabel(6, "Event with #tau_{#mu} Removed");
+//      NEvents_->GetXaxis()->SetBinLabel(7, "Event with no #tau_{#mu} Removed ");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 10, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 10, 0, 150);
-  DiMuInvMassFakeWeight_     = new TH1F("DiMuInvMassFakeWeight"    , "", 300, 0, 30);
+//  Float_t binsx[] = {2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30};
+//  Float_t binsx[] = {2.5, 3, 3.5, 4, 4.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30};
+  Float_t binsx[] = {2.5, 3, 3.5, 4, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30};
+  DiMuInvMassFakeWeight_     = new TH1F("DiMuInvMassFakeWeight"    , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx);
+//  DiMuInvMassFakeWeight_     = new TH1F("DiMuInvMassFakeWeight"    , "", 1200, 0, 30);
   DiMuDiTauInvMassFakeWeight_     = new TH1F("DiMuDiTauInvMassFakeWeight"    , "", 333, 0, 1000);
   DiTauInvMassFakeWeight_     = new TH1F("DiTauInvMassFakeWeight"    , "", 300, 0, 30);
   PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 10, 0, 300);
@@ -414,7 +495,13 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
 
   //Write output file
   out_->cd();
-  
+  if (rooDataset_)
+  { 
+    mumumass_dataset->Write();
+    mumutautaumass_dataset->Write();
+    mumufourBodymass_dataset->Write();
+  }//if
+
   NEvents_->Write();
   InvMassTauMuMu1_->Write();
   InvMassTauMuMu2_->Write();

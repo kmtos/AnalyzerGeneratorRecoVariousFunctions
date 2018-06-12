@@ -137,6 +137,7 @@ class FakeRateMiniAODGetRatesMuons : public edm::EDAnalyzer {
       double mu3dRMin_;
       double mu3dRMax_;
       double tauPtCut_;
+      double mu3dROverlapCut_;
       bool requireRemovedMuon_;
       bool checkInvMass_;
       double checkInvMassMin_;
@@ -199,6 +200,7 @@ FakeRateMiniAODGetRatesMuons::FakeRateMiniAODGetRatesMuons(const edm::ParameterS
   mu3dRMin_(iConfig.getParameter<double>("mu3dRMin")),
   mu3dRMax_(iConfig.getParameter<double>("mu3dRMax")),
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
+  mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
   checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
   checkInvMassMin_(iConfig.getParameter<double>("checkInvMassMin")),
@@ -304,7 +306,7 @@ void FakeRateMiniAODGetRatesMuons::analyze(const edm::Event& iEvent, const edm::
     for (edm::View<pat::Muon>::const_iterator iMu = pMuons->begin(); iMu != pMuons->end(); ++iMu)
     { 
       double mu1dR = deltaR(mu1, *iMu), mu2dR = deltaR(mu2, *iMu);
-      if (mu1dR > .5 && mu2dR > .5)
+      if (mu1dR > mu3dROverlapCut_ && mu2dR > mu3dROverlapCut_)
        checkMu3 = true;
     }//for iMu
     if (checkMu3)
@@ -331,7 +333,7 @@ void FakeRateMiniAODGetRatesMuons::analyze(const edm::Event& iEvent, const edm::
       for (edm::View<pat::Muon>::const_iterator iMu = pMuons->begin(); iMu != pMuons->end(); ++iMu)
       {
         double currdR = deltaR(*iTau, *iMu), mu1dR = deltaR(mu1, *iMu), mu2dR = deltaR(mu2, *iMu);
-        if (mu1dR < .5 || mu2dR < .5)
+        if (mu1dR < mu3dROverlapCut_ || mu2dR < mu3dROverlapCut_)
          continue;
         if (currdR < mu3dRMax_ && currdR > mu3dRMin_ && currdR < bestMu3dR)
         {
@@ -392,7 +394,7 @@ void FakeRateMiniAODGetRatesMuons::analyze(const edm::Event& iEvent, const edm::
     reco::MuonPFIsolation iso = iMuon->pfIsolationR04();
     double reliso = (iso.sumChargedHadronPt+TMath::Max(0.,iso.sumNeutralHadronEt+iso.sumPhotonEt-0.5*iso.sumPUPt) ) / iMuon->pt();
 std::cout << "dR(iMu,mu1)= " << deltaR(*iMuon, mu1) << "\tdR(iMu,mu2)=" << deltaR(*iMuon, mu2) << std::endl;
-    if ( deltaR(*iMuon, mu1) < .5 || deltaR(*iMuon, mu2) < .5)
+    if ( deltaR(*iMuon, mu1) < mu3dROverlapCut_ || deltaR(*iMuon, mu2) < mu3dROverlapCut_)
       continue;
     MuonNoIsoPt_->Fill(iMuon->pt() , pileupWeight*genWeight );
     MuonNoIsoEta_->Fill(fabs( iMuon->eta()) , pileupWeight*genWeight );

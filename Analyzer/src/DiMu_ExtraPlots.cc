@@ -17,6 +17,9 @@
 //
 //
 
+#ifndef __CINT__
+#include "RooGlobalFunc.h"
+#endif
 
 // system include files
 #include <memory>
@@ -76,7 +79,24 @@
 #include "DataFormats/PatCandidates/interface/Tau.h"
 
 #include "AnalyzerGeneratorRecoVariousFunctions/VariousFunctions/interface/VariousFunctions.h"
+#include "AnalyzerGeneratorRecoVariousFunctions/VariousFunctions/interface/BTagCalibrationStandalone.h"
 #include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
+
+#include "RooArgSet.h"
+#include "RooArgusBG.h"
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+
+#include "RooGaussian.h"
+#include "RooCBShape.h"
+#include "RooExponential.h"
+#include "RooBreitWigner.h"
+
+#include "RooConstVar.h"
+#include "RooDataHist.h"
+#include "RooFitResult.h"
+#include "RooMinuit.h"
+#include "RooPlot.h"
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -129,6 +149,9 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       std::string outFileName_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
       edm::EDGetTokenT<edm::View<pat::Tau> > tauTag_;
+      bool checkBTag_;
+      string csvBTag_;
+      string bTagSFShift_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::MET> > metTag_;
       edm::EDGetTokenT<edm::View<pat::Jet> > jetTag_;
@@ -136,11 +159,15 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;
       
       double tauPtCut_;
+      double diMudRCut_;
+      double mu3dROverlapCut_;
+      double tauHadOverlapdRCut_;
       double xsec_; 
       double lumi_; 
       double summedWeights_;
       bool MC_;
       bool ApplyFR_;
+      bool rooDataset_;
       std::string PileupFileName_;
       std::string _fpIDs_BToF;
       std::string _fpIDs_GH;
@@ -149,8 +176,7 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       std::string _fpTrack;
       std::string _fpTrigger_BToF;
       std::string _fpTrigger_GH;
-      std::string _fpIDs_JPsi;
-      std::string _fpISOs_JPsi;
+      std::string _fp_LowPt;
       edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUTag_;
       TFile *_fileIDs_BToF;
       TFile *_fileIDs_GH;
@@ -159,18 +185,13 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       TFile *_fileTrack;
       TFile *_fileTrigger_BToF;
       TFile *_fileTrigger_GH;
-      TFile *_fileIDs_JPsi;
-      TFile *_fileISOs_JPsi;
+      TFile *_file_LowPt;
       TH2F *IDsWeight_BToF;
       TH2F *IDsWeight_GH;
       TH2F *ISOsWeight_BToF;
       TH2F *ISOsWeight_GH;
-      TH2F *IDsWeight_JPsi_BD;
-      TH2F *ISOsWeight_JPsi_BD;
-      TH2F *IDsWeight_JPsi_EF;
-      TH2F *ISOsWeight_JPsi_EF;
-      TH2F *IDsWeight_JPsi_GH;
-      TH2F *ISOsWeight_JPsi_GH;
+      TH2F *IDsWeight_LowPt_ID;
+      TH2F *ISOsWeight_LowPt_ISO;
       TGraph *TrackWeight;
       TH2F *TriggerWeight_BToF;
       TH2F *TriggerWeight_GH;
@@ -199,6 +220,16 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       Double_t f_z1_pt;
       Double_t f_u1;
       Double_t f_u2;
+
+      RooRealVar *x = new RooRealVar("x","x", 0, 30);
+      RooRealVar *w = new RooRealVar("w","w",-9999999, 99999999);
+      RooDataSet *mumumass_dataset = new RooDataSet("mumumass_dataset", "mumumass_dataset", RooArgSet(*x,*w));
+
+      RooRealVar *y = new RooRealVar("y","y", 0, 30);
+      RooDataSet *mumutautaumass_dataset = new RooDataSet("mumutautaumass_dataset", "mumutautaumass_dataset", RooArgSet(*x,*y,*w));
+
+      RooRealVar *y1 = new RooRealVar("y1","y1", 0, 1000);
+      RooDataSet *mumufourBodymass_dataset = new RooDataSet("mumufourBodymass_dataset", "mumufourBodymass_dataset", RooArgSet(*x,*y1,*w));
 
       //Histograms
       TH1F* NEvents_;
@@ -258,17 +289,24 @@ DiMu_ExtraPlots::DiMu_ExtraPlots(const edm::ParameterSet& iConfig):
   outFileName_(iConfig.getParameter<std::string>("outFileName")),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
   tauTag_(consumes<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
+  checkBTag_(iConfig.getParameter<bool>("checkBTag")),
+  csvBTag_(iConfig.getParameter<std::string>("csvBTag")),
+  bTagSFShift_(iConfig.getParameter<std::string>("bTagSFShift")), 
   mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   metTag_(consumes<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("metTag"))),
   jetTag_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetTag"))),
   pileupSummaryInfo_(consumes<std::vector<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileupSummaryInfo"))),
   genEventInfoToken_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoToken"))),
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
+  diMudRCut_(iConfig.getParameter<double>("diMudRCut")),
+  mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
+  tauHadOverlapdRCut_(iConfig.getParameter<double>("tauHadOverlapdRCut")),
   xsec_(iConfig.getParameter<double>("xsec")),
   lumi_(iConfig.getParameter<double>("lumi")),
   summedWeights_(iConfig.getParameter<double>("summedWeights")),
   MC_(iConfig.getParameter<bool>("MC")),
   ApplyFR_(iConfig.getParameter<bool>("ApplyFR")),
+  rooDataset_(iConfig.getParameter<bool>("rooDataset")),
   PileupFileName_(iConfig.getParameter<std::string>("PileupFileName")),
   _fpIDs_BToF(iConfig.getParameter<std::string>("fpIDs_BToF")),
   _fpIDs_GH(iConfig.getParameter<std::string>("fpIDs_GH")),
@@ -277,10 +315,10 @@ DiMu_ExtraPlots::DiMu_ExtraPlots(const edm::ParameterSet& iConfig):
   _fpTrack(iConfig.getParameter<std::string>("fpTrack")),
   _fpTrigger_BToF(iConfig.getParameter<std::string>("fpTrigger_BToF")),
   _fpTrigger_GH(iConfig.getParameter<std::string>("fpTrigger_GH")),
-  _fpIDs_JPsi(iConfig.getParameter<std::string>("fpIDs_JPsi")),
-  _fpISOs_JPsi(iConfig.getParameter<std::string>("fpISOs_JPsi"))
+  _fp_LowPt(iConfig.getParameter<std::string>("fp_LowPt"))
 
 {
+std::cout << "check1" << std::endl;
   PileupFile = new TFile(PileupFileName_.c_str());
   Pileup_ = (TH1F*)PileupFile->Get("PileupWeights");
 
@@ -291,8 +329,7 @@ DiMu_ExtraPlots::DiMu_ExtraPlots(const edm::ParameterSet& iConfig):
   _fileTrack = new TFile(_fpTrack.c_str());
   _fileTrigger_BToF = new TFile(_fpTrigger_BToF.c_str());
   _fileTrigger_GH = new TFile(_fpTrigger_GH.c_str());
-  _fileIDs_JPsi = new TFile(_fpIDs_JPsi.c_str());
-  _fileISOs_JPsi = new TFile(_fpISOs_JPsi.c_str());
+  _file_LowPt = new TFile(_fp_LowPt.c_str());
   
 
   IDsWeight_BToF =  (TH2F*)_fileIDs_BToF->Get("EtavsPtMedium2016ID");
@@ -302,19 +339,16 @@ DiMu_ExtraPlots::DiMu_ExtraPlots(const edm::ParameterSet& iConfig):
   TrackWeight = (TGraph*)_fileTrack->Get("ratio_eff_aeta_dr030e030_corr");
   TriggerWeight_BToF = (TH2F*)_fileTrigger_BToF->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio");
   TriggerWeight_GH = (TH2F*)_fileTrigger_GH->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio");
-  IDsWeight_JPsi_BD = (TH2F*)_fileIDs_JPsi->Get("EtavsPtMedium2016IDRunBDtoMC");
-  ISOsWeight_JPsi_BD = (TH2F*)_fileISOs_JPsi->Get("EtavsPtMedium2016ISORunBDtoMC");
-  IDsWeight_JPsi_EF = (TH2F*)_fileIDs_JPsi->Get("EtavsPtMedium2016IDRunEFtoMC");
-  ISOsWeight_JPsi_EF = (TH2F*)_fileISOs_JPsi->Get("EtavsPtMedium2016ISORunEFtoMC");
-  IDsWeight_JPsi_GH = (TH2F*)_fileIDs_JPsi->Get("EtavsPtMedium2016IDRunGHtoMC");
-  ISOsWeight_JPsi_GH = (TH2F*)_fileISOs_JPsi->Get("EtavsPtMedium2016ISORunGHtoMC");
-std::cout << ISOsWeight_JPsi_BD << " " << IDsWeight_JPsi_GH << " " << ISOsWeight_JPsi_EF << std::endl;
-//  std::cout << "IDsWeight_BToF =" << IDsWeight_BToF << std::endl;
-//  std::cout << "IDsWeight_GH =" << IDsWeight_GH << std::endl;
-//  std::cout << "ISOsWeight_BToF =" << ISOsWeight_BToF << std::endl;
-//  std::cout << "ISOsWeight_GH =" << ISOsWeight_GH << std::endl;
-//  std::cout << "TrackWeight =" << TrackWeight << std::endl;
-//  std::cout << "TriggerWeight_BToF =" << TriggerWeight_BToF << std::endl;
+  IDsWeight_LowPt_ID = (TH2F*)_file_LowPt->Get("hist_EtavsPtLooseID_DatatoMC");
+  ISOsWeight_LowPt_ISO = (TH2F*)_file_LowPt->Get("hist_EtavsPtLooseISO_DatatoMC");
+  std::cout << "ISOsWeight_LowPt_ISO=" << ISOsWeight_LowPt_ISO << std::endl;
+  std::cout << "IDsWeight_LowPt_ID-" << IDsWeight_LowPt_ID << std::endl;
+  std::cout << "IDsWeight_BToF =" << IDsWeight_BToF << std::endl;
+  std::cout << "IDsWeight_GH =" << IDsWeight_GH << std::endl;
+  std::cout << "ISOsWeight_BToF =" << ISOsWeight_BToF << std::endl;
+  std::cout << "ISOsWeight_GH =" << ISOsWeight_GH << std::endl;
+  std::cout << "TrackWeight =" << TrackWeight << std::endl;
+  std::cout << "TriggerWeight_BToF =" << TriggerWeight_BToF << std::endl;
 
   Double_t x[TrackWeight->GetN()], y[TrackWeight->GetN()];
   for(int i=0; i<TrackWeight->GetN(); i++){
@@ -342,6 +376,8 @@ std::cout << ISOsWeight_JPsi_BD << " " << IDsWeight_JPsi_GH << " " << ISOsWeight
   GaussU2Corr[2]={0.0, 20.0,0.0 ,21.3 ,20.0, 30.0};
   GaussU2Corr[3]={0.0, 20.5,0.0, 21.5, 30.0, 50.0};
   GaussU2Corr[4]={0.0,21.6 , 0.0, 22.1, 50.0, 1000.0};
+
+
 }//DiMu_ExtraPlots
 
 
@@ -379,15 +415,6 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   iEvent.getByToken(metTag_, pMET);
   pat::MET MET = pMET->at(0);
 
-//  double highestCSVInc = -1, highestCMVA = -1;
-//  for (edm::View<pat::Jet>::const_iterator iJet = pJets->begin(); iJet != pJets->end(); ++iJet)
-//  {
-//    if (iJet->pt() > tauPtCut_ && fabs(iJet->eta() ) < 2.4  && iJet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > highestCSVInc) 
-//      highestCSVInc = iJet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-//    if (iJet->pt() > tauPtCut_ && fabs(iJet->eta() ) < 2.4  && iJet->bDiscriminator("pfCombinedMVABJetTags") > highestCMVA) 
-//      highestCMVA = iJet->bDiscriminator("pfCombinedMVABJetTags");
-//  }//for iJet
-
 ///////////////////////////////////////
 // Get PU and Gen Weights if MC
 ///////////////////////////////////////
@@ -415,10 +442,6 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     iEvent.getByToken(genEventInfoToken_, genEventInfo);
     double eventGenWeight = genEventInfo->weight();
     genWeight = eventGenWeight * lumi_ * xsec_ / summedWeights_;
-//    std::cout << "genWeight=" << genWeight << "\teventGenWeight=" << eventGenWeight << "\tlumi_=" << lumi_  << "\tsummedWeights_=" << summedWeights_ << "\txsec_=" << xsec_ << "\tpileupWeight=" <<pileupWeight <<  "\tnTrueVertices=" << nTrueVertices << std::endl;
-  
-//    if (pPileupSummaryInfo.isValid()) std::cout << "VALID" << std::endl;
-//    if (pPileupSummaryInfo->size()>0) std::cout << "SIZE>0" << std::endl;
   }//if MC_
 
 ///////////////////////////////////////
@@ -451,7 +474,8 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   std::cout << "mu2.pt()=" << mu2.pt() << "\tmu2.eta()=" << mu2.eta() << "\tmu2.phi()=" << mu2.phi() << std::endl;
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
   std::cout << "diMuP4.M()=" << diMuP4.M() << std::endl;
-  if (diMuP4.M() > 30.0 )
+  std::cout << "diMudR= " << deltaR(mu1, mu2) << std::endl;
+  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_)
   {
     NEvents_->Fill(1);
     return;
@@ -460,27 +484,20 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 ///////////////////////////////////////
 // Do Track Iso and ID and ISO scale
 //////////////////////////////////////
-  double IDs_weightBD=1.0;//every muon pass through "medium ID"
-  double IDs_weightEF=1.0;
+  double IDs_weightBF=1.0;//every muon pass through "medium ID"
   double IDs_weightGH=1.0;
-  double ISOs_weightBD=1.0; // every muon pass through 0.25 relative isolation
-  double ISOs_weightEF=1.0; // every muon pass through 0.25 relative isolation
+  double ISOs_weightBF=1.0; // every muon pass through 0.25 relative isolation
   double ISOs_weightGH=1.0;
   double Tracks_weight=1.0;
-  float LumiFraction_GH = 17484.837/38090.857;
-  float LumiFraction_EF =  7545.496/38090.857; 
-  float LumiFraction_BD = 13060.524/38090.857; //1.0-LumiFraction_GH;
-  
-  float binxIDs_BD = IDsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyIDs_BD = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
-  float binxIDs_EF = IDsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyIDs_EF = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
+  float LumiFraction_GH = 16.1 / 35.9;
+  float LumiFraction_BF = 19.8 / 35.9; //1.0-LumiFraction_GH;
+ 
+  float binxIDs_BF = IDsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
+  float binyIDs_BF = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
   float binxIDs_GH = IDsWeight_GH->GetXaxis()->FindBin(mu1.pt());
   float binyIDs_GH = IDsWeight_GH->GetYaxis()->FindBin(fabs(mu1.eta()));
-  float binxISOs_BD = ISOsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyISOs_BD = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
-  float binxISOs_EF = ISOsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyISOs_EF = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
+  float binxISOs_BF = ISOsWeight_BToF->GetXaxis()->FindBin(mu1.pt());
+  float binyISOs_BF = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
   float binxISOs_GH = ISOsWeight_GH->GetXaxis()->FindBin(mu1.pt());
   float binyISOs_GH = ISOsWeight_GH->GetYaxis()->FindBin(fabs(mu1.eta()));
   for (std::list<TrackProperties>::const_iterator it = TrackCorr.begin(); it != TrackCorr.end(); it++ )
@@ -491,108 +508,80 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         break; 
      }//if
   }//for it
-//  std::cout << "LumiFraction_BD=" << LumiFraction_BD << "\tLumiFraction_GH=" << LumiFraction_GH << "\nIDsWeight_BD->GetBinContent(binxIDs_BD, binyIDs_BD)=" << IDsWeight_BD->GetBinContent(binxIDs_BD, binyIDs_BD) << "\tIDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH)=" << IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH) << "\nISOsWeight_BD->GetBinContent(binxISOs_BD, binyISOs_BD)=" << ISOsWeight_BD->GetBinContent(binxISOs_BD, binyISOs_BD) << "\tISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH) << "\nbinxIDs_BD=" << binxIDs_BD << "\tbinyIDs_BD=" << binyIDs_BD << "\tbinxIDs_GH=" << binxIDs_GH << "\tbinyIDs_GH=" << binyIDs_GH << "\nbinxISOs_BD=" << binxISOs_BD << "\tbinyISOs_BD=" << binyISOs_BD << "\tbinxISOs_GH=" << binxISOs_GH << "\tbinyISOs_GH=" << binyISOs_GH << std::endl;
+//  std::cout << "LumiFraction_BF=" << LumiFraction_BF << "\tLumiFraction_GH=" << LumiFraction_GH << "\nIDsWeight_BF->GetBinContent(binxIDs_BF, binyIDs_BF)=" << IDsWeight_BF->GetBinContent(binxIDs_BF, binyIDs_BF) << "\tIDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH)=" << IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH) << "\nISOsWeight_BF->GetBinContent(binxISOs_BF, binyISOs_BF)=" << ISOsWeight_BF->GetBinContent(binxISOs_BF, binyISOs_BF) << "\tISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH) << "\nbinxIDs_BF=" << binxIDs_BF << "\tbinyIDs_BF=" << binyIDs_BF << "\tbinxIDs_GH=" << binxIDs_GH << "\tbinyIDs_GH=" << binyIDs_GH << "\nbinxISOs_BF=" << binxISOs_BF << "\tbinyISOs_BF=" << binyISOs_BF << "\tbinxISOs_GH=" << binxISOs_GH << "\tbinyISOs_GH=" << binyISOs_GH << std::endl;
   
-  if (binxIDs_BD == 7)
+  if (binxIDs_BF == 7)
   {
-    binxIDs_BD = 6;
-    binxIDs_EF = 6;
+    binxIDs_BF = 6;
     binxIDs_GH = 6;
-    binxISOs_BD = 6;
-    binxISOs_EF = 6;
+    binxISOs_BF = 6;
     binxISOs_GH = 6;
   }//if
 
-  std::cout << "\n\nIDs_weightBD=" << IDs_weightBD << "\tIDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD)=" << IDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD) << std::endl;
-  std::cout << "IDs_weightEF=" << IDs_weightEF << "\tIDsWeight_EF->GetBinContent(binxIDs_EF, binyIDs_EF)=" << IDsWeight_BToF->GetBinContent(binxIDs_EF, binyIDs_EF) << std::endl;
+  std::cout << "\n\nIDs_weightBF=" << IDs_weightBF << "\tIDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF)=" << IDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF) << std::endl;
   std::cout << "IDs_weightGH=" << IDs_weightGH << "\tIDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH)=" << IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH) << std::endl;
-  std::cout << "ISOs_weightBD=" << ISOs_weightBD << "\tISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD)=" << ISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD) << std::endl;
-  std::cout << "ISOs_weightEF=" << ISOs_weightEF << "\tISOsWeight_EF->GetBinContent(binxISOs_EF, binyISOs_EF)=" << ISOsWeight_BToF->GetBinContent(binxISOs_EF, binyISOs_EF) << std::endl;
+  std::cout << "ISOs_weightBF=" << ISOs_weightBF << "\tISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF)=" << ISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF) << std::endl;
   std::cout << "ISOs_weightGH=" << ISOs_weightGH << "\tISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH) << std::endl;
-  IDs_weightBD = IDs_weightBD * IDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD);
-  IDs_weightGH = IDs_weightGH * IDsWeight_BToF->GetBinContent(binxIDs_GH, binyIDs_GH);
-  IDs_weightEF = IDs_weightEF * IDsWeight_GH->GetBinContent(binxIDs_EF, binyIDs_EF);
-  ISOs_weightBD = ISOs_weightBD * ISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD);
-  ISOs_weightEF = ISOs_weightEF * ISOsWeight_BToF->GetBinContent(binxISOs_EF, binyISOs_EF);
+  IDs_weightBF = IDs_weightBF * IDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF);
+  IDs_weightGH = IDs_weightGH * IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH);
+  ISOs_weightBF = ISOs_weightBF * ISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF);
   ISOs_weightGH = ISOs_weightGH * ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH);
 
   if (mu2.pt() > 20.0)
   {
     std::cout << "Z Eff" << std::endl;
-    binxIDs_BD = IDsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
-    binyIDs_BD = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxIDs_EF = IDsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
-    binyIDs_EF = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
+    binxIDs_BF = IDsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
+    binyIDs_BF = IDsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
     binxIDs_GH = IDsWeight_GH->GetXaxis()->FindBin(mu2.pt());
     binyIDs_GH = IDsWeight_GH->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxISOs_BD = ISOsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
-    binyISOs_BD = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxISOs_EF = ISOsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
-    binyISOs_EF = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
+    binxISOs_BF = ISOsWeight_BToF->GetXaxis()->FindBin(mu2.pt());
+    binyISOs_BF = ISOsWeight_BToF->GetYaxis()->FindBin(fabs(mu2.eta()));
     binxISOs_GH = ISOsWeight_GH->GetXaxis()->FindBin(mu2.pt());
     binyISOs_GH = ISOsWeight_GH->GetYaxis()->FindBin(fabs(mu2.eta()));
-    if (binxIDs_BD == 7)
+    if (binxIDs_BF == 7)
     {  
-      binxIDs_BD = 6;
-      binxIDs_EF = 6;
+      binxIDs_BF = 6;
       binxIDs_GH = 6;
-      binxISOs_BD = 6;
-      binxISOs_EF = 6;
+      binxISOs_BF = 6;
       binxISOs_GH = 6;
     }//if
     
-    std::cout << "IDs_weightBD=" << IDs_weightBD << "\tIDsWeight_BD->GetBinContent(binxIDs_BD, binyIDs_BD)=" << IDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD) << std::endl;
-    std::cout << "IDs_weightEF=" << IDs_weightEF << "\tIDsWeight_EF->GetBinContent(binxIDs_EF, binyIDs_EF)=" << IDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD) << std::endl;
+    std::cout << "IDs_weightBF=" << IDs_weightBF << "\tIDsWeight_BF->GetBinContent(binxIDs_BF, binyIDs_BF)=" << IDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF) << std::endl;
     std::cout << "IDs_weightGH=" << IDs_weightGH << "\tIDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH)=" << IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH) << std::endl;
-    std::cout << "ISOs_weightBD=" << ISOs_weightBD << "\tISOsWeight_BD->GetBinContent(binxISOs_BD, binyISOs_BD)=" << ISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD) << std::endl;
-    std::cout << "ISOs_weightEF=" << ISOs_weightEF << "\tISOsWeight_EF->GetBinContent(binxISOs_EF, binyISOs_EF)=" << ISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD) << std::endl;
+    std::cout << "ISOs_weightBF=" << ISOs_weightBF << "\tISOsWeight_BF->GetBinContent(binxISOs_BF, binyISOs_BF)=" << ISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF) << std::endl;
     std::cout << "ISOs_weightGH=" << ISOs_weightGH << "\tISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH) << std::endl;
-    IDs_weightBD = IDs_weightBD * IDsWeight_BToF->GetBinContent(binxIDs_BD, binyIDs_BD);
-    IDs_weightEF = IDs_weightEF * IDsWeight_BToF->GetBinContent(binxIDs_EF, binyIDs_EF);
+    IDs_weightBF = IDs_weightBF * IDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF);
     IDs_weightGH = IDs_weightGH * IDsWeight_GH->GetBinContent(binxIDs_GH, binyIDs_GH);
-    ISOs_weightBD = ISOs_weightBD * ISOsWeight_BToF->GetBinContent(binxISOs_BD, binyISOs_BD);
-    ISOs_weightEF = ISOs_weightEF * ISOsWeight_BToF->GetBinContent(binxISOs_EF, binyISOs_EF);
+    ISOs_weightBF = ISOs_weightBF * ISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF);
     ISOs_weightGH = ISOs_weightGH * ISOsWeight_GH->GetBinContent(binxISOs_GH, binyISOs_GH);
   }//if
   else 
   {
     std::cout << "JPsi Eff" << std::endl;
-    binxIDs_BD = IDsWeight_JPsi_BD->GetXaxis()->FindBin(mu2.pt());
-    binyIDs_BD = IDsWeight_JPsi_BD->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxIDs_EF = IDsWeight_JPsi_EF->GetXaxis()->FindBin(mu2.pt());
-    binxIDs_EF = IDsWeight_JPsi_EF->GetXaxis()->FindBin(mu2.pt());
-    binyIDs_GH = IDsWeight_JPsi_GH->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binyIDs_GH = IDsWeight_JPsi_GH->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxISOs_BD = ISOsWeight_JPsi_BD->GetXaxis()->FindBin(mu2.pt());
-    binyISOs_BD = ISOsWeight_JPsi_BD->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxISOs_EF = ISOsWeight_JPsi_EF->GetXaxis()->FindBin(mu2.pt());
-    binyISOs_EF = ISOsWeight_JPsi_EF->GetYaxis()->FindBin(fabs(mu2.eta()));
-    binxISOs_GH = ISOsWeight_JPsi_GH->GetXaxis()->FindBin(mu2.pt());
-    binyISOs_GH = ISOsWeight_JPsi_GH->GetYaxis()->FindBin(fabs(mu2.eta()));
-    if (binxIDs_BD == 7)
+
+    binyIDs_BF = IDsWeight_LowPt_ID->GetYaxis()->FindBin(mu2.pt());
+    binxIDs_BF = IDsWeight_LowPt_ID->GetXaxis()->FindBin(fabs(mu2.eta()));
+    binyIDs_GH = IDsWeight_LowPt_ID->GetYaxis()->FindBin(mu2.pt());
+    binxIDs_GH = IDsWeight_LowPt_ID->GetXaxis()->FindBin(fabs(mu2.eta()));
+    binyISOs_BF = ISOsWeight_LowPt_ISO->GetYaxis()->FindBin(mu2.pt());
+    binxISOs_BF = ISOsWeight_LowPt_ISO->GetXaxis()->FindBin(fabs(mu2.eta()));
+    binyISOs_GH = ISOsWeight_LowPt_ISO->GetYaxis()->FindBin(mu2.pt());
+    binxISOs_GH = ISOsWeight_LowPt_ISO->GetXaxis()->FindBin(fabs(mu2.eta()));
+    if (binyIDs_BF == 7)
     {
-      binxIDs_BD = 6;
-      binxIDs_EF = 6;
-      binxIDs_GH = 6;
-      binxISOs_BD = 6;
-      binxISOs_EF = 6;
-      binxISOs_GH = 6;
+      binyIDs_BF = 6;
+      binyIDs_GH = 6;
+      binyISOs_BF = 6;
+      binyISOs_GH = 6;
     }//if
-    std::cout << "IDs_weightBD=" << IDs_weightBD << "\tIDsWeight_JPsi_BD->GetBinContent(binxIDs_BD, binyIDs_BD)=" << IDsWeight_JPsi_BD->GetBinContent(binxIDs_BD, binyIDs_BD) << std::endl;
-    std::cout << "IDs_weightEF=" << IDs_weightEF << "\tIDsWeight_JPsi_EF->GetBinContent(binxIDs_EF, binyIDs_EF)=" << IDsWeight_JPsi_EF->GetBinContent(binxIDs_BD, binyIDs_BD) << std::endl;
-    std::cout << "IDs_weightGH=" << IDs_weightGH << "\tIDsWeight_JPsi_GH->GetBinContent(binxIDs_GH, binyIDs_GH)=" << IDsWeight_JPsi_GH->GetBinContent(binxIDs_GH, binyIDs_GH) << std::endl;
-    std::cout << "ISOs_weightBD=" << ISOs_weightBD << "\tISOsWeight_JPsi_BD->GetBinContent(binxISOs_BD, binyISOs_BD)=" << ISOsWeight_JPsi_BD->GetBinContent(binxISOs_BD, binyISOs_BD) << std::endl;
-    std::cout << "ISOs_weightEF=" << ISOs_weightEF << "\tISOsWeight_JPsi_EF->GetBinContent(binxISOs_EF, binyISOs_EF)=" << ISOsWeight_JPsi_EF->GetBinContent(binxISOs_BD, binyISOs_BD) << std::endl;
-    std::cout << "ISOs_weightGH=" << ISOs_weightGH << "\tISOsWeight_JPsi_GH->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_JPsi_GH->GetBinContent(binxISOs_GH, binyISOs_GH) << std::endl;
-    IDs_weightBD = IDs_weightBD * IDsWeight_JPsi_BD->GetBinContent(binxIDs_BD, binyIDs_BD);
-    IDs_weightEF = IDs_weightEF * IDsWeight_JPsi_EF->GetBinContent(binxIDs_EF, binyIDs_EF);
-    IDs_weightGH = IDs_weightGH * IDsWeight_JPsi_GH->GetBinContent(binxIDs_GH, binyIDs_GH);
-    ISOs_weightBD = ISOs_weightBD * ISOsWeight_JPsi_BD->GetBinContent(binxISOs_BD, binyISOs_BD);
-    ISOs_weightEF = ISOs_weightEF * ISOsWeight_JPsi_EF->GetBinContent(binxISOs_EF, binyISOs_EF);
-    ISOs_weightGH = ISOs_weightGH * ISOsWeight_JPsi_GH->GetBinContent(binxISOs_GH, binyISOs_GH);
+    std::cout << "IDs_weightBF=" << IDs_weightBF << "\tIDsWeight_LowPt_ID->GetBinContent(binxIDs_BF, binyIDs_BF)=" << IDsWeight_LowPt_ID->GetBinContent(binxIDs_BF, binyIDs_BF) << std::endl;
+    std::cout << "ISOs_weightGH=" << ISOs_weightGH << "\tISOsWeight_LowPt_ISO->GetBinContent(binxISOs_GH, binyISOs_GH)=" << ISOsWeight_LowPt_ISO->GetBinContent(binxISOs_GH, binyISOs_GH) << std::endl;
+    IDs_weightBF = IDs_weightBF * IDsWeight_LowPt_ID->GetBinContent(binxIDs_BF, binyIDs_BF);
+    IDs_weightGH = IDs_weightGH * IDsWeight_LowPt_ID->GetBinContent(binxIDs_GH, binyIDs_GH);
+    ISOs_weightBF = ISOs_weightBF * ISOsWeight_LowPt_ISO->GetBinContent(binxISOs_BF, binyISOs_BF);
+    ISOs_weightGH = ISOs_weightGH * ISOsWeight_LowPt_ISO->GetBinContent(binxISOs_GH, binyISOs_GH);
   }//else
 
-     
   for (std::list<TrackProperties>::const_iterator it = TrackCorr.begin(); it != TrackCorr.end(); it++ )
   {
      if (fabs(mu2.eta()) >= (*it).x-(*it).errx_down && fabs(mu2.eta()) <= (*it).x+(*it).errx_up)
@@ -602,29 +591,47 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
      }//if 
   }//for it
 
+ std::cout << "check6" << std::endl;
+
 ///////////////////////////////////////
 // Trigger efficiencies
 ///////////////////////////////////////
-  double Trigger_weightBD=1.0;
-  double Trigger_weightEF=1.0;
+  double Trigger_weightBF=1.0;
   double Trigger_weightGH=1.0;
-  float binxTrigger_BD = TriggerWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyTrigger_BD = TriggerWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
-  float binxTrigger_EF = TriggerWeight_BToF->GetXaxis()->FindBin(mu1.pt());
-  float binyTrigger_EF = TriggerWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
+  float binxTrigger_BF = TriggerWeight_BToF->GetXaxis()->FindBin(mu1.pt());
+  float binyTrigger_BF = TriggerWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
   float binxTrigger_GH = TriggerWeight_GH->GetXaxis()->FindBin(mu1.pt());
   float binyTrigger_GH = TriggerWeight_GH->GetYaxis()->FindBin(fabs(mu1.eta()));
-  Trigger_weightBD = Trigger_weightBD *  TriggerWeight_BToF->GetBinContent(binxTrigger_BD, binyTrigger_BD);
-  Trigger_weightEF = Trigger_weightEF *  TriggerWeight_BToF->GetBinContent(binxTrigger_EF, binyTrigger_EF);
+  if (binxTrigger_BF == 0)
+  {
+    binxTrigger_BF = 1;
+    binxTrigger_GH = 1;
+  }//if    
+  Trigger_weightBF = Trigger_weightBF *  TriggerWeight_BToF->GetBinContent(binxTrigger_BF, binyTrigger_BF);
   Trigger_weightGH = Trigger_weightGH *  TriggerWeight_GH->GetBinContent(binxTrigger_GH, binyTrigger_GH);          
+
+//////////////////////////////
+// BTaggin Scale factors
+//////////////////////////////
+  // BTaggin SF
+  std::cout << "===> Loading the input .csv SF file..." << std::endl;
+  
+  std::string inputCSVfile = "/afs/cern.ch/work/k/ktos/public/CMSSW_8_0_17/src/AnalyzerGeneratorRecoVariousFunctions/Analyzer/FILE_TESTS/CSVv2_Moriond17_B_H.csv";  
+  BTagCalibration calib("csvv2", inputCSVfile);
+  std::cout << "bTagSFShift_= " << bTagSFShift_ << "  BTagEntry::FLAV_C=" << BTagEntry::FLAV_C << "  BTagEntry::FLAV_B=" << BTagEntry::FLAV_B <<  std::endl;
+  BTagCalibrationReader reader(BTagEntry::OP_MEDIUM, bTagSFShift_) ;
+  
+  reader.load(calib, BTagEntry::FLAV_B, "comb");
+  reader.load(calib, BTagEntry::FLAV_C, "comb");
+  reader.load(calib, BTagEntry::FLAV_UDSG, "incl");
+  std::cout  << "initialized reader" << std::endl;
 
 ///////////////////////////////////////
 // Combining weights and SF
 ///////////////////////////////////////
-  std::cout << "\n\nIDs_weightBD=" << IDs_weightBD << "\tISOs_weightBD=" << ISOs_weightBD << "\tTrigger_weightBD=" << Trigger_weightBD << std::endl;
-  std::cout << "IDs_weightEF=" << IDs_weightEF << "\tISOs_weightEF=" << ISOs_weightEF << "\tTracks_weight=" << Tracks_weight << "\tTrigger_weightEF=" << Trigger_weightEF << std::endl;
-  std::cout << "IDs_weightGH=" << IDs_weightGH << "\tISOs_weightGH=" << ISOs_weightGH << "\tTracks_weight=" << Tracks_weight << "\tTrigger_weightGH=" << Trigger_weightGH << std::endl;
-  double SFsWeight = LumiFraction_BD * (IDs_weightBD * ISOs_weightBD * Trigger_weightBD) + LumiFraction_EF * (IDs_weightEF * ISOs_weightEF * Trigger_weightEF) + LumiFraction_GH * (IDs_weightGH * ISOs_weightGH * Trigger_weightGH);  
+  std::cout << "\n\nIDs_weightBF=" << IDs_weightBF << "\tISOs_weightGH=" << ISOs_weightGH << "\tTracks_weight=" << Tracks_weight << "\tTrigger_weightGH=" << Trigger_weightGH << std::endl;
+  double SFsWeight = LumiFraction_BF * (IDs_weightBF * ISOs_weightBF * Trigger_weightBF) + 
+                     LumiFraction_GH * (IDs_weightGH * ISOs_weightGH * Trigger_weightGH);  
   if (!MC_)
     SFsWeight = 1.0;
   std::cout << "pileupWeight=" << pileupWeight << "\tgenWeight=" << genWeight << "\tSFsWeight=" << SFsWeight << std::endl;
@@ -633,14 +640,15 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 // Do DiTau Side of selection
 ///////////////////////////////////////
   reco::LeafCandidate::LorentzVector diTauP4, fourBody, mu1mu3, mu2mu3;
-  double bestdR = 100000000000000000;
+  double bestdR = 100000000000000000, bTagValue = -1, csvSF = -1;
   bool checkEventDiTau = false;
   unsigned int TauRemovedMuCount = 0;
   pat::Muon mu3; 
   std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()= " << pMu3->size() << std::endl;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
-    if (iTau->pt() < tauPtCut_)
+    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
+        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") <= -0.5)
       continue;
     std::cout << "iTau=>pt=" << iTau->pt() << std::endl;
     bool checkMu3Removed = false;
@@ -648,7 +656,7 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     {
       double currdR = deltaR(*iTau, *iMu);
       std::cout  << "\tdR=" << currdR << std::endl;
-      if (currdR < .8 && currdR < bestdR)   
+      if (currdR < .8 && currdR < bestdR && deltaR(*iMu, mu1) > mu3dROverlapCut_ && deltaR(*iMu, mu2) > mu3dROverlapCut_)   
       {
         bestdR = currdR;
         diTauP4 = iTau->p4() + iMu->p4();
@@ -658,75 +666,114 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         fourBody = iTau->p4() + iMu->p4() + mu1.p4() + mu2.p4();
         checkMu3Removed = true;
         checkEventDiTau = true;
+        double smallestdRJet = 10000000000000000;
+        for (edm::View<pat::Jet>::const_iterator iJet = pJets->begin(); iJet != pJets->end(); ++iJet)
+        {
+          double dRJet = deltaR(*iTau, *iJet);
+          if (dRJet < smallestdRJet)
+          {
+            bTagValue = iJet->bDiscriminator(csvBTag_);
+            smallestdRJet = dRJet;
+            int hadronFlavor = iJet->hadronFlavour();
+            if ( hadronFlavor == 5 )
+              csvSF = reader.eval(BTagEntry::FLAV_B, fabs(iJet->eta()), iJet->pt(), bTagValue);
+
+            else if( hadronFlavor == 4 )
+              csvSF = reader.eval(BTagEntry::FLAV_C, fabs(iJet->eta()), iJet->pt(), bTagValue);
+
+            else 
+              csvSF = reader.eval(BTagEntry::FLAV_UDSG, fabs(iJet->eta()), iJet->pt(), bTagValue);
+	    std::cout << "csvSF=" << csvSF << "  hadronFlavor=" << hadronFlavor << " bTagValue=" << bTagValue << std::endl;
+          }//if dRJet < smallestdRJet
+        }//for iJet
       }//if
     }//for iMu
     if (checkMu3Removed)
       TauRemovedMuCount++;
   }//for iTau
+
+  double csvWeight = 1;
+  if (bTagValue >= 0.8484)
+    csvWeight = 1 - csvSF;
+
+   std::cout << "csvWeight= " << csvWeight << std::endl;
+
   std::cout << "FoundDiTau=" << checkEventDiTau << std::endl;
+  double tauMedSF = 0.97;
   if (checkEventDiTau)
   {
     NEvents_->Fill(3);
-    DiTauDiMuMass_->Fill(fourBody.M(), pileupWeight*genWeight*SFsWeight );
+    DiTauDiMuMass_->Fill(fourBody.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     if (bestdR < .4)
     {
-      DiMuPtSmallerdR_->Fill(diMuP4.Pt(), pileupWeight*genWeight*SFsWeight );
-      DiTauMassSmallerdR_->Fill(diTauP4.M(), pileupWeight*genWeight*SFsWeight );
+      DiMuPtSmallerdR_->Fill(diMuP4.Pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+      DiTauMassSmallerdR_->Fill(diTauP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     }//if
-    DiMuDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - diMuP4.Phi() ), pileupWeight*genWeight*SFsWeight );
-    InvMassTauHadMu3_->Fill(diTauP4.M(), pileupWeight*genWeight*SFsWeight );
-    InvMassMu1TauMu_->Fill(mu1mu3.M(), pileupWeight*genWeight*SFsWeight );
+    DiMuDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - diMuP4.Phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    InvMassTauHadMu3_->Fill(diTauP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    InvMassMu1TauMu_->Fill(mu1mu3.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     if (mu1mu3.M() > 60.0 && mu1mu3.M() < 120 )
     {
       double dRZ = deltaR(mu1, mu3);
-      ZMassdR_->Fill(dRZ, pileupWeight*genWeight*SFsWeight );
+      ZMassdR_->Fill(dRZ, pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     }//if 
     if (mu2mu3.M() > 60.0 && mu2mu3.M() < 120 )
     {
       double dRZ = deltaR(mu2, mu3);
-      ZMassdR_->Fill(dRZ, pileupWeight*genWeight*SFsWeight );
+      ZMassdR_->Fill(dRZ, pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     }//if 
     InvMassMu2TauMu_->Fill(mu2mu3.M() );
-    PtTauHadMu3_->Fill(diTauP4.Pt(), pileupWeight*genWeight*SFsWeight );
-    DiTauEta_->Fill(diTauP4.Eta(), pileupWeight*genWeight*SFsWeight );
-    DiTauPhi_->Fill(diTauP4.Phi(), pileupWeight*genWeight*SFsWeight );
-    METDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - MET.phi() ), pileupWeight*genWeight*SFsWeight );
-    InvMassZPeakRange_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
-    InvMassUpsilonRange_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
-    InvMassFullRange_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+    PtTauHadMu3_->Fill(diTauP4.Pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiTauEta_->Fill(diTauP4.Eta(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiTauPhi_->Fill(diTauP4.Phi(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    METDiTauDeltaPhi_->Fill(fabs(diTauP4.Phi() - MET.phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    InvMassZPeakRange_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    InvMassUpsilonRange_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    InvMassFullRange_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     GenWeights_->Fill(genWeight);
     PileupWeights_->Fill(pileupWeight);
-    SFWeights_->Fill(SFsWeight);
+    SFWeights_->Fill(SFsWeight*tauMedSF);
     if (mu1.eta() < .9 && mu2.eta() < .9)
-      InvMassDiMuBarrBarr_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuBarrBarr_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     else if ( (mu1.eta() < .9 && mu2.eta() < 1.2 && mu2.eta() > .9) || (mu1.eta() < 1.2 && mu1.eta() > .9 && mu2.eta() < .9) )
-      InvMassDiMuBarrOver_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuBarrOver_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     else if ( (mu1.eta() < .9 && mu2.eta() > 1.2) || (mu1.eta() > 1.2 && mu2.eta() < .9) )
-      InvMassDiMuBarrEndc_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuBarrEndc_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     else if ( (mu1.eta() > 1.2 && mu2.eta() < 1.2 && mu2.eta() > .9) || (mu1.eta() < 1.2 && mu1.eta() > .9 && mu2.eta() > 1.2) )
-      InvMassDiMuEndcOver_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuEndcOver_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     else if ( mu2.eta() < 1.2 && mu2.eta() > .9 && mu1.eta() < 1.2 && mu1.eta() > .9)
-      InvMassDiMuOverOver_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuOverOver_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     else if (mu1.eta() > 1.2 && mu2.eta() > 1.2)
-      InvMassDiMuEndcEndc_->Fill(diMuP4.M(), pileupWeight*genWeight*SFsWeight );
-    Mu1Pt_->Fill(mu1.pt(), pileupWeight*genWeight*SFsWeight );
-    Mu2Pt_->Fill(mu2.pt(), pileupWeight*genWeight*SFsWeight );
-    PtMu1vsPtMu2_->Fill(mu1.pt(), mu2.pt() , pileupWeight*genWeight*SFsWeight );
-    DiMuPt_->Fill(diMuP4.Pt(), pileupWeight*genWeight*SFsWeight );
-    Mu1Eta_->Fill(mu1.eta(), pileupWeight*genWeight*SFsWeight );
-    Mu2Eta_->Fill(mu2.eta(), pileupWeight*genWeight*SFsWeight );
-    DiMuEta_->Fill(diMuP4.Eta(), pileupWeight*genWeight*SFsWeight );
-    DiMuPhi_->Fill(diMuP4.Phi(), pileupWeight*genWeight*SFsWeight );
-    DiMudR_->Fill(reco::deltaR(mu1, mu2), pileupWeight*genWeight*SFsWeight );
-    DiTaudR_->Fill(bestdR, pileupWeight*genWeight*SFsWeight);
-    EtMET_->Fill(MET.pt(), pileupWeight*genWeight*SFsWeight );
-    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*genWeight*SFsWeight );
-    EtMET_->Fill(MET.pt(), pileupWeight*genWeight*SFsWeight );
-    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*genWeight*SFsWeight );
+      InvMassDiMuEndcEndc_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    Mu1Pt_->Fill(mu1.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    Mu2Pt_->Fill(mu2.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    PtMu1vsPtMu2_->Fill(mu1.pt(), mu2.pt() , pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiMuPt_->Fill(diMuP4.Pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    Mu1Eta_->Fill(mu1.eta(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    Mu2Eta_->Fill(mu2.eta(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiMuEta_->Fill(diMuP4.Eta(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiMuPhi_->Fill(diMuP4.Phi(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiMudR_->Fill(reco::deltaR(mu1, mu2), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiTaudR_->Fill(bestdR, pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF);
+    EtMET_->Fill(MET.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    EtMET_->Fill(MET.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
   }//for checkMu3Removed 
   else
     NEvents_->Fill(2);
   NMedIsoTausWithMu3_->Fill(TauRemovedMuCount ); 
+
+  if (rooDataset_)
+  {
+    x->setVal(diMuP4.M() );
+    y->setVal(diTauP4.M() );
+    y1->setVal(fourBody.M() );
+    w->setVal(pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF*.001 );
+    mumumass_dataset->add(RooArgSet(*x,*w));
+    mumutautaumass_dataset->add(RooArgSet(*x,*y,*w));
+    mumufourBodymass_dataset->add(RooArgSet(*x,*y1,*w));
+  }//if
 }//End InvMass::analyze
 
 
@@ -1116,46 +1163,51 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
 
   //Write output file
   out_->cd();
-
-  NMedIsoTausWithMu3Canvas_.Write();
-  InvMassMu1TauMuCanvas_.Write();
-  InvMassMu2TauMuCanvas_.Write();
-  InvMassTauHadMu3Canvas_.Write();
-  PtTauHadMu3Canvas_.Write();
-  InvMassUpsilonRangeCanvas_.Write();
-  InvMassZPeakRangeCanvas_.Write();
-  InvMassFullRangeCanvas_.Write();
-  InvMassDiMuBarrBarrCanvas_.Write();
-  InvMassDiMuBarrEndcCanvas_.Write();
-  InvMassDiMuEndcEndcCanvas_.Write();
-  InvMassDiMuBarrOverCanvas_.Write();
-  InvMassDiMuOverOverCanvas_.Write();
-  InvMassDiMuEndcOverCanvas_.Write();
-  Mu1PtCanvas_.Write();
-  Mu2PtCanvas_.Write();
-  DiMuPtCanvas_.Write();
-  DiMuPtSmallerdRCanvas_.Write();
-  Mu1EtaCanvas_.Write();
-  Mu2EtaCanvas_.Write();
-  DiTauEtaCanvas_.Write();
-  DiTaudRCanvas_.Write();
-  DiTauPhiCanvas_.Write();
-  DiMuEtaCanvas_.Write();
-  DiMudRCanvas_.Write();
-  DiMuPhiCanvas_.Write();
-  EtMETCanvas_.Write();
-  DiTauDiMuMassCanvas_.Write();
-  DiTauMassSmallerdRCanvas_.Write();
-  DiMuDiTauDeltaPhiCanvas_.Write();
-  METDiTauDeltaPhiCanvas_.Write();
-  METDiMuDeltaPhiCanvas_.Write();
-  PtMu1vsPtMu2Canvas_.Write();
-  PileupWeightsCanvas_.Write();
-  SFWeightsCanvas_.Write();
-  GenWeightsCanvas_.Write();
-  HighestCSVInclJetCanvas_.Write();
-  HighestCombMVAJetCanvas_.Write();
-  ZMassdRCanvas_.Write();
+  if (rooDataset_)
+  {
+    mumumass_dataset->Write();
+    mumutautaumass_dataset->Write();
+    mumufourBodymass_dataset->Write();
+  }//if
+//  NMedIsoTausWithMu3Canvas_.Write();
+//  InvMassMu1TauMuCanvas_.Write();
+//  InvMassMu2TauMuCanvas_.Write();
+//  InvMassTauHadMu3Canvas_.Write();
+//  PtTauHadMu3Canvas_.Write();
+//  InvMassUpsilonRangeCanvas_.Write();
+//  InvMassZPeakRangeCanvas_.Write();
+//  InvMassFullRangeCanvas_.Write();
+//  InvMassDiMuBarrBarrCanvas_.Write();
+//  InvMassDiMuBarrEndcCanvas_.Write();
+//  InvMassDiMuEndcEndcCanvas_.Write();
+//  InvMassDiMuBarrOverCanvas_.Write();
+//  InvMassDiMuOverOverCanvas_.Write();
+//  InvMassDiMuEndcOverCanvas_.Write();
+//  Mu1PtCanvas_.Write();
+//  Mu2PtCanvas_.Write();
+//  DiMuPtCanvas_.Write();
+//  DiMuPtSmallerdRCanvas_.Write();
+//  Mu1EtaCanvas_.Write();
+//  Mu2EtaCanvas_.Write();
+//  DiTauEtaCanvas_.Write();
+//  DiTaudRCanvas_.Write();
+//  DiTauPhiCanvas_.Write();
+//  DiMuEtaCanvas_.Write();
+//  DiMudRCanvas_.Write();
+//  DiMuPhiCanvas_.Write();
+//  EtMETCanvas_.Write();
+//  DiTauDiMuMassCanvas_.Write();
+//  DiTauMassSmallerdRCanvas_.Write();
+//  DiMuDiTauDeltaPhiCanvas_.Write();
+//  METDiTauDeltaPhiCanvas_.Write();
+//  METDiMuDeltaPhiCanvas_.Write();
+//  PtMu1vsPtMu2Canvas_.Write();
+//  PileupWeightsCanvas_.Write();
+//  SFWeightsCanvas_.Write();
+//  GenWeightsCanvas_.Write();
+//  HighestCSVInclJetCanvas_.Write();
+//  HighestCombMVAJetCanvas_.Write();
+//  ZMassdRCanvas_.Write();
 
   NEvents_->Write();
   NMedIsoTausWithMu3_->Write();
