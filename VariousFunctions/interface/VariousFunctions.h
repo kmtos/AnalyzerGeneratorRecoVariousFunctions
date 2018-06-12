@@ -8,7 +8,12 @@
 #include "TAxis.h"
 #include <string>
 #include "TH2F.h"
-
+#include "TStyle.h"
+#include "TPad.h"
+#include "TLatex.h"
+#include "TLine.h"
+#include "TBox.h"
+#include "TASImage.h"
 
 class VariousFunctions { 
 
@@ -19,10 +24,20 @@ class VariousFunctions {
 					   const char*, const Float_t, const Float_t, const Float_t, const char*, const Float_t, const Float_t, const Float_t, const bool); 
 
     //Format and Draw Histograms
+    static void formatAndDrawCanvasAndHist1DFileService(TCanvas*, TH1F*, const Int_t, const Int_t, const Int_t, const Color_t, const Size_t, const Style_t,
+                                           const char*, const Float_t, const Float_t, const Float_t, const char*, const Float_t, const Float_t, const Float_t, const bool);
+
+    //Format and Draw Histograms
     static void formatAndDrawCanvasAndHist2D(TCanvas&, TH2F*, const Int_t, const Int_t, const Int_t, const Color_t, const Size_t, const Style_t,
                                            const char*, const Float_t, const Float_t, const Float_t, 
 				           const char*, const Float_t, const Float_t, const Float_t,
   					   const char*, const Float_t, const Float_t, const Float_t);
+
+    //Format and Draw Histograms
+    static void formatAndDrawCanvasAndHist2DFileService(TCanvas*, TH2F*, const Int_t, const Int_t, const Int_t, const Color_t, const Size_t, const Style_t,
+                                           const char*, const Float_t, const Float_t, const Float_t,
+                                           const char*, const Float_t, const Float_t, const Float_t,
+                                           const char*, const Float_t, const Float_t, const Float_t);
 
     //Format and Draw Histograms
     static void formatAndDrawCanvasAndTGraphAsym(TCanvas&, TGraphAsymmErrors*, const Int_t, const Int_t, const Int_t, const Color_t, const Size_t, const Style_t,
@@ -52,6 +67,12 @@ class VariousFunctions {
     //Finds all muons in a Ref and plots their pt in the given histogram
     static void findAndPlotBMuons(const reco::GenParticleRef&, const int, TH1F*, const bool);
 
+    static void setTDRStyle(bool );
+    static void SetCanvas(TCanvas*, int, int);
+    static void SetHist(TH1F*, int, int, int, float, const char*, const char*);
+    static void CMS_lumi( TPad*, int , int, bool, bool , bool );
+
+  
 };
 
 
