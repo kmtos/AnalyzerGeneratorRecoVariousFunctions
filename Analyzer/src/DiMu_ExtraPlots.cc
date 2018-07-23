@@ -249,6 +249,8 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       TH1F* InvMassDiMuEndcOver_;
       TH1F* Mu1Pt_;
       TH1F* Mu2Pt_;
+      TH1F* Mu3Pt_;
+      TH1F* TauHPt_;
       TH1F* DiMuPt_;
       TH1F* DiMuPtSmallerdR_;
       TH1F* Mu1Eta_;
@@ -272,6 +274,7 @@ class DiMu_ExtraPlots : public edm::EDAnalyzer {
       TH1F* HighestCSVInclJet_;
       TH1F* HighestCombMVAJet_;
       TH1F* ZMassdR_;
+      TH2F* DiTauMassVSMVA_;
 };
 
 //
@@ -470,6 +473,9 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       mu2 = *iMuon;
   }
 
+  if (mu1.pt() < 26.0) 
+    return;
+
   std::cout << "mu1.pt()=" << mu1.pt() << "\tmu1.eta()=" << mu1.eta() << "\tmu1.phi()=" << mu1.phi() << std::endl;
   std::cout << "mu2.pt()=" << mu2.pt() << "\tmu2.eta()=" << mu2.eta() << "\tmu2.phi()=" << mu2.phi() << std::endl;
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
@@ -602,11 +608,6 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   float binyTrigger_BF = TriggerWeight_BToF->GetYaxis()->FindBin(fabs(mu1.eta()));
   float binxTrigger_GH = TriggerWeight_GH->GetXaxis()->FindBin(mu1.pt());
   float binyTrigger_GH = TriggerWeight_GH->GetYaxis()->FindBin(fabs(mu1.eta()));
-  if (binxTrigger_BF == 0)
-  {
-    binxTrigger_BF = 1;
-    binxTrigger_GH = 1;
-  }//if    
   Trigger_weightBF = Trigger_weightBF *  TriggerWeight_BToF->GetBinContent(binxTrigger_BF, binyTrigger_BF);
   Trigger_weightGH = Trigger_weightGH *  TriggerWeight_GH->GetBinContent(binxTrigger_GH, binyTrigger_GH);          
 
@@ -644,11 +645,12 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   bool checkEventDiTau = false;
   unsigned int TauRemovedMuCount = 0;
   pat::Muon mu3; 
+  pat::Tau tau;
   std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()= " << pMu3->size() << std::endl;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
     if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
-        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") <= -0.5)
+        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byIsolationMVArun2v1DBoldDMwLTraw") <= -0.5)
       continue;
     std::cout << "iTau=>pt=" << iTau->pt() << std::endl;
     bool checkMu3Removed = false;
@@ -661,6 +663,7 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         bestdR = currdR;
         diTauP4 = iTau->p4() + iMu->p4();
         mu3 = *iMu; 
+        tau = *iTau;
 	mu1mu3 = iMu->p4() + mu1.p4();   
 	mu2mu3 = iMu->p4() + mu2.p4();
         fourBody = iTau->p4() + iMu->p4() + mu1.p4() + mu2.p4();
@@ -747,6 +750,8 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       InvMassDiMuEndcEndc_->Fill(diMuP4.M(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     Mu1Pt_->Fill(mu1.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     Mu2Pt_->Fill(mu2.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    Mu3Pt_->Fill(mu3.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    TauHPt_->Fill(tau.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     PtMu1vsPtMu2_->Fill(mu1.pt(), mu2.pt() , pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     DiMuPt_->Fill(diMuP4.Pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     Mu1Eta_->Fill(mu1.eta(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
@@ -759,12 +764,13 @@ void DiMu_ExtraPlots::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     EtMET_->Fill(MET.pt(), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
     METDiMuDeltaPhi_->Fill(fabs(diMuP4.Phi() - MET.phi() ), pileupWeight*csvWeight*genWeight*SFsWeight*tauMedSF );
+    DiTauMassVSMVA_->Fill(diMuP4.M(), tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw"));
   }//for checkMu3Removed 
   else
     NEvents_->Fill(2);
   NMedIsoTausWithMu3_->Fill(TauRemovedMuCount ); 
 
-  if (rooDataset_)
+  if (rooDataset_ && checkEventDiTau)
   {
     x->setVal(diMuP4.M() );
     y->setVal(diTauP4.M() );
@@ -811,6 +817,8 @@ void DiMu_ExtraPlots::beginJob()
   InvMassDiMuEndcOver_     = new TH1F("InvMassDiMuEndcOver"    , "", 101, 0, 101);
   Mu1Pt_     = new TH1F("Mu1Pt"    , "", 50, 0, 500);
   Mu2Pt_     = new TH1F("Mu2Pt"    , "", 50, 0, 500);
+  Mu3Pt_     = new TH1F("Mu3Pt"    , "", 50, 0, 500);
+  TauHPt_     = new TH1F("TauHPt"    , "", 50, 0, 500);
   DiMuPt_     = new TH1F("DiMuPt"    , "", 30, 0, 500);
   DiMuPtSmallerdR_     = new TH1F("DiMuPtSmallerdR"    , "", 30, 0, 500);
   Mu1Eta_     = new TH1F("Mu1Eta"    , "", 30, -2.5, 2.5);
@@ -834,6 +842,7 @@ void DiMu_ExtraPlots::beginJob()
   HighestCSVInclJet_     = new TH1F("HighestCSVInclJet"    , "", 100, 0, 1);
   HighestCombMVAJet_     = new TH1F("HighestCombMVAJet"    , "", 100, 0, 1);
   ZMassdR_     = new TH1F("ZMassdR"    , "", 100, 0, 6);
+  DiTauMassVSMVA_     = new TH2F("DiTauMassVSMVA"    , "", 50, 0, 25, 50, -10, 1);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
@@ -856,6 +865,8 @@ void DiMu_ExtraPlots::endJob()
   TCanvas InvMassDiMuEndcOverCanvas_("InvMassDiMuEndcOverCanvas","",600,600);
   TCanvas Mu1PtCanvas_("Mu1PtCanvas","",600,600);
   TCanvas Mu2PtCanvas_("Mu2PtCanvas","",600,600);
+  TCanvas Mu3PtCanvas_("Mu3PtCanvas","",600,600);
+  TCanvas TauHPtCanvas_("TauHPtCanvas","",600,600);
   TCanvas DiMuPtCanvas_("DiMuPtCanvas","",600,600);
   TCanvas DiMuPtSmallerdRCanvas_("DiMuPtSmallerdRCanvas","",600,600);
   TCanvas Mu1EtaCanvas_("Mu1EtaCanvas","",600,600);
@@ -879,6 +890,7 @@ void DiMu_ExtraPlots::endJob()
   TCanvas HighestCSVInclJetCanvas_("HighestCSVInclJetCanvas","",600,600);
   TCanvas HighestCombMVAJetCanvas_("HighestCombMVAJetCanvas","",600,600);
   TCanvas ZMassdRCanvas_("ZMassdRCanvas","",600,600);
+  TCanvas DiTauMassVSMVACanvas_("DiTauMassVSMVACanvas","",600,600);
 
 std::cout << "Setting Bin contents to zero if negative" << std::endl;
 
@@ -1106,6 +1118,10 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 	 1, 0, 0, kBlack, .1, 20, "p_{T}(#mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(Mu2PtCanvas_, Mu2Pt_,
 	 1, 0, 0, kBlack, .1, 20, "p_{T}(#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(Mu3PtCanvas_, Mu3Pt_,
+	 1, 0, 0, kBlack, .1, 20, "p_{T}(#mu_{3})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(TauHPtCanvas_, TauHPt_,
+	 1, 0, 0, kBlack, .1, 20, "p_{T}(#tau_{h})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(DiMuPtCanvas_, DiMuPt_,
 	 1, 0, 0, kBlack, .1, 20, "p_{T}(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(DiMuPtSmallerdRCanvas_, DiMuPtSmallerdR_,
@@ -1152,6 +1168,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, .1, 20, "highest Combined MVA value jet in Event", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(ZMassdRCanvas_, ZMassdR_,
          1, 0, 0, kBlack, .1, 20, "#DeltaR #mu_{1} #tau_{#mu}", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist2D(DiTauMassVSMVACanvas_, DiTauMassVSMVA_,
+         1, 0, 0, kBlack, 7, 20, "M(tautau)", .04, .04, 1.1, "MVA", .04, .04, 1.6, "", .04, .04, 1.0);
 
 
 std::cout << "after formatting" << std::endl;
@@ -1226,6 +1244,8 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   InvMassDiMuEndcOver_->Write();
   Mu1Pt_->Write();
   Mu2Pt_->Write();
+  Mu3Pt_->Write();
+  TauHPt_->Write();
   DiMuPt_->Write();
   DiMuPtSmallerdR_->Write();
   Mu1Eta_->Write();
@@ -1249,6 +1269,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   HighestCSVInclJet_->Write();
   HighestCombMVAJet_->Write();
   ZMassdR_->Write();
+  DiTauMassVSMVA_->Write();
 
 
   out_->Write();
@@ -1303,6 +1324,10 @@ void DiMu_ExtraPlots::reset(const bool doDelete)
   Mu1Pt_ = NULL;
   if ((doDelete) && (Mu2Pt_ != NULL)) delete Mu2Pt_;
   Mu2Pt_ = NULL;
+  if ((doDelete) && (Mu3Pt_ != NULL)) delete Mu3Pt_;
+  Mu3Pt_ = NULL;
+  if ((doDelete) && (TauHPt_ != NULL)) delete TauHPt_;
+  TauHPt_ = NULL;
   if ((doDelete) && (DiMuPt_ != NULL)) delete DiMuPt_;
   DiMuPt_ = NULL;
   if ((doDelete) && (DiMuPtSmallerdR_ != NULL)) delete DiMuPtSmallerdR_;
@@ -1349,6 +1374,8 @@ void DiMu_ExtraPlots::reset(const bool doDelete)
   HighestCombMVAJet_ = NULL;
   if ((doDelete) && (ZMassdR_ != NULL)) delete ZMassdR_;
   ZMassdR_ = NULL;
+  if ((doDelete) && (DiTauMassVSMVA_ != NULL)) delete DiTauMassVSMVA_;
+  DiTauMassVSMVA_ = NULL;
 
 }
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

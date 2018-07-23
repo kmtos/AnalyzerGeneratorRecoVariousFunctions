@@ -177,6 +177,7 @@ class FakeRateMiniAODEstimateRegionA : public edm::EDAnalyzer {
       TH1F* DiTauInvMassFakeWeight_;
       TH1F* PtMu1FakeWeight_;
       TH1F* PtMu2FakeWeight_;
+      TH1F* PtTauFakeWeight_;
       TH1F* PtMu3FakeWeight_;
       TH1F* EtaFakeWeight_;
       TH1F* DRFakeWeight_;
@@ -276,7 +277,7 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
   }
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
   std::cout << "mu1.pt()= " << mu1.pt() << "\nmu2.pt()= " << mu2.pt() << "\tdiMuP4.M()=" << diMuP4.M() << std::endl;
-  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_)
+  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_ || mu1.pt() < 26.0)
     return;
 
 
@@ -290,12 +291,13 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
   double bestMu3dR = 10000000, tauPt = -1, tauEta = -1000000, bTagValue = -1;
   bool checkEventDiTau = false;
   pat::Muon mu3;
+  pat::Tau  tau;
   std::cout << "pTaus->size()= " << pTaus->size() << "\tpMu3->size()=" << pMu3->size() << std::endl;
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
     std::cout << "\tiTau->pt()= " << iTau->pt() << "\t(iTau->eta()=" << (iTau->eta()) << std::endl;
     if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
-        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") <= -0.5)
+        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byIsolationMVArun2v1DBoldDMwLTraw") <= -0.5)
       continue;
     for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
     {
@@ -310,7 +312,8 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
         bestMu3dR = currdR;
         checkEventDiTau = true;
         mu3 = *iMu;
-	    double smallestdRJet = 100000000000;
+        tau = *iTau;
+        double smallestdRJet = 100000000000;
         for (edm::View<pat::Jet>::const_iterator iJet = pJets->begin(); iJet != pJets->end(); ++iJet)
         {
           double dRJet = deltaR(*iTau, *iJet);
@@ -369,6 +372,7 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
   TauVisMassZoom_->Fill(diTauP4.M(),  fakeRateWeight);
   PtMu1FakeWeight_->Fill(mu1.pt(), fakeRateWeight);
   PtMu2FakeWeight_->Fill(mu2.pt(), fakeRateWeight);
+  PtTauFakeWeight_->Fill(tau.pt(), fakeRateWeight);
   PtMu3FakeWeight_->Fill(mu3.pt(), fakeRateWeight);
   EtaFakeWeight_->Fill(mu1.eta(), fakeRateWeight);
   double dR_Mu1Mu2 = deltaR(mu1, mu2);
@@ -448,6 +452,7 @@ void FakeRateMiniAODEstimateRegionA::beginJob()
   DiTauInvMassFakeWeight_     = new TH1F("DiTauInvMassFakeWeight"    , "", 300, 0, 30);
   PtMu1FakeWeight_     = new TH1F("PtMu1FakeWeight"    , "", 10, 0, 300);
   PtMu2FakeWeight_     = new TH1F("PtMu2FakeWeight"    , "", 10, 0, 300);
+  PtTauFakeWeight_     = new TH1F("PtTauFakeWeight"    , "", 10, 0, 300);
   PtMu3FakeWeight_     = new TH1F("PtMu3FakeWeight"    , "", 10, 0, 300);
   EtaFakeWeight_     = new TH1F("EtaFakeWeight"    , "", 10, -2.5, 2.5);
   DRFakeWeight_     = new TH1F("DRFakeWeight"    , "", 10, 0, 5);
@@ -469,6 +474,7 @@ void FakeRateMiniAODEstimateRegionA::endJob()
   TCanvas DiTauInvMassFakeWeightCanvas_("DiTauInvMassFakeWeightCanvas","",600,600);
   TCanvas PtMu1FakeWeightCanvas_("PtMu1FakeWeightCanvas","",600,600);
   TCanvas PtMu2FakeWeightCanvas_("PtMu2FakeWeightCanvas","",600,600);
+  TCanvas PtTauFakeWeightCanvas_("PtTauFakeWeightCanvas","",600,600);
   TCanvas PtMu3FakeWeightCanvas_("PtMu3FakeWeightCanvas","",600,600);
   TCanvas EtaFakeWeightCanvas_("EtaFakeWeightCanvas","",600,600);
   TCanvas DRFakeWeightCanvas_("DRFakeWeightCanvas","",600,600);
@@ -497,6 +503,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
          1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{1})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu2FakeWeightCanvas_, PtMu2FakeWeight_,
          1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist1D(PtTauFakeWeightCanvas_, PtTauFakeWeight_,
+         1, 0, 0, kBlack, 1, 20, "p_{T}(#tau_{H})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(PtMu3FakeWeightCanvas_, PtMu3FakeWeight_,
          1, 0, 0, kBlack, 1, 20, "p_{T}(#mu_{3})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(EtaFakeWeightCanvas_, EtaFakeWeight_,
@@ -535,6 +543,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   DiTauInvMassFakeWeight_->Write();
   PtMu1FakeWeight_->Write();
   PtMu2FakeWeight_->Write();
+  PtTauFakeWeight_->Write();
   PtMu3FakeWeight_->Write();
   EtaFakeWeight_->Write();
   DRFakeWeight_->Write();
@@ -580,6 +589,8 @@ void FakeRateMiniAODEstimateRegionA::reset(const bool doDelete)
   PtMu1FakeWeight_ = NULL;
   if ((doDelete) && (PtMu2FakeWeight_ != NULL)) delete PtMu2FakeWeight_;
   PtMu2FakeWeight_ = NULL;
+  if ((doDelete) && (PtTauFakeWeight_ != NULL)) delete PtTauFakeWeight_;
+  PtTauFakeWeight_ = NULL;
   if ((doDelete) && (PtMu3FakeWeight_ != NULL)) delete PtMu3FakeWeight_;
   PtMu3FakeWeight_ = NULL;
   if ((doDelete) && (EtaFakeWeight_ != NULL)) delete EtaFakeWeight_;
