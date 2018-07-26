@@ -148,6 +148,9 @@ class FakeRateMiniAODDataNoFR : public edm::EDAnalyzer {
       double tauPtCut_;
       double diMudRCut_;
       double mu3dROverlapCut_;
+      std::string minMVARaw_;
+      std::string medIsoTau_;
+      bool passDiscriminator_;
       double tauHadOverlapdRCut_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
@@ -207,6 +210,9 @@ FakeRateMiniAODDataNoFR::FakeRateMiniAODDataNoFR(const edm::ParameterSet& iConfi
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
   diMudRCut_(iConfig.getParameter<double>("diMudRCut")),
   mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
+  minMVARaw_(iConfig.getParameter<std::string>("minMVARaw")),
+  medIsoTau_(iConfig.getParameter<std::string>("medIsoTau")),
+  passDiscriminator_(iConfig.getParameter<bool>("passDiscriminator")),
   tauHadOverlapdRCut_(iConfig.getParameter<double>("tauHadOverlapdRCut")),
   mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
@@ -270,12 +276,9 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
       mu2 = *iMuon;
   }
  
-  if (mu1.pt() < 26.0)
-    return;
-
   reco::LeafCandidate::LorentzVector diMuP4 = mu1.p4() + mu2.p4();
   std::cout << "mu1.pt()=" << mu1.pt() << "\tmu2.pt()=" << mu2.pt() << "\tdiMuP4..M()=" << diMuP4.M() << std::endl;
-  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_)
+  if (diMuP4.M() > 30.0 || deltaR(mu1, mu2) > diMudRCut_ || mu1.pt() < 26.0)
   {
     NEvents_->Fill(1);
     return;
@@ -296,8 +299,9 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
     std::cout << "iTau->pt()=" << iTau->pt() << std::endl;
-    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
-        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byIsolationMVArun2v1DBoldDMwLTraw") <= -0.5)
+    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ ||deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID(minMVARaw_) <= -0.5)
+      continue;
+    if ( (!iTau->tauID(medIsoTau_) && passDiscriminator_) || (iTau->tauID(medIsoTau_) && !passDiscriminator_) )
       continue;
     for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
     {
@@ -376,7 +380,7 @@ void FakeRateMiniAODDataNoFR::analyze(const edm::Event& iEvent, const edm::Event
 }//End FakeRateMiniAODDataNoFR::analyze
 
 
-// ------------ method called once each job just before starting event loop  ------------
+// x------------ method called once each job just before starting event loop  ------------
 void FakeRateMiniAODDataNoFR::beginJob()
 {
   std::cout << "Begin Job" << std::endl;

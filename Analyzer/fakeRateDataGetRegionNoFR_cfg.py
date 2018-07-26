@@ -75,11 +75,14 @@ process.ggh = cms.EDAnalyzer("FakeRateMiniAODDataNoFR",
    tauPtCut = cms.double(10.0),
    diMudRCut = cms.double(1.0),
    tauHadOverlapdRCut = cms.double(.8),
-   mu3dROverlapCut = cms.double(.4),
+   mu3dROverlapCut = cms.double(0.5),
+   minMVARaw = cms.string("byIsolationMVArun2v1DBoldDMwLTraw"),
+   medIsoTau = cms.string("byMediumIsolationMVArun2v1DBdR03oldDMwLT"),
+   passDiscriminator = cms.bool(True),
    mu3Tag = cms.InputTag('Mu3'),
    mu12Tag = cms.InputTag('Mu1Mu2'),
    requireRemovedMuon = cms.bool(True),
-   rooDataset = cms.bool(True)
+   rooDataset = cms.bool(False)
 )
 
 process.p2 = cms.Path(

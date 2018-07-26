@@ -61,7 +61,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 ####################
 process.source = cms.Source("PoolSource",
          fileNames = cms.untracked.vstring(
-'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/ZZTo4L_13TeV-amcatnloFXFX-pythia8/MiniAOD_ZZTo4LAmac_MedIsoMu2_TauDM_ZSKIM_JUL18/180721_150224/0000/RegionB_selection_1.root')
+'root://eoscms//eos/cms/store/group/phys_higgs/HiggsExo/ktos/SingleMuon/MiniAOD_SingleMu1_MedIsoMu2_TauDM_ZSKIM_JUL18/180721_060412/0000/RegionB_selection_1.root')
 )
 
 process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
@@ -87,7 +87,7 @@ process.ggh = cms.EDAnalyzer("FakeRateMiniAODGetRates",
    checkInvMassMax = cms.double(100),
    csvBTag = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
    checkBTag = cms.bool(True),
-   isMC = cms.bool(True),
+   isMC = cms.bool(False),
    xsec = cms.double(1),
    lumi = cms.double(1),
    summedWeights = cms.double(1),

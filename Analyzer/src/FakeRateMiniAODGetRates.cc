@@ -131,11 +131,12 @@ class FakeRateMiniAODGetRates : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::View<pat::Tau> > tauTag_;
       std::string medIsoTag_;
       std::string decayModeFindingTag_;
-      std::string isoRawTag_;
       double mu3dRMin_;
       double mu3dRMax_;
       double tauPtCut_;
       double mu3dROverlapCut_;
+      std::string minMVARaw_;
+      std::string medIsoTau_;
 //      edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
       bool requireRemovedMuon_;
@@ -173,7 +174,8 @@ class FakeRateMiniAODGetRates : public edm::EDAnalyzer {
       TH2F *ISOsWeight_GH;
       TH2F *IDsWeight_LowPt_ID;
       TH2F *ISOsWeight_LowPt_ISO;
-      TGraph *TrackWeight;
+      TGraph *TrackWeight_eta;
+      TGraph *TrackWeight_vtx;
       TH2F *TriggerWeight_BToF;
       TH2F *TriggerWeight_GH;
       struct TrackProperties{
@@ -184,7 +186,7 @@ class FakeRateMiniAODGetRates : public edm::EDAnalyzer {
         Double_t erry_up;
         Double_t erry_down;
       };
-      std::list<TrackProperties> TrackCorr;
+      std::list<TrackProperties> TrackCorr_eta, TrackCorr_vtx;
       struct Gauss{
         Double_t meanData;
         Double_t sigmaData;
@@ -207,6 +209,7 @@ class FakeRateMiniAODGetRates : public edm::EDAnalyzer {
       TH1F* InvMassTauMuMu1_;
       TH1F* InvMassMu1Mu2_;
       TH1F* InvMassTauMuMu2_;
+      TH2F* MVARawvsMVADisc_;
 
       TH2F* EtavsPtTauMedIso_;
       TH2F* EtavsPtTauDMFind_;
@@ -236,12 +239,12 @@ FakeRateMiniAODGetRates::FakeRateMiniAODGetRates(const edm::ParameterSet& iConfi
   tauTag_(consumes<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauTag"))),
   medIsoTag_(iConfig.getParameter<std::string>("medIsoTag")),
   decayModeFindingTag_(iConfig.getParameter<std::string>("decayModeFindingTag")),
-  isoRawTag_(iConfig.getParameter<std::string>("isoRawTag")),
   mu3dRMin_(iConfig.getParameter<double>("mu3dRMin")),
   mu3dRMax_(iConfig.getParameter<double>("mu3dRMax")),
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
   mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
-//  mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
+  minMVARaw_(iConfig.getParameter<std::string>("minMVARaw")),
+  medIsoTau_(iConfig.getParameter<std::string>("medIsoTau")),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
   requireRemovedMuon_(iConfig.getParameter<bool>("requireRemovedMuon")),
   checkInvMass_(iConfig.getParameter<bool>("checkInvMass")),
@@ -280,7 +283,8 @@ FakeRateMiniAODGetRates::FakeRateMiniAODGetRates(const edm::ParameterSet& iConfi
   IDsWeight_GH =  (TH2F*)_fileIDs_GH->Get("EtavsPtLooseID");
   ISOsWeight_BToF = (TH2F*)_fileISOs_BToF->Get("EtavsPtLooseISO");
   ISOsWeight_GH = (TH2F*)_fileISOs_GH->Get("EtavsPtLooseISO");
-  TrackWeight = (TGraph*)_fileTrack->Get("ratio_eff_aeta_dr030e030_corr");
+  TrackWeight_eta = (TGraph*)_fileTrack->Get("ratio_eff_eta3_dr030e030_corr");
+  TrackWeight_vtx = (TGraph*)_fileTrack->Get("ratio_eff_vtx_dr030e030_corr");
   TriggerWeight_BToF = (TH2F*)_fileTrigger_BToF->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio");
   TriggerWeight_GH = (TH2F*)_fileTrigger_GH->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio");
   IDsWeight_LowPt_ID = (TH2F*)_file_LowPt->Get("hist_EtavsPtLooseID_DatatoMC");
@@ -291,21 +295,36 @@ FakeRateMiniAODGetRates::FakeRateMiniAODGetRates(const edm::ParameterSet& iConfi
   std::cout << "IDsWeight_GH =" << IDsWeight_GH << std::endl;
   std::cout << "ISOsWeight_BToF =" << ISOsWeight_BToF << std::endl;
   std::cout << "ISOsWeight_GH =" << ISOsWeight_GH << std::endl;
-  std::cout << "TrackWeight =" << TrackWeight << std::endl;
+  std::cout << "TrackWeight_eta =" << TrackWeight_eta << std::endl;
+  std::cout << "TrackWeight_vtx =" << TrackWeight_vtx << std::endl;
   std::cout << "TriggerWeight_BToF =" << TriggerWeight_BToF << std::endl;
 
-  Double_t x[TrackWeight->GetN()], y[TrackWeight->GetN()];
-  for(int i=0; i<TrackWeight->GetN(); i++){
-     TrackWeight->GetPoint(i, x[i], y[i]);
+  Double_t x[TrackWeight_eta->GetN()], y[TrackWeight_eta->GetN()];
+  for(int i=0; i<TrackWeight_eta->GetN(); i++){
+     TrackWeight_eta->GetPoint(i, x[i], y[i]);
      cout<<"x="<<x[i]<<"; "<<"y="<<y[i]<<"."<<std::endl;
      TrackProperties val;
      val.x=x[i];
      val.y=y[i];
-     val.errx_up=TrackWeight->GetErrorXhigh(i+1);
-     val.errx_down=TrackWeight->GetErrorXlow(i+1);
-     val.erry_up=TrackWeight->GetErrorYhigh(i+1);
-     val.erry_down=TrackWeight->GetErrorYlow(i+1);
-     TrackCorr.push_back(val);
+     val.errx_up=TrackWeight_eta->GetErrorXhigh(i);
+     val.errx_down=TrackWeight_eta->GetErrorXlow(i);
+     val.erry_up=TrackWeight_eta->GetErrorYhigh(i);
+     val.erry_down=TrackWeight_eta->GetErrorYlow(i);
+     TrackCorr_eta.push_back(val);
+  }
+
+  Double_t xval[TrackWeight_vtx->GetN()], yval[TrackWeight_vtx->GetN()];
+  for(int i=0; i<TrackWeight_vtx->GetN(); i++){
+     TrackWeight_vtx->GetPoint(i, xval[i], yval[i]);
+     cout<<"xval="<<xval[i]<<"; "<<"yval="<<yval[i]<<"."<<std::endl;
+     TrackProperties val;
+     val.x=xval[i];
+     val.y=yval[i];
+     val.errx_up=TrackWeight_vtx->GetErrorXhigh(i);
+     val.errx_down=TrackWeight_vtx->GetErrorXlow(i);
+     val.erry_up=TrackWeight_vtx->GetErrorYhigh(i);
+     val.erry_down=TrackWeight_vtx->GetErrorYlow(i);
+     TrackCorr_vtx.push_back(val);
   }
 
   GaussU1Corr[0]={1.8,19.4,1.7, 20.9,0.0,10.0};
@@ -401,7 +420,7 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
   double tauMedSF = 0.97, TriggerWeight = 1.0;
   float LumiFraction_GH = 16.1 / 35.9;
   float LumiFraction_BF = 19.8 / 35.9; //1.0-LumiFraction_GH;
-  
+ 
   if (isMC_)
   {
     edm::Handle<std::vector<PileupSummaryInfo> > pPileupSummaryInfo;
@@ -412,7 +431,7 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
       nTrueVertices = pPileupSummaryInfo->at(1).getTrueNumInteractions();
 
     PileupFile = new TFile(PileupFileName_.c_str());
-    TH1F* Pileup_ = (TH1F*)PileupFile->Get("PileupWeights");
+    TH1F* Pileup_ = (TH1F*)PileupFile->Get("pileup_scale");
     pileupWeight = Pileup_->GetBinContent(nTrueVertices);
     PileupFile->Close();
 
@@ -425,8 +444,9 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
   ///////////////////////////////////////
   // Do Track Iso and ID and ISO scale
   //////////////////////////////////////
-    for (std::list<TrackProperties>::const_iterator it = TrackCorr.begin(); it != TrackCorr.end(); it++ )
+    for (std::list<TrackProperties>::const_iterator it = TrackCorr_eta.begin(); it != TrackCorr_eta.end(); it++ )
     {
+       std::cout << "fabs(mu1.eta()=" << fabs(mu1.eta()) << "   (*it).x-(*it).errx_down=" <<  (*it).x-(*it).errx_down << "  (*it).x+(*it).errx_up=" << (*it).x+(*it).errx_up << std::endl;
        if (fabs(mu1.eta()) >= (*it).x-(*it).errx_down && fabs(mu1.eta()) <= (*it).x+(*it).errx_up)
        {
           mu1TrackWeight *= (*it).y;
@@ -434,9 +454,28 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
        }//if
     }//for it
 
-    for (std::list<TrackProperties>::const_iterator it = TrackCorr.begin(); it != TrackCorr.end(); it++ )
+    for (std::list<TrackProperties>::const_iterator it = TrackCorr_vtx.begin(); it != TrackCorr_vtx.end(); it++ )
+    {
+       std::cout << "nTrueVertices=" << nTrueVertices << "   (*it).x-(*it).errx_down=" <<  (*it).x-(*it).errx_down << "  (*it).x+(*it).errx_up=" << (*it).x+(*it).errx_up << std::endl;
+       if (nTrueVertices >= (*it).x-(*it).errx_down && nTrueVertices <= (*it).x+(*it).errx_up)
+       {
+          mu1TrackWeight *= (*it).y;
+          break;
+       }//if
+    }//for it
+
+    for (std::list<TrackProperties>::const_iterator it = TrackCorr_eta.begin(); it != TrackCorr_eta.end(); it++ )
     {
        if (fabs(mu2.eta()) >= (*it).x-(*it).errx_down && fabs(mu2.eta()) <= (*it).x+(*it).errx_up)
+       {
+          mu2TrackWeight *= (*it).y;
+          break;
+       }//if
+    }//for it
+
+    for (std::list<TrackProperties>::const_iterator it = TrackCorr_vtx.begin(); it != TrackCorr_vtx.end(); it++ )
+    {
+       if (nTrueVertices >= (*it).x-(*it).errx_down && nTrueVertices <= (*it).x+(*it).errx_up)
        {
           mu2TrackWeight *= (*it).y;
           break;
@@ -489,11 +528,6 @@ void FakeRateMiniAODGetRates::analyze(const edm::Event& iEvent, const edm::Event
       binxIDs_BF = IDsWeight_LowPt_ID->GetXaxis()->FindBin(fabs(mu2.eta()));
       binyISOs_BF = ISOsWeight_LowPt_ISO->GetYaxis()->FindBin(mu2.pt());
       binxISOs_BF = ISOsWeight_LowPt_ISO->GetXaxis()->FindBin(fabs(mu2.eta()));
-      if (binyIDs_BF == 7)
-      {
-        binyIDs_BF = 6;
-        binyISOs_BF = 6;
-      }//if
       mu2IDWeight  = IDsWeight_BToF->GetBinContent(binxIDs_BF, binyIDs_BF);
       mu2ISOWeight = ISOsWeight_BToF->GetBinContent(binxISOs_BF, binyISOs_BF);
     }//else
@@ -533,7 +567,8 @@ std::cout << "DiMu: pt= " << diMuP4.Pt() << "  eta=" << diMuP4.Eta() << " Mass="
     double bestMu3dR = 10000000;
     bool checkSubMu = false;
     pat::Muon mu3;
-    if (iTau->tauID(medIsoTag_) <= -0.5 || iTau->pt() <= tauPtCut_ || fabs(iTau->eta() ) >= 2.4 || deltaR(mu1,*iTau) <= 0.8 || deltaR(mu2,*iTau) <= 0.8)
+    std::cout << "iTau->tauID(medIsoTag_)=" << iTau->tauID(medIsoTag_) << "  DMFind=" << iTau->tauID(decayModeFindingTag_) << "  iTau->pt()=" << iTau->pt() << "  fabs(iTau->eta() )=" << fabs(iTau->eta() ) << "  deltaR(mu1,*iTau)=" << deltaR(mu1,*iTau) << "  deltaR(mu2,*iTau)=" << deltaR(mu2,*iTau) << std::endl;
+    if (iTau->tauID(minMVARaw_) <= -0.5 || iTau->pt() <= tauPtCut_ || fabs(iTau->eta() ) >= 2.4 || deltaR(mu1,*iTau) <= 0.8 || deltaR(mu2,*iTau) <= 0.8)
       continue;
     for (edm::View<pat::Muon>::const_iterator iMu = pMuons->begin(); iMu != pMuons->end(); ++iMu)
     {
@@ -543,14 +578,13 @@ std::cout << "DiMu: pt= " << diMuP4.Pt() << "  eta=" << diMuP4.Eta() << " Mass="
        continue;
       if (currdR < mu3dRMax_ && currdR > mu3dRMin_ && currdR < bestMu3dR)
       {
-        std::cout << "mu3.pt()=" << mu3.pt() << " fabs(mu3.eta())=" << fabs(mu3.eta()) << std::endl;
         diTauP4 = iTau->p4() + iMu->p4();
         checkSubMu = true;
         mu3 = *iMu;
         DMFind = iTau->tauID(decayModeFindingTag_);
-        MedIso = iTau->tauID(medIsoTag_);
+        MedIso = iTau->tauID(medIsoTau_);
         //mu Track Weight
-        for (std::list<TrackProperties>::const_iterator it = TrackCorr.begin(); it != TrackCorr.end(); it++ )
+        for (std::list<TrackProperties>::const_iterator it = TrackCorr_eta.begin(); it != TrackCorr_eta.end(); it++ )
         {
            if (fabs(mu3.eta()) >= (*it).x-(*it).errx_down && fabs(mu3.eta()) <= (*it).x+(*it).errx_up)
            {
@@ -559,6 +593,14 @@ std::cout << "DiMu: pt= " << diMuP4.Pt() << "  eta=" << diMuP4.Eta() << " Mass="
            }//if
         }//for it
 
+        for (std::list<TrackProperties>::const_iterator it = TrackCorr_vtx.begin(); it != TrackCorr_vtx.end(); it++ )
+        {
+           if (fabs(mu3.eta()) >= (*it).x-(*it).errx_down && fabs(mu3.eta()) <= (*it).x+(*it).errx_up)
+           {
+              mu3TrackWeight *= (*it).y;
+              break;
+           }//if
+        }//for it
         //mu3 ID weight
         if (mu3.pt() > 20.0)
         {
@@ -579,7 +621,6 @@ std::cout << "DiMu: pt= " << diMuP4.Pt() << "  eta=" << diMuP4.Eta() << " Mass="
           std::cout << "JPsi Eff" << std::endl;
           double binyIDs_BF = IDsWeight_LowPt_ID->GetYaxis()->FindBin(mu3.pt());
           double binxIDs_BF = IDsWeight_LowPt_ID->GetXaxis()->FindBin(fabs(mu3.eta()));
-std::cout << "cehck2" << IDsWeight_LowPt_ID <<  "\t" << binxIDs_BF << "\t" << binyIDs_BF << std::endl;
           mu3IDWeight  = IDsWeight_LowPt_ID->GetBinContent(binxIDs_BF, binyIDs_BF);
         }//else
  
@@ -613,15 +654,17 @@ std::cout << "cehck2" << IDsWeight_LowPt_ID <<  "\t" << binxIDs_BF << "\t" << bi
       NEvents_->Fill(2);
     else if (iTau->pt() > tauPtCut_ )
       NEvents_->Fill(3);
-    else if (DMFind >= .5)
+    else if ( bTagValue >= 0.8484)
       NEvents_->Fill(4);
+    else if (DMFind >= .5)
+      NEvents_->Fill(5);
     else if (MedIso >= .5)
       NEvents_->Fill(6);
 
     if (!checkSubMu && requireRemovedMuon_) 
       continue;
 
-    std::cout << "Found DiTau" <<  std::endl;
+    std::cout << "Found DiTau\tbTagValue=" << bTagValue <<  std::endl;
     double csvWeight = 1.0;
     if (!isMC_ && bTagValue >= 0.8484)
       continue;
@@ -641,6 +684,7 @@ std::cout << "cehck2" << IDsWeight_LowPt_ID <<  "\t" << binxIDs_BF << "\t" << bi
     if (!isMC_)
       totalWeight = 1.0;
 
+    std::cout << "total_weight=" << totalWeight << std::endl;
     if (checkSubMu)
     {
       reco::LeafCandidate::LorentzVector diMuP4_Mu1TauMu, diMuP4_Mu2TauMu;    
@@ -652,6 +696,7 @@ std::cout << "cehck2" << IDsWeight_LowPt_ID <<  "\t" << binxIDs_BF << "\t" << bi
 
       InvMassTauMuMu1_->Fill(diMuP4_Mu1TauMu.M() ,totalWeight );
       InvMassTauMuMu2_->Fill(diMuP4_Mu2TauMu.M() ,totalWeight );
+      MVARawvsMVADisc_->Fill(iTau->tauID(minMVARaw_), iTau->tauID(medIsoTau_), totalWeight );
     }//if removed Mu
 
     if (DMFind >= .5)
@@ -687,17 +732,18 @@ void FakeRateMiniAODGetRates::beginJob()
       NEvents_->GetXaxis()->SetBinLabel(1, "TotalEvents"); 
       NEvents_->GetXaxis()->SetBinLabel(2, "Total #tau's");
       NEvents_->GetXaxis()->SetBinLabel(3, "#tau's With #mu");
-      NEvents_->GetXaxis()->SetBinLabel(4, "#tau's p_{T} > 20");
-      NEvents_->GetXaxis()->SetBinLabel(5, "Pass DMFind");
-      NEvents_->GetXaxis()->SetBinLabel(6, "Pass Loose Iso");
+      NEvents_->GetXaxis()->SetBinLabel(4, "#tau's p_{T} > 10");
+      NEvents_->GetXaxis()->SetBinLabel(5, "Pass csv");
+      NEvents_->GetXaxis()->SetBinLabel(6, "Pass DMFind");
       NEvents_->GetXaxis()->SetBinLabel(7, "Pass Med Iso");
       NEvents_->GetXaxis()->SetBinLabel(8, "Pass Tight Iso");
   InvMassTauMuMu1_     = new TH1F("InvMassTauMuMu1"    , "", 75, 0, 150);
   InvMassMu1Mu2_     = new TH1F("InvMassMu1Mu2"    , "", 75, 0, 150);
   InvMassTauMuMu2_     = new TH1F("InvMassTauMuMu2"    , "", 75, 0, 150);
+  MVARawvsMVADisc_     = new TH2F("MVARawvsMVADisc"    , "", 75, 0, 150, 2, -0.5, 1.5);
 
   Float_t binsx[] = {9.9999, 20, 30, 40, 60, 300};
-  Float_t binsy[] = {0, .9, 1.5, 2.4};
+  Float_t binsy[] = {0, 0.9, 1.5, 2.4};
   EtavsPtTauMedIso_  = new TH2F("EtavsPtTauMedIso"     , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
   EtavsPtTauDMFind_  = new TH2F("EtavsPtTauDMFind"     , "", sizeof(binsx)/sizeof(Float_t) - 1, binsx, sizeof(binsy)/sizeof(Float_t) - 1, binsy);
 
@@ -710,6 +756,7 @@ void FakeRateMiniAODGetRates::beginJob()
   InvMassTauMuMu1_->Sumw2();
   InvMassMu1Mu2_->Sumw2();
   InvMassTauMuMu2_->Sumw2();
+  MVARawvsMVADisc_->Sumw2();
 
   EtavsPtTauMedIso_->Sumw2();
   EtavsPtTauDMFind_->Sumw2();
@@ -729,6 +776,7 @@ void FakeRateMiniAODGetRates::endJob()
   TCanvas InvMassTauMuMu1Canvas("InvMassTauMuMu1","",600,600);
   TCanvas InvMassMu1Mu2Canvas("InvMassMu1Mu2","",600,600);
   TCanvas InvMassTauMuMu2Canvas("InvMassTauMuMu2","",600,600);
+  TCanvas MVARawvsMVADiscCanvas("MVARawvsMVADisc","",600,600);
 
   TCanvas EtavsPtTauMedIsoCanvas("EtavsPtTauMedIso","",600,600);
   TCanvas EtavsPtTauDMFindCanvas("EtavsPtTauDMFind","",600,600);
@@ -750,6 +798,8 @@ std::cout << "<----------------Declared Canvases-------------->" << std::endl;
 	 1, 0, 0, kBlack, 7, 20, "Mass(#mu_{1} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
   VariousFunctions::formatAndDrawCanvasAndHist1D(InvMassTauMuMu2Canvas, InvMassTauMuMu2_,
 	 1, 0, 0, kBlack, 7, 20, "Mass(#tau_{#mu} #mu_{2})", .04, .04, 1.1,  "", .04, .04, 1.0, false);
+  VariousFunctions::formatAndDrawCanvasAndHist2D(MVARawvsMVADiscCanvas, MVARawvsMVADisc_,
+         1, 0, 0, kBlack, 7, 20, "MVA Raw Iso ", .04, .04, 1.1, "MVA Discriminator", .04, .04, 1.6, "", .04, .04, 1.0);
 
 
   VariousFunctions::formatAndDrawCanvasAndHist2D(EtavsPtTauMedIsoCanvas, EtavsPtTauMedIso_,
@@ -782,6 +832,7 @@ std::cout << "<----------------Formatted Canvases and Histos-------------->" << 
   InvMassTauMuMu1_->Write();
   InvMassMu1Mu2_->Write();
   InvMassTauMuMu2_->Write();
+  MVARawvsMVADisc_->Write();
  
   EtavsPtTauMedIso_->Write();
   EtavsPtTauDMFind_->Write();
@@ -820,6 +871,8 @@ void FakeRateMiniAODGetRates::reset(const bool doDelete)
   InvMassMu1Mu2_ = NULL;
   if ((doDelete) && (InvMassTauMuMu2_ != NULL)) delete InvMassTauMuMu2_;
   InvMassTauMuMu2_ = NULL;
+  if ((doDelete) && (MVARawvsMVADisc_ != NULL)) delete MVARawvsMVADisc_;
+  MVARawvsMVADisc_ = NULL;
 
   if ((doDelete) && (EtavsPtTauMedIso_ != NULL)) delete EtavsPtTauMedIso_;
   EtavsPtTauMedIso_ = NULL;

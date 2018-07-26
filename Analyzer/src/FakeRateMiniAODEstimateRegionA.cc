@@ -75,6 +75,7 @@
 
 #include "AnalyzerGeneratorRecoVariousFunctions/VariousFunctions/interface/VariousFunctions.h"
 #include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
+#include "AnalyzerGeneratorRecoVariousFunctions/VariousFunctions/interface/BTagCalibrationStandalone.h"
 
 #include "RooArgSet.h"
 #include "RooArgusBG.h"
@@ -144,12 +145,15 @@ class FakeRateMiniAODEstimateRegionA : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::View<pat::Tau> > tauTag_;
       bool checkBTag_;
       edm::EDGetTokenT<edm::View<pat::Jet> > jetTag_;
-      string csvBTag_;
+      std::string csvBTag_;
       double mu3dRMin_;
       double mu3dRMax_;
       double tauPtCut_;
       double diMudRCut_;
       double mu3dROverlapCut_;
+      std::string minMVARaw_;
+      std::string medIsoTau_;
+      bool passDiscriminator_;
       double tauHadOverlapdRCut_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu3Tag_;
       edm::EDGetTokenT<edm::View<pat::Muon> > mu12Tag_;
@@ -211,6 +215,9 @@ FakeRateMiniAODEstimateRegionA::FakeRateMiniAODEstimateRegionA(const edm::Parame
   tauPtCut_(iConfig.getParameter<double>("tauPtCut")),
   diMudRCut_(iConfig.getParameter<double>("diMudRCut")),
   mu3dROverlapCut_(iConfig.getParameter<double>("mu3dROverlapCut")),
+  minMVARaw_(iConfig.getParameter<std::string>("minMVARaw")),
+  medIsoTau_(iConfig.getParameter<std::string>("medIsoTau")),
+  passDiscriminator_(iConfig.getParameter<bool>("passDiscriminator")),
   tauHadOverlapdRCut_(iConfig.getParameter<double>("tauHadOverlapdRCut")),
   mu3Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu3Tag"))),
   mu12Tag_(consumes<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("mu12Tag"))),
@@ -296,8 +303,9 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
   for (edm::View<pat::Tau>::const_iterator iTau = pTaus->begin(); iTau != pTaus->end(); ++iTau)
   {
     std::cout << "\tiTau->pt()= " << iTau->pt() << "\t(iTau->eta()=" << (iTau->eta()) << std::endl;
-    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || 
-        deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID("byIsolationMVArun2v1DBoldDMwLTraw") <= -0.5)
+    if (iTau->pt() < tauPtCut_ || fabs(iTau->eta() ) > 2.4 || deltaR(*iTau,mu1) < tauHadOverlapdRCut_ || deltaR(*iTau, mu2) < tauHadOverlapdRCut_ || iTau->tauID(minMVARaw_) <= -0.5)
+      continue;
+    if ( (!iTau->tauID(medIsoTau_) && passDiscriminator_) || (iTau->tauID(medIsoTau_) && !passDiscriminator_) )
       continue;
     for (edm::View<pat::Muon>::const_iterator iMu = pMu3->begin(); iMu != pMu3->end(); ++iMu)
     {
@@ -318,10 +326,10 @@ void FakeRateMiniAODEstimateRegionA::analyze(const edm::Event& iEvent, const edm
         {
           double dRJet = deltaR(*iTau, *iJet);
           if (dRJet < smallestdRJet)
-   	      {
-	        bTagValue = iJet->bDiscriminator(csvBTag_);
-	        smallestdRJet = dRJet;
-	      }//if dRJet < smallestdRJet
+          {
+	    bTagValue = iJet->bDiscriminator(csvBTag_);
+	    smallestdRJet = dRJet;
+	  }//if dRJet < smallestdRJet
         }//for iJet
       }//if
     }//for iMu
